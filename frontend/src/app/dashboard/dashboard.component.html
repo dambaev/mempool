@@ -20,13 +20,13 @@
           </div>
         </div>
       </div>
-      <div class="col">
+      <!-- <div class="col">
         <div class="card">
           <div class="card-body">
             <ng-container *ngTemplateOutlet="stateService.network === 'liquid' ? lbtcPegs : txPerSecond; context: { $implicit: mempoolInfoData }"></ng-container>
           </div>
         </div>
-      </div>
+      </div> -->
     </ng-template>
     <ng-template #expanded>
       <div class="col card-wrapper" *ngIf="(network$ | async) !== 'liquid' && (network$ | async) !== 'liquidtestnet'">
@@ -41,7 +41,7 @@
         <app-difficulty></app-difficulty>
       </div>
       <div class="col">
-        <div class="card graph-card">
+        <div class="card">
           <div class="card-body pl-0">
             <div style="padding-left: 1.25rem;">
               <ng-container *ngTemplateOutlet="mempoolTable; context: { $implicit: mempoolInfoData }"></ng-container>
@@ -60,7 +60,7 @@
           </div>
         </div>
       </div>
-      <div class="col">
+      <!-- <div class="col">
         <div class="card graph-card">
           <div class="card-body">
             <ng-container *ngTemplateOutlet="stateService.network === 'liquid' ? lbtcPegs : txPerSecond; context: { $implicit: mempoolInfoData }"></ng-container>
@@ -79,7 +79,7 @@
             </ng-template>
           </div>
         </div>
-      </div>
+      </div> -->
       <ng-template [ngIf]="collapseLevel === 'one'">
       <div class="col">
         <div class="card">
@@ -110,7 +110,7 @@
           </div>
         </div>
       </div>
-      <div class="col">
+      <!-- <div class="col">
         <div class="card">
           <div class="card-body">
             <h5 class="card-title" i18n="dashboard.latest-transactions">Latest transactions</h5>
@@ -133,7 +133,7 @@
             <div class="">&nbsp;</div>
           </div>
         </div>
-      </div>
+      </div> -->
     </ng-template>
     </ng-template>
   </div>
