@@ -52,12 +52,9 @@
                 <td><a [routerLink]="['/block/' | relativeUrl, block.id]" title="{{ block.id }}">{{ block.id | shortenString : 13 }}</a> <app-clipboard class="d-none d-sm-inline-block" [text]="block.id"></app-clipboard></td>
               </tr>
               <tr>
-                <td i18n="block.timestamp">Timestamp</td>
+                <td i18n="block.mediantime">Mediantime (Posix)</td>
                 <td>
-                  &lrm;{{ block.mediantime * 1000 | date:'yyyy-MM-dd HH:mm' }}
-                  <div class="lg-inline">
-                    <i class="symbol">(<app-time-since [time]="block.timestamp" [fastRender]="true"></app-time-since>)</i>
-                  </div>
+                  &lrm;{{ block.mediantime }}
                 </td>
               </tr>
               <tr *ngIf="network !== 'liquid' && network !== 'liquidtestnet'">
@@ -65,7 +62,7 @@
                 <td>{{ block.bits | decimal2hex }}</td>
               </tr>
               <tr>
-                <td i18n="block.mediantime">Mediantime UTC</td>
+                <td i18n="block.mediantime">Mediantime (UTC)</td>
                 <td>{{ block.mediantime * 1000 | date:'yyyy-MM-dd HH:mm' }}</td>
               </tr>
             </tbody>
