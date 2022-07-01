@@ -31,7 +31,7 @@ variable "SSH_KEYS_IDS" {
 resource "digitalocean_droplet" "dev_droplet_instance" {
   name   = var.DROPLET_NAME
   size   = "s-1vcpu-2gb"
-  image  = "centos-8-x64"
+  image  = "centos-stream-8-x64"
   region = var.DO_REGION
   ssh_keys = var.SSH_KEYS_IDS
   volume_ids = [ ]
