@@ -196,6 +196,13 @@ export class WebsocketService {
     this.lastWant = JSON.stringify(data);
   }
 
+  checkAccountSecret( accountSecret: string) {
+    if (!this.stateService.isBrowser) {
+      return;
+    }
+    this.websocketSubject.next( {action: 'checkAccountSecret', data: [ accountSecret] });
+  }
+
   goOffline() {
     this.goneOffline = true;
     this.stateService.connectionState$.next(0);
@@ -231,6 +238,29 @@ export class WebsocketService {
         }
       });
     }
+    if( response.checkedAccountToken) {
+      this.stateService.accountTokenState = 'checked';
+      this.stateService.$accountToken.next( response.checkedAccountToken);
+      this.stateService.$showAccountURLWarning.next( false);
+    }
+    if( response.declinedAccountSecret) {
+      this.want(['generatedaccounttoken']);
+    }
+    if( response.generatedAccountSecret  && response.generatedAccountToken) {
+      this.stateService.accountTokenState = 'generated';
+      this.stateService.$accountSecret.next( response.generatedAccountSecret);
+      this.stateService.$accountToken.next( response.generatedAccountToken);
+      this.stateService.$showAccountURLWarning.next( true);
+    }
+    if( response.lastDifficultyEpochEndBlocks && response.lastDifficultyEpochEndBlocks.length) {
+      const lastDifficultyEpochEndBlocks = response.lastDifficultyEpochEndBlocks;
+      lastDifficultyEpochEndBlocks.forEach((block: Block) => {
+        if( this.stateService.lastDifficultyEpochEndBlockHeight === undefined || block.height > this.stateService.lastDifficultyEpochEndBlockHeight) {
+          this.stateService.lastDifficultyEpochEndBlockHeight = block.height;
+          this.stateService.lastDifficultyEpochEndBlocks$.next([block, false]);
+        }
+      });
+    }
 
     if (response.tx) {
       this.stateService.mempoolTransactions$.next(response.tx);
@@ -238,8 +268,13 @@ export class WebsocketService {
 
     if (response.block) {
       if (response.block.height > this.stateService.latestBlockHeight) {
-        this.stateService.latestBlockHeight = response.block.height;
-        this.stateService.blocks$.next([response.block, !!response.txConfirmed]);
+        const block = response.block;
+        this.stateService.latestBlockHeight = block.height;
+        this.stateService.blocks$.next([block, !!response.txConfirmed]);
+        if( block.height % 2016 === 0) {
+          this.stateService.lastDifficultyEpochEndBlockHeight = block.height;
+          this.stateService.lastDifficultyEpochEndBlocks$.next([block, !!response.txConfirmed]);
+        }
       }
 
       if (response.txConfirmed) {

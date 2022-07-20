@@ -109,6 +109,16 @@ export interface Block {
   size: number;
   weight: number;
   previousblockhash: string;
+  chainwork: string;
+  mediantime: number;
+
+  // Custom properties
+  medianFee?: number;
+  feeRange?: number[];
+  reward?: number;
+  coinbaseTx?: Transaction;
+  matchRate: number;
+  stage: number;
 }
 
 export interface Address {

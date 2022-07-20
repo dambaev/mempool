@@ -3,3 +3,7 @@ data
 docker-compose.yml
 backend/mempool-config.json
 *.swp
+nix/development/.state
+nix/production/.state
+DO_TOKEN
+.vscode

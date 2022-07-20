@@ -5,12 +5,17 @@ import { BlockExtended, DifficultyAdjustment } from './node-api.interface';
 export interface WebsocketResponse {
   block?: BlockExtended;
   blocks?: BlockExtended[];
+  lastDifficultyEpochEndBlocks?: BlockExtended[];
   conversions?: any;
   txConfirmed?: boolean;
   historicalDate?: string;
   mempoolInfo?: MempoolInfo;
   vBytesPerSecond?: number;
   previousRetarget?: number;
+  generatedAccountSecret?: string;
+  generatedAccountToken?: string;
+  checkedAccountToken?: string;
+  declinedAccountSecret?: string;
   action?: string;
   data?: string[];
   tx?: Transaction;

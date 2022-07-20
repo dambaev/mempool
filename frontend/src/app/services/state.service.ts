@@ -38,6 +38,7 @@ export interface Env {
   BISQ_WEBSITE_URL: string;
   MINING_DASHBOARD: boolean;
   LIGHTNING: boolean;
+  LAST_EPOCH_END_BLOCKS_AMOUNT: number;
 }
 
 const defaultEnv: Env = {
@@ -63,6 +64,7 @@ const defaultEnv: Env = {
   'BISQ_WEBSITE_URL': 'https://bisq.markets',
   'MINING_DASHBOARD': true,
   'LIGHTNING': false,
+  'LAST_EPOCH_END_BLOCKS_AMOUNT': 30,
 };
 
 @Injectable({
@@ -77,6 +79,14 @@ export class StateService {
 
   networkChanged$ = new ReplaySubject<string>(1);
   blocks$: ReplaySubject<[BlockExtended, boolean]>;
+  lastDifficultyEpochEndBlocks$: ReplaySubject<[BlockExtended, boolean]>;
+
+  lastDifficultyEpochEndBlockHeight: number | undefined = undefined;
+  accountTokenState: 'init' | 'checked' | 'generated' = 'init'; // this flag is being used to check if frontend should ask to generate account id hash
+  $showAccountURLWarning: ReplaySubject<boolean> = new ReplaySubject<boolean>( 1); // this flag is being used to check if frontend should display WARNING message
+  $accountSecret: ReplaySubject<string> = new ReplaySubject(1); // this value will only be used if user haven't specified it
+  $accountToken: ReplaySubject<string> = new ReplaySubject(1); // this value is an API token
+
   transactions$ = new ReplaySubject<TransactionStripped>(6);
   conversions$ = new ReplaySubject<any>(1);
   bsqPrice$ = new ReplaySubject<number>(1);
@@ -135,6 +145,7 @@ export class StateService {
     });
 
     this.blocks$ = new ReplaySubject<[BlockExtended, boolean]>(this.env.KEEP_BLOCKS_AMOUNT);
+    this.lastDifficultyEpochEndBlocks$ = new ReplaySubject<[BlockExtended, boolean]>(this.env.LAST_EPOCH_END_BLOCKS_AMOUNT);
 
     if (this.env.BASE_MODULE === 'bisq') {
       this.network = this.env.BASE_MODULE;

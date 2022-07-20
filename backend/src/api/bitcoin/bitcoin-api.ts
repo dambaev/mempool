@@ -87,6 +87,9 @@ class BitcoinApi implements AbstractBitcoinApi {
   $getBlockHeader(hash: string): Promise<string> {
     return this.bitcoindClient.getBlockHeader(hash, false);
   }
+  $getBlockStats( hash: string): Promise<IEsploraApi.BlockStats> {
+    return this.bitcoindClient.getBlockStats( hash, []);
+  }
 
   async $getBlock(hash: string): Promise<IEsploraApi.Block> {
     const foundBlock = blocks.getBlocks().find((block) => block.id === hash);
@@ -227,6 +230,25 @@ class BitcoinApi implements AbstractBitcoinApi {
     }
 
     return esploraTransaction;
+  }
+
+  private convertBlock(block: IBitcoinApi.Block): IEsploraApi.Block {
+    return {
+      id: block.hash,
+      height: block.height,
+      version: block.version,
+      timestamp: block.time,
+      bits: parseInt(block.bits, 16),
+      nonce: block.nonce,
+      difficulty: block.difficulty,
+      merkle_root: block.merkleroot,
+      tx_count: block.nTx,
+      size: block.size,
+      weight: block.weight,
+      previousblockhash: block.previousblockhash,
+      chainwork: block.chainwork,
+      mediantime: block.mediantime,
+    };
   }
 
   private translateScriptPubKeyType(outputType: string): string {

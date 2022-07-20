@@ -35,6 +35,8 @@ import bisqRoutes from "./api/bisq/bisq.routes";
 import liquidRoutes from "./api/liquid/liquid.routes";
 import bitcoinRoutes from "./api/bitcoin/bitcoin.routes";
 
+import chainStats from './chainstats';
+
 class Server {
   private wss: WebSocket.Server | undefined;
   private server: http.Server | undefined;
@@ -166,6 +168,11 @@ class Server {
       await memPool.$updateMempool();
       indexer.$run();
 
+      try {
+        await chainStats.$updateChainstats();
+      } catch (e) {
+        logger.debug( '$updateChainstats error: ${( e instanceof Error ? e.message : e)}');
+      }
       setTimeout(this.runMainUpdateLoop.bind(this), config.MEMPOOL.POLL_RATE_MS);
       this.currentBackendRetryInterval = 5;
     } catch (e) {

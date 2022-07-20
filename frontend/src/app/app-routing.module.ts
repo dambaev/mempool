@@ -8,6 +8,8 @@ import { AddressComponent } from './components/address/address.component';
 import { MasterPageComponent } from './components/master-page/master-page.component';
 import { AboutComponent } from './components/about/about.component';
 import { StatusViewComponent } from './components/status-view/status-view.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { SetAccountSecretComponent } from './components/setaccountsecret/setaccountsecret.component';
 import { TermsOfServiceComponent } from './components/terms-of-service/terms-of-service.component';
 import { PrivacyPolicyComponent } from './components/privacy-policy/privacy-policy.component';
 import { TrademarkPolicyComponent } from './components/trademark-policy/trademark-policy.component';
@@ -23,8 +25,13 @@ import { AssetComponent } from './components/asset/asset.component';
 import { AssetsNavComponent } from './components/assets/assets-nav/assets-nav.component';
 
 let routes: Routes = [
-  { 
+  {
+    path: 'account/:accountsecret',
+    component: SetAccountSecretComponent,
+  },
+  {
     path: 'testnet',
+    component: MasterPageComponent,
     children: [
       {
         path: '',
@@ -129,6 +136,10 @@ let routes: Routes = [
   {
     path: 'signet',
     children: [
+      {
+        path: 'account/:accountsecret',
+        component: SetAccountSecretComponent,
+      },
       {
         path: 'mining/blocks',
         redirectTo: 'blocks',
@@ -273,8 +284,22 @@ let routes: Routes = [
         component: AddressComponent
       },
       {
+        path: 'account/:accountsecret',
+        component: SetAccountSecretComponent,
+      },
+      {
         path: 'tx',
         component: StartComponent,
+        children: [
+          {
+            path: ':id',
+            component: TransactionComponent
+          },
+        ],
+      },
+      {
+        path: '',
+        component: LiquidMasterPageComponent,
         children: [
           {
             path: ':id',

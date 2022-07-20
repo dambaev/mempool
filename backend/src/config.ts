@@ -24,6 +24,7 @@ interface IConfig {
     USER_AGENT: string;
     STDOUT_LOG_MIN_PRIORITY: 'emerg' | 'alert' | 'crit' | 'err' | 'warn' | 'notice' | 'info' | 'debug';
     AUTOMATIC_BLOCK_REINDEXING: boolean;
+    CHAINSTAT_BATCH_SIZE: number;
   };
   ESPLORA: {
     REST_API_URL: string;
@@ -60,6 +61,8 @@ interface IConfig {
     SOCKET: string,
     PORT: number;
     DATABASE: string;
+    ACCOUNT_DATABASE: string;
+    SECRET_SALT: string;
     USERNAME: string;
     PASSWORD: string;
   };
@@ -129,6 +132,7 @@ const defaults: IConfig = {
     'USER_AGENT': 'mempool',
     'STDOUT_LOG_MIN_PRIORITY': 'debug',
     'AUTOMATIC_BLOCK_REINDEXING': false,
+    'CHAINSTAT_BATCH_SIZE': 10000,
   },
   'ESPLORA': {
     'REST_API_URL': 'http://127.0.0.1:3000',
@@ -156,6 +160,8 @@ const defaults: IConfig = {
     'SOCKET': '',
     'PORT': 3306,
     'DATABASE': 'mempool',
+    'ACCOUNT_DATABASE': 'mempoolacc',
+    'SECRET_SALT': 'changeme',
     'USERNAME': 'mempool',
     'PASSWORD': 'mempool'
   },

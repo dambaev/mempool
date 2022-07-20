@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, Inject, LOCALE_ID, OnInit } from '@angular/core';
-import { combineLatest, merge, Observable, of } from 'rxjs';
+import { ChangeDetectionStrategy, Component, Inject, LOCALE_ID, OnInit, OnDestroy } from '@angular/core';
+import { combineLatest, merge, Observable, of, timer, Subscription } from 'rxjs';
 import { filter, map, scan, share, switchMap, tap } from 'rxjs/operators';
 import { BlockExtended, OptimizedMempoolStats } from '../interfaces/node-api.interface';
 import { MempoolInfo, TransactionStripped } from '../interfaces/websocket.interface';
@@ -32,21 +32,26 @@ interface MempoolStatsData {
   styleUrls: ['./dashboard.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
+  collapseLevel: string;
   featuredAssets$: Observable<any>;
   network$: Observable<string>;
   mempoolBlocksData$: Observable<MempoolBlocksData>;
   mempoolInfoData$: Observable<MempoolInfoData>;
+  lastDifficultyEpochEndBlocks: BlockExtended[];
+  lastDifficultyEpochEndBlocksSubscription: Subscription;
+  lastDifficultyEpochEndBlocksSeries: any;
   mempoolLoadingStatus$: Observable<number>;
   vBytesPerSecondLimit = 1667;
+  mempoolStats$: Observable<MempoolStatsData>;
   blocks$: Observable<BlockExtended[]>;
   transactions$: Observable<TransactionStripped[]>;
   latestBlockHeight: number;
   mempoolTransactionsWeightPerSecondData: any;
-  mempoolStats$: Observable<MempoolStatsData>;
-  transactionsWeightPerSecondOptions: any;
   isLoadingWebSocket$: Observable<boolean>;
   liquidPegsMonth$: Observable<any>;
+  difficultySliderStartValue: number = 0; // those 2 variables contain start / end values for difficulty chart slider
+  difficultySliderEndValue: number = 0;
 
   constructor(
     @Inject(LOCALE_ID) private locale: string,
@@ -57,7 +62,38 @@ export class DashboardComponent implements OnInit {
     private storageService: StorageService,
   ) { }
 
+  ngOnDestroy() {
+    this.lastDifficultyEpochEndBlocksSubscription.unsubscribe();
+  }
+
   ngOnInit(): void {
+    this.lastDifficultyEpochEndBlocks = [];
+    this.lastDifficultyEpochEndBlocksSubscription = this.stateService.lastDifficultyEpochEndBlocks$
+      .subscribe(([block, txConfirmed]) => {
+        this.lastDifficultyEpochEndBlocks.push( block);
+        if( this.lastDifficultyEpochEndBlocks.length > 0){
+          if(this.lastDifficultyEpochEndBlocks.length <= 30) {
+            this.difficultySliderStartValue = this.lastDifficultyEpochEndBlocks[0].height;
+            this.difficultySliderEndValue = this.lastDifficultyEpochEndBlocks[ this.lastDifficultyEpochEndBlocks.length - 1].height;
+          }else{
+            this.difficultySliderStartValue = this.lastDifficultyEpochEndBlocks[ this.lastDifficultyEpochEndBlocks.length - 30].height;
+            this.difficultySliderEndValue = this.lastDifficultyEpochEndBlocks[ this.lastDifficultyEpochEndBlocks.length - 1].height;
+          }
+        }
+        let map = new Map<number, string>();
+        this.lastDifficultyEpochEndBlocks.map((block) => {
+          const block_date = new Date( block.timestamp * 1000);
+          const month_real = block_date.getMonth() + 1;
+          const month = (month_real < 10) ? '0' + String(month_real) : month_real;
+          const day = (block_date.getDate() < 10) ? '0' + String(block_date.getDate()) : block_date.getDate();
+          map.set( block.height, String(block.height) + '\n'
+            + block_date.getFullYear() + '/' + month + '/' + day);
+        });
+        this.lastDifficultyEpochEndBlocksSeries = {
+          labels: map,
+          series: [this.lastDifficultyEpochEndBlocks.map((block)=> [ block.height, block.difficulty])]
+        };
+      });
     this.isLoadingWebSocket$ = this.stateService.isLoadingWebSocket$;
     this.seoService.resetTitle();
     this.websocketService.want(['blocks', 'stats', 'mempool-blocks', 'live-2h-chart']);

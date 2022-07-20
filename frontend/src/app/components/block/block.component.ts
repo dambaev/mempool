@@ -41,7 +41,6 @@ export class BlockComponent implements OnInit, OnDestroy {
   page = 1;
   itemsPerPage: number;
   txsLoadingStatus$: Observable<number>;
-  showDetails = false;
   showPreviousBlocklink = true;
   showNextBlocklink = true;
   transactionsError: any = null;
@@ -248,14 +247,6 @@ export class BlockComponent implements OnInit, OnDestroy {
 
     this.networkChangedSubscription = this.stateService.networkChanged$
       .subscribe((network) => this.network = network);
-
-    this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
-      if (params.showDetails === 'true') {
-        this.showDetails = true;
-      } else {
-        this.showDetails = false;
-      }
-    });
 
     this.keyNavigationSubscription = this.stateService.keyNavigation$.subscribe((event) => {
       if (this.showPreviousBlocklink && event.key === 'ArrowRight' && this.nextBlockHeight - 2 >= 0) {

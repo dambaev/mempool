@@ -2,6 +2,8 @@ import config from '../config';
 import DB from '../database';
 import logger from '../logger';
 import { Common } from './common';
+import oe from './oe-database-migration';
+
 
 class DatabaseMigration {
   private static currentVersion = 33;
@@ -63,8 +65,8 @@ class DatabaseMigration {
       this.uniqueLogs.push(this.hashratesTruncatedMessage);
     }
 
-    logger.debug('MIGRATIONS: Current state.schema_version ' + databaseSchemaVersion);
-    logger.debug('MIGRATIONS: Latest DatabaseMigration.version is ' + DatabaseMigration.currentVersion);
+    logger.info('MIGRATIONS: Current state.schema_version ' + databaseSchemaVersion);
+    logger.info('MIGRATIONS: Latest DatabaseMigration.version is ' + DatabaseMigration.currentVersion);
     if (databaseSchemaVersion >= DatabaseMigration.currentVersion) {
       logger.debug('MIGRATIONS: Nothing to do.');
       return;
