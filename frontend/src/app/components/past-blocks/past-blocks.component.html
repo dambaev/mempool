@@ -1,0 +1,54 @@
+<div class="blocks-container blockchain-blocks-container" *ngIf="(loadingBlocks$ | async) === false; else loadingBlocksTemplate">
+  <div *ngFor="let pastBlock of pastBlocks; let i = index; trackBy: trackByPastBlocksFn" >
+    <div class="text-center bitcoin-block mined-block blockchain-blocks-{{ i }}" id="bitcoin-block-{{ pastBlock.height }}" [ngStyle]="blockStyles[i]" [class.blink-bg]="(specialBlocks[pastBlock.height] !== undefined)">
+      <a draggable="false" [routerLink]="['/block/' | relativeUrl, pastBlock.id]" [state]="{ data: { block: pastBlock } }"
+        class="blockLink" [ngClass]="{'disabled': (this.stateService.blockScrolling$ | async)}">&nbsp;</a>
+      <div class="block-height">
+        <a [routerLink]="['/block/' | relativeUrl, pastBlock.id]" [state]="{ data: { block: pastBlock } }">{{ pastBlock.height }}</a>
+      </div>
+      <div class="block-body">
+        <div class="mediantime-utc">
+          Mediantime (POSIX):
+          <div><a class="mediantime-posix" [class.gold]="isTipBlock(pastBlock) || isMedianBlock(pastBlock)">{{ pastBlock.mediantime }}</a><a class="m-tooltip" [ngbTooltip]="getMedianTimePosixTooltip(pastBlock)" placement="top">[?]</a></div>
+        </div>
+        <div class="mediantime-utc">
+          Mediantime (UTC):
+          <div>{{ pastBlock.mediantime * 1000 | date:'yyyy-MM-dd HH:mm' }}</div>
+        </div>
+        <div *ngIf="!(isTipBlock(pastBlock) || isMedianBlock(pastBlock)); else goldTimestamp" class="time-utc" >
+          Time (POSIX):
+          <div><a class="time-utc-posix">{{ pastBlock.timestamp }}</a><a class="m-tooltip" [ngbTooltip]="timePosixTooltip" placement="top">[?]</a></div>
+        </div>
+        <ng-template #goldTimestamp>
+          <div class="time-utc">
+            Time (POSIX):
+            <div><a class="time-utc-gold">{{ pastBlock.timestamp }}</a><a class="m-tooltip" [ngbTooltip]="timePosixTooltip" placement="top">[?]</a></div>
+          </div>
+        </ng-template>
+        <div class="mediantime-utc">
+          Time (UTC):
+          <div>{{ pastBlock.timestamp * 1000 | date:'yyyy-MM-dd HH:mm' }}</div>
+        </div>
+        <!-- <div *ngIf="pastBlock.mediantimeDiff < 600; else speeddownTemplate" class="mediantime-utc" >
+          <b>{{ pastBlock.mediantimeDiff }} seconds (<600)</b> <a ngbTooltip="test tooltip">[?]</a>
+        </div>
+        <ng-template #speeddownTemplate>
+          <div class="mediantime-utc">
+            <b>{{ pastBlock.mediantimeDiff }} seconds (>=600)</b><a ngbTooltip="test tooltip">[?]</a>
+          </div>
+        </ng-template> -->
+      </div>
+    </div>
+  </div>
+  <div [hidden]="!arrowVisible" id="arrow-up" [style.transition]="transition" [ngStyle]="{'left': arrowLeftPx + 'px' }"></div>
+</div>
+
+<ng-template #loadingBlocksTemplate>
+  <div class="blocks-container">
+    <div class="flashing">
+      <div *ngFor="let block of emptyBlocks; let i = index; trackBy: trackByBlocksFn" >
+        <div class="text-center bitcoin-block mined-block" id="bitcoin-block-{{ block.height }}" [ngStyle]="emptyBlockStyles[i]"></div>
+      </div>
+    </div>
+  </div>
+</ng-template>
