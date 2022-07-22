@@ -28,6 +28,7 @@ import icons from './api/liquid/icons';
 import { Common } from './api/common';
 
 import chainStats from './chainstats';
+import opEnergyApiService from './api/op-energy.service';
 
 class Server {
   private wss: WebSocket.Server | undefined;
@@ -184,6 +185,8 @@ class Server {
     memPool.setMempoolChangedCallback(websocketHandler.handleMempoolChange.bind(websocketHandler));
     fiatConversion.setProgressChangedCallback(websocketHandler.handleNewConversionRates.bind(websocketHandler));
     loadingIndicators.setProgressChangedCallback(websocketHandler.handleLoadingChanged.bind(websocketHandler));
+    opEnergyApiService.setNewTimeStrikeCallback(websocketHandler.handleNewTimeStrike.bind(websocketHandler));
+    opEnergyApiService.setNewTimeSlowFastGuessCallback(websocketHandler.handleNewTimeSlowFastGuess.bind(websocketHandler));
   }
 
   setUpHttpApiRoutes() {
