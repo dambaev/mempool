@@ -14,6 +14,9 @@ import transactionUtils from './transaction-utils';
 import {exec} from 'child_process';
 import * as sha256 from 'crypto-js/sha256';
 
+import { TimeStrike, SlowFastGuess } from './interfaces/op-energy.interface';
+import opEnergyApiService from './op-energy.service';
+
 class WebsocketHandler {
   private wss: WebSocket.Server | undefined;
   private extraInitProperties = {};
@@ -45,6 +48,41 @@ class WebsocketHandler {
             client['want-mempool-blocks'] = parsedMessage.data.indexOf('mempool-blocks') > -1;
             client['want-live-2h-chart'] = parsedMessage.data.indexOf('live-2h-chart') > -1;
             client['want-stats'] = parsedMessage.data.indexOf('stats') > -1;
+          }
+          if (parsedMessage && parsedMessage['track-time-strikes'] === 'start') {
+            client['want-time-strikes'] = true; // want notifications about ALL time strikes
+          }
+          if (parsedMessage && parsedMessage['track-time-strikes'] === 'stop') {
+            client['want-time-strikes'] = null;
+          }
+          if (parsedMessage && parsedMessage['track-time-strike-start'] !== undefined) {
+            const ts = parsedMessage['track-time-strike-start'];
+            const blockHeight = opEnergyApiService.verifyBlockHeight( ts.blockHeight);
+            const nLockTime = opEnergyApiService.verifyNLockTime( ts.nLockTime);
+            const value = {
+              'blockHeight': blockHeight.value,
+              'nLockTime': nLockTime.value,
+            };
+            if( client['track-time-strikes'] !== undefined) { // already an array
+              if( client['track-time-strikes'].indexOf( value) < 0){ // add only if it is not already exists
+                client['track-time-strikes'].push( value);
+              }
+            } else { // create initial array
+              client['track-time-strikes'] = [ value ];
+            }
+          }
+          if (parsedMessage && parsedMessage['track-time-strike-stop'] !== undefined) {
+            const ts = parsedMessage['track-time-strike-stop'];
+            const blockHeight = opEnergyApiService.verifyBlockHeight( ts.blockHeight);
+            const nLockTime = opEnergyApiService.verifyNLockTime( ts.nLockTime);
+            const value = {
+              'blockHeight': blockHeight.value,
+              'nLockTime': nLockTime.value,
+            };
+
+            if ( client[ 'track-time-strikes' ]) {
+              client[ 'track-time-strikes' ] = client[ 'track-time-strikes' ].filter( (element, index, array) => element.blockHeight !== value.blockHeight && element.nLockTime !== value.nLockTime);
+            }
           }
 
           if (parsedMessage && parsedMessage['track-tx']) {
@@ -575,6 +613,49 @@ class WebsocketHandler {
       }
     }
     return true;
+  }
+  // sends notifications to all the WebSockets' clients about new TimeStrike value
+  handleNewTimeStrike( timeStrike: TimeStrike) {
+    if (!this.wss) {
+      throw new Error('WebSocket.Server is not set');
+    }
+    const value = {
+      'blockHeight': timeStrike.blockHeight,
+      'nLockTime': timeStrike.nLockTime,
+    };
+
+    this.wss.clients.forEach((client) => {
+      if (client.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      if (!client['want-time-strikes']) {
+        return;
+      }
+
+      client.send(JSON.stringify({ timeStrike: timeStrike} ));
+    });
+  }
+  // sends notifications to all the WebSockets' clients about new SlowFastGuess value
+  handleNewTimeSlowFastGuess( timeSlowFastGuess: SlowFastGuess) {
+    if (!this.wss) {
+      throw new Error('WebSocket.Server is not set');
+    }
+    const ts = {
+      'blockHeight': timeSlowFastGuess.blockHeight,
+      'nLockTime': timeSlowFastGuess.nLockTime,
+    };
+
+    this.wss.clients.forEach((client) => {
+      if (client.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      if ( client['track-time-strikes'] === undefined || client['track-time-strikes'].filter( (element, index, array) => element.blockHeight === ts.blockHeight && element.nLockTime === ts.nLockTime).length < 1) {
+        return;
+      }
+      client.send(JSON.stringify({ timeSlowFastGuess: timeSlowFastGuess} ));
+    });
   }
 }
 

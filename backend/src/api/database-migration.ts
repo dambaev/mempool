@@ -16,7 +16,7 @@ class DatabaseMigration {
    * Entry point
    */
   public async $initializeOrMigrateDatabase(): Promise<void> {
-    await oe.$initializeOrMigrateDatabase();
+    await oe.$initializeOrMigrateDatabase( 'mainLoop');
     logger.info('MIGRATIONS: Running migrations');
 
     await this.$printDatabaseVersion();

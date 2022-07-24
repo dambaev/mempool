@@ -862,7 +862,7 @@ class Routes {
       logger.info( `${UUID}: PROFILE: start: $getTimeStrikes`);
       const maccount_token = req.query.account_token;
       if( typeof maccount_token === "string" ) {
-        const result = await opEnergyApiService.$getTimeStrikes( opEnergyApiService.verifyAccountToken( maccount_token));
+        const result = await opEnergyApiService.$getTimeStrikes( UUID, opEnergyApiService.verifyAccountToken( maccount_token));
         res.json( result.map( (blocksid) => {
           return blocksid.value;
         }));
@@ -878,7 +878,7 @@ class Routes {
   public async $postTimeStrike(req: Request, res: Response) {
     const UUID = await opEnergyApiService.$generateRandomHash();
     try {
-      logger.info( `${UUID}: PROFILE: start: $postTimeStrike`);
+      logger.info( `${UUID} PROFILE: start: $postTimeStrike`);
       const maccount_token = req.body.account_token;
       const mnlocktime = req.body.nlocktime;
       const mblock_height = req.body.block_height;
@@ -892,7 +892,7 @@ class Routes {
       if( typeof mblock_height !== "number" ) {
         throw new Error( 'ERROR: req.body.block_height is not a number');
       }
-      const result = await opEnergyApiService.$addTimeStrike( opEnergyApiService.verifyAccountToken( maccount_token), opEnergyApiService.verifyBlockHeight( mblock_height), opEnergyApiService.verifyNLockTime(mnlocktime));
+      const result = await opEnergyApiService.$addTimeStrike( UUID, opEnergyApiService.verifyAccountToken( maccount_token), opEnergyApiService.verifyBlockHeight( mblock_height), opEnergyApiService.verifyNLockTime(mnlocktime));
       res.json( result.value);
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$addTimeStrike: ${e instanceof Error ? e.message: e}`);
@@ -917,7 +917,7 @@ class Routes {
       if( typeof mblock_height !== "number" ) {
         throw new Error( 'ERROR: req.query.block_height is not a string');
       }
-      const result = await opEnergyApiService.$getSlowFastGuesses( opEnergyApiService.verifyAccountToken( maccount_token), opEnergyApiService.verifyBlockHeight( mblock_height), opEnergyApiService.verifyNLockTime(mnlocktime));
+      const result = await opEnergyApiService.$getSlowFastGuesses( UUID, opEnergyApiService.verifyAccountToken( maccount_token), opEnergyApiService.verifyBlockHeight( mblock_height), opEnergyApiService.verifyNLockTime(mnlocktime));
       res.json( result);
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getSlowFastGuesses: ${e instanceof Error ? e.message: e}`);
@@ -946,7 +946,7 @@ class Routes {
       if( typeof mguess !== "string" ) {
         throw new Error( 'ERROR: req.body.guess is not a string');
       }
-      const result = await opEnergyApiService.$addSlowFastGuess( opEnergyApiService.verifyAccountToken( maccount_token), opEnergyApiService.verifyBlockHeight( mblock_height), opEnergyApiService.verifyNLockTime(mnlocktime), opEnergyApiService.verifySlowFastGuessValue( mguess));
+      const result = await opEnergyApiService.$addSlowFastGuess( UUID, opEnergyApiService.verifyAccountToken( maccount_token), opEnergyApiService.verifyBlockHeight( mblock_height), opEnergyApiService.verifyNLockTime(mnlocktime), opEnergyApiService.verifySlowFastGuessValue( mguess));
       res.json( result);
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$postSlowFastGuess: ${e instanceof Error ? e.message: e}`);
@@ -967,7 +967,7 @@ class Routes {
       if( typeof mdisplay_name !== "string") {
         throw new Error( 'ERROR: req.body.display_name is not a string');
       }
-      const result = await opEnergyApiService.$updateUserDisplayName( opEnergyApiService.verifyAccountToken( maccount_token), opEnergyApiService.verifyAlphaNum(mdisplay_name.slice(0,30)));
+      const result = await opEnergyApiService.$updateUserDisplayName( UUID, opEnergyApiService.verifyAccountToken( maccount_token), opEnergyApiService.verifyAlphaNum(mdisplay_name.slice(0,30)));
       res.json( result);
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$postUserDisplayName: ${e instanceof Error ? e.message: e}`);
@@ -987,7 +987,7 @@ class Routes {
       if( typeof mblock_height !== "number" ) {
         throw new Error( 'ERROR: req.body.block_height is not a number');
       }
-      const result = await opEnergyApiService.$getTimeStrikesByBlock( opEnergyApiService.verifyAccountToken( maccount_token), opEnergyApiService.verifyBlockHeight( mblock_height));
+      const result = await opEnergyApiService.$getTimeStrikesByBlock( UUID, opEnergyApiService.verifyAccountToken( maccount_token), opEnergyApiService.verifyBlockHeight( mblock_height));
       res.json( result.map( (blocksid) => {
         return blocksid.value;
       }));
