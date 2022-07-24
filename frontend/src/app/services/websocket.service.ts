@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs';
 import { ApiService } from './api.service';
 import { take } from 'rxjs/operators';
 import { TransferState, makeStateKey } from '@angular/platform-browser';
+import { TimeStrike } from '../interfaces/op-energy.interface';
 
 const OFFLINE_RETRY_AFTER_MS = 10000;
 const OFFLINE_PING_CHECK_AFTER_MS = 30000;
@@ -167,16 +168,28 @@ export class WebsocketService {
   fetchStatistics(historicalDate: string) {
     this.websocketSubject.next({ historicalDate });
   }
-  // this procedure should be used to ask server to send messages with the result of single player guess block game
-  startTrackSinglePlayerGuessBlock() {
+  // this procedure should be used to ask server to send notifications about new strikes
+  startTrackTimeStrikes() {
     this.websocketSubject.next( {
-      'track-single-player-guess-block': 'start'
+      'track-time-strikes': 'start'
     });
   }
-  // this procedure asks server to stop sending messages with the result of single player guess block game
-  stopTrackSinglePlayerGuessBlock() {
+  // this procedure asks server to stop sending notifications about new strikes
+  stopTrackTimeStrikes() {
     this.websocketSubject.next( {
-      'track-single-player-guess-block': 'start'
+      'track-time-strikes': 'stop'
+    });
+  }
+  // this procedure should be used to ask server to send notifications about new guesses for a given strike
+  startTrackTimeSlowFastGuessesByTimeStrike( ts: TimeStrike) {
+    this.websocketSubject.next( {
+      'track-time-strike-start': ts
+    });
+  }
+  // this procedure asks server to stop sending notifications about new guesses for a given strike
+  stopTrackTimeSlowFastGuessesByTimeStrike( ts: TimeStrike) {
+    this.websocketSubject.next( {
+      'track-time-strike-stop': ts
     });
   }
 
@@ -224,6 +237,14 @@ export class WebsocketService {
   }
 
   handleResponse(response: WebsocketResponse) {
+    if ( response.timeStrike) {
+      const ts = response.timeStrike;
+      this.stateService.timeStrikes$.next( ts);
+    }
+    if ( response.timeSlowFastGuess) {
+      const slowFastGuess = response.timeSlowFastGuess;
+      this.stateService.timeSlowFastGuesses$.next( slowFastGuess);
+    }
     if (response.blocks && response.blocks.length) {
       const blocks = response.blocks;
       blocks.forEach((block: Block) => {

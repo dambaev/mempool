@@ -997,28 +997,6 @@ class Routes {
     }
     logger.info( `${UUID}: PROFILE: end: $getTimeStrikesByBlock`);
   }
-  public async $getTimeStrikesByBlock(req: Request, res: Response) {
-    const UUID = await opEnergyApiService.$generateRandomHash();
-    try {
-      logger.info( `${UUID}: PROFILE: start: $getTimeStrikesByBlock`);
-      const maccount_token = req.query.account_token;
-      const mblock_height = Number(req.query.block_height);
-      if( typeof maccount_token !== "string" ) {
-        throw new Error( 'ERROR: req.query.account_token is not a string');
-      }
-      if( typeof mblock_height !== "number" ) {
-        throw new Error( 'ERROR: req.body.block_height is not a number');
-      }
-      const result = await opEnergyApiService.$getTimeStrikesByBlock( opEnergyApiService.verifyAccountToken( maccount_token), opEnergyApiService.verifyBlockHeight( mblock_height));
-      res.json( result.map( (blocksid) => {
-        return blocksid.value;
-      }));
-    } catch(e) {
-      logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getTimeStrikesByBlock: ${e instanceof Error ? e.message: e}`);
-      res.status(404).send('not found');
-    }
-    logger.info( `${UUID}: PROFILE: end: $getTimeStrikesByBlock`);
-  }
 
 }
 

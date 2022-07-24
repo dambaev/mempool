@@ -6,6 +6,7 @@ import { OptimizedMempoolStats } from '../interfaces/node-api.interface';
 import { Router, NavigationStart } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
 import { map, shareReplay } from 'rxjs/operators';
+import { TimeStrike, SlowFastGuess} from '../interfaces/op-energy.interface';
 
 interface MarkBlockState {
   blockHeight?: number;
@@ -95,6 +96,8 @@ export class StateService {
   previousRetarget$ = new ReplaySubject<number>(1);
   backendInfo$ = new ReplaySubject<IBackendInfo>(1);
   loadingIndicators$ = new ReplaySubject<ILoadingIndicators>(1);
+  timeStrikes$ = new ReplaySubject<TimeStrike>(1);
+  timeSlowFastGuesses$ = new ReplaySubject<SlowFastGuess>(1);
 
   live2Chart$ = new Subject<OptimizedMempoolStats>();
 

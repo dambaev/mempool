@@ -1,5 +1,6 @@
 import { ILoadingIndicators } from '../services/state.service';
 import { Block, Transaction } from './electrs.interface';
+import { TimeStrike, SlowFastGuess } from './op-energy.interface';
 
 export interface WebsocketResponse {
   block?: Block;
@@ -28,7 +29,11 @@ export interface WebsocketResponse {
   'track-asset'?: string;
   'watch-mempool'?: boolean;
   'track-bisq-market'?: string;
-  'track-single-player-guess-block'?: 'start' | 'stop';
+  'track-time-strikes'?: 'start' | 'stop';
+  'track-time-strike-start'?: TimeStrike;
+  'track-time-strike-stop'?: TimeStrike;
+  timeStrike?: TimeStrike;
+  timeSlowFastGuess?: SlowFastGuess;
 }
 
 export interface MempoolBlock {
