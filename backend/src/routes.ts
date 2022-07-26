@@ -871,7 +871,7 @@ class Routes {
       }
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getTimeStrikes: ${e instanceof Error ? e.message: e}`);
-      res.status(404).send('not found');
+      res.status(404).send(`${UUID}: ${e instanceof Error? e.message : e}`);
     }
     logger.info( `${UUID}: PROFILE: end: $getTimeStrikes`);
   }
@@ -896,7 +896,7 @@ class Routes {
       res.json( result.value);
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$addTimeStrike: ${e instanceof Error ? e.message: e}`);
-      res.status(404).send('not found');
+      res.status(404).send(`${UUID}: ${e instanceof Error? e.message : e}`);
     }
     logger.info( `${UUID}: PROFILE: end: $postTimeStrike`);
   }
@@ -921,7 +921,7 @@ class Routes {
       res.json( result);
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getSlowFastGuesses: ${e instanceof Error ? e.message: e}`);
-      res.status(404).send('not found');
+      res.status(404).send(`${UUID}: ${e instanceof Error? e.message : e}`);
     }
     logger.info( `${UUID}: PROFILE: end: $getSlowFastGuesses`);
   }
@@ -950,7 +950,7 @@ class Routes {
       res.json( result);
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$postSlowFastGuess: ${e instanceof Error ? e.message: e}`);
-      res.status(404).send('not found');
+      res.status(404).send(`${UUID}: ${e instanceof Error? e.message : e}`);
     }
     logger.info( `${UUID}: PROFILE: end: $postSlowFastGuess`);
   }
@@ -971,7 +971,7 @@ class Routes {
       res.json( result);
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$postUserDisplayName: ${e instanceof Error ? e.message: e}`);
-      res.status(404).send('not found');
+      res.status(404).send(`${UUID}: ${e instanceof Error? e.message : e}`);
     }
     logger.info( `${UUID}: PROFILE: end: $postUserDisplayName`);
   }
@@ -993,7 +993,7 @@ class Routes {
       }));
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getTimeStrikesByBlock: ${e instanceof Error ? e.message: e}`);
-      res.status(404).send('not found');
+      res.status(404).send(`${UUID}: ${e instanceof Error? e.message : e}`);
     }
     logger.info( `${UUID}: PROFILE: end: $getTimeStrikesByBlock`);
   }
