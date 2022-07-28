@@ -14,23 +14,6 @@ class BitcoinApi implements AbstractBitcoinApi {
     this.bitcoindClient = bitcoinClient;
   }
 
-  static convertBlock(block: IBitcoinApi.Block): IEsploraApi.Block {
-    return {
-      id: block.hash,
-      height: block.height,
-      version: block.version,
-      timestamp: block.time,
-      bits: parseInt(block.bits, 16),
-      nonce: block.nonce,
-      difficulty: block.difficulty,
-      merkle_root: block.merkleroot,
-      tx_count: block.nTx,
-      size: block.size,
-      weight: block.weight,
-      previousblockhash: block.previousblockhash,
-    };
-  }
-
 
   $getRawTransaction(txId: string, skipConversion = false, addPrevout = false, lazyPrevouts = false): Promise<IEsploraApi.Transaction> {
     // If the transaction is in the mempool we already converted and fetched the fee. Only prevouts are missing
@@ -232,7 +215,7 @@ class BitcoinApi implements AbstractBitcoinApi {
     return esploraTransaction;
   }
 
-  private convertBlock(block: IBitcoinApi.Block): IEsploraApi.Block {
+  static convertBlock(block: IBitcoinApi.Block): IEsploraApi.Block {
     return {
       id: block.hash,
       height: block.height,
