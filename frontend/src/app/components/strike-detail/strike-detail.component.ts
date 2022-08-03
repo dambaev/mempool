@@ -22,7 +22,7 @@ import { ToastrService } from 'ngx-toastr';
 export class StrikeDetailComponent implements OnInit, OnDestroy {
   network = '';
   fromBlock: Block;
-  toBlock: Block;
+  toBlock: Block | any;
   blockHeight: number;
   nextBlockHeight: number;
   fromBlockHash: string;
@@ -48,6 +48,7 @@ export class StrikeDetailComponent implements OnInit, OnDestroy {
   networkChangedSubscription: Subscription;
 
   slowFastGuesses: SlowFastGuess[] = [];
+  currentActiveGuess: 'slow' | 'fast' | null = null;
 
   get strikeElapsedTime(): number {
     return (this.strike.nLockTime - this.fromBlock.mediantime);
@@ -71,6 +72,10 @@ export class StrikeDetailComponent implements OnInit, OnDestroy {
 
   get hashrate(): bigint {
     return this.chainworkDiff / BigInt(this.timeDiff);
+  }
+
+  get canGuess(): boolean {
+    return this.stateService.latestBlockHeight > 0 && this.strike.blockHeight > this.stateService.latestBlockHeight;
   }
 
   constructor(
@@ -155,8 +160,12 @@ export class StrikeDetailComponent implements OnInit, OnDestroy {
               return of([fromBlockInCache, toBlockInCache]);
             }
             return combineLatest([
-              this.electrsApiService.getBlockHashFromHeight$(parseInt(fromBlockHash, 10)),
-              this.electrsApiService.getBlockHashFromHeight$(parseInt(toBlockHash, 10))
+              this.electrsApiService.getBlockHashFromHeight$(parseInt(fromBlockHash, 10)).pipe(
+                catchError(() => of(fromBlockHash)),
+              ),
+              this.electrsApiService.getBlockHashFromHeight$(parseInt(toBlockHash, 10)).pipe(
+                catchError(() => of(toBlockHash)),
+              )
             ])
               .pipe(
                 switchMap(([fromHash, toHash]) => {
@@ -166,8 +175,12 @@ export class StrikeDetailComponent implements OnInit, OnDestroy {
                     this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/tetris/strike/`, fromHash, toHash, this.strike.blockHeight, this.strike.nLockTime, this.strike.creationTime]).toString()
                   );
                   return combineLatest([
-                    this.electrsApiService.getBlock$(fromHash),
-                    this.electrsApiService.getBlock$(toHash)
+                    this.electrsApiService.getBlock$(fromHash).pipe(
+                      catchError(() => of(fromHash)),
+                    ),
+                    this.electrsApiService.getBlock$(toHash).pipe(
+                      catchError(() => of(toHash)),
+                    )
                   ]);
                 })
               );
@@ -180,8 +193,12 @@ export class StrikeDetailComponent implements OnInit, OnDestroy {
           }
 
           return combineLatest([
-            this.electrsApiService.getBlock$(fromBlockHash),
-            this.electrsApiService.getBlock$(toBlockHash)
+            this.electrsApiService.getBlock$(fromBlockHash).pipe(
+              catchError(() => of(fromBlockHash)),
+            ),
+            this.electrsApiService.getBlock$(toBlockHash).pipe(
+              catchError(() => of(toBlockHash)),
+            )
           ]);
         }
       }),
@@ -316,6 +333,7 @@ export class StrikeDetailComponent implements OnInit, OnDestroy {
   }
 
   guess(guess: 'slow' | 'fast') {
+    this.currentActiveGuess = guess;
     this.opEnergyApiService.$slowFastGuess(guess, this.strike)
       .subscribe((slowFastGuess: SlowFastGuess) => {
         this.slowFastGuesses = [...this.slowFastGuesses, slowFastGuess];

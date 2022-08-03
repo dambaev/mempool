@@ -2,15 +2,23 @@
   <div class="observed-blockspan-detail--top">
     <div class="blockspan">
       <!-- <app-tetris-blockspan-water [fromBlock]="fromBlock" [toBlock]="toBlock"></app-tetris-blockspan-water> -->
-      <app-tetris-blockspan-strike [fromBlock]="fromBlock.height" [toBlock]="strike.blockHeight" [elapsedTime]="strike.elapsedTime"></app-tetris-blockspan-strike>
-      <h3>Guess</h3>
-      <div class="guess-btns">
-        <button type="button" class="btn btn-primary" (click)="guess('fast')">Fast</button>
-        <button type="button" class="btn btn-secondary" (click)="guess('slow')">Slow</button>
-      </div>
+      <app-tetris-blockspan-strike [fromBlock]="fromBlock.height" [toBlock]="strike.blockHeight" [elapsedTime]="strikeElapsedTime" [strike]="strike"></app-tetris-blockspan-strike>
+      <ng-container *ngIf="canGuess">
+        <h3 class="text-center mt-4 mb-4">Guess</h3>
+        <div class="guess-btns">
+          <div class="guess-btns--btn hot" [class.active]="currentActiveGuess === 'fast'" (click)="guess('fast')">
+            <fa-icon [icon]="['fas', 'burn']" [fixedWidth]="true"></fa-icon>
+            <div>Hot</div>
+          </div>
+          <div class="guess-btns--btn cold" [class.active]="currentActiveGuess === 'slow'" (click)="guess('slow')">
+            <fa-icon [icon]="['fas', 'snowflake']" [fixedWidth]="true"></fa-icon>
+            <div>Cold</div>
+          </div>
+        </div>
+      </ng-container>
     </div>
     <div class="blockspan-table">
-      <h3>Strike < {{ fromBlock.height }} - {{ toBlock.height }} / {{ strikeElapsedTime }} ></h3>
+      <h3>Strike < {{ fromBlock.height }} - {{ toBlock.height || toBlock }} / {{ strikeElapsedTime }} ></h3>
       <div class="content">
         <table class="table table-borderless table-striped">
           <tbody>
@@ -30,9 +38,15 @@
             </tr>
             <tr>
               <td>To value</td>
-              <td>{{ toBlock.height }}</td>
-              <td>{{ toBlock.mediantime * 1000 | date:'yyyy-MM-dd HH:mm' }}</td>
-              <td>{{ toBlock.mediantime }}</td>
+              <td>{{ toBlock.height || toBlock }}</td>
+              <td>
+                <span *ngIf="toBlock.mediantime">{{ toBlock.mediantime * 1000 | date:'yyyy-MM-dd HH:mm' }}</span>
+                <span *ngIf="!toBlock.mediantime">?</span>
+              </td>
+              <td>
+                <span *ngIf="toBlock.mediantime">{{ toBlock.mediantime }}</span>
+                <span *ngIf="!toBlock.mediantime">?</span>
+              </td>
               <td><div></div></td>
             </tr>
             <tr>
@@ -44,8 +58,14 @@
             </tr>
             <tr>
               <td>Blockspan Time</td>
-              <td>{{ toBlock.height - fromBlock.height }}</td>
-              <td>{{ toHHMMSS(toBlock.mediantime - fromBlock.mediantime) }}</td>
+              <td>
+                <span *ngIf="toBlock.height">{{ toBlock.height - fromBlock.height }}</span>
+                <span *ngIf="!toBlock.height">{{ toBlock - fromBlock.height }}</span>
+              </td>
+              <td>
+                <span *ngIf="toBlock.mediantime">{{ toHHMMSS(toBlock.mediantime - fromBlock.mediantime) }}</span>
+                <span *ngIf="!toBlock.mediantime">?</span>
+              </td>
               <td>{{ timeDiff }}</td>
               <td>{{ energyDiff | number }} %</td>
             </tr>
@@ -61,7 +81,10 @@
               <td></td>
               <td></td>
               <td></td>
-              <td><div class="outcome" [class.hot]="toBlock.mediantime < strike.nLockTime">HOTTER</div></td>
+              <td>
+                <div *ngIf="toBlock.mediantime" class="outcome" [class.hot]="toBlock.mediantime < strike.nLockTime">HOTTER</div>
+                <div *ngIf="!toBlock.mediantime">?</div>
+              </td>
             </tr>
           </tbody>
         </table>
