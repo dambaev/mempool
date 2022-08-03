@@ -8,6 +8,20 @@ Currently, we only provide support for deployment to DigitalOcean using terrafor
 
 There is a manual installation procedure, described at https://github.com/dambaev/mempool-overlay/blob/services-based-build/README.md, which walks you step-by-step in a procedure of getting NixOS on DigitalOcean and deploying op-energy toy exchange.
 
+# Repositories hierarchy involved into Op-Energy development
+
+Op-energy consist of those repos:
+1. https://github.com/dambaev/op-energy - this is the main repo for op-energy development;
+2. https://github.com/dambaev/op-energy-development - repo, that describes OS configuration for development instances;
+3. https://github.com/dambaev/op-energy-production - repo, that describes OS configuration for production instances.
+
+With such split, we are able to keep op-energy development in one environment and OS development/production environment in anothers repos as environment is not directly related to Op-Energy, but we still using Nix to describe OS environment.
+
+`op-energy-development` and `op-energy-production` are using `op-energy` repo as a git submodule.
+It is expected, that:
+1. `op-energy-production` has only `master` branch and only using `op-energy-master` branch of the `op-energy` repo submodule;
+2. `op-energy-development` should have branches for each development instance and each such instance is expected to use some feature branch of `op-energy` repo submodule, such that we expect, that development instances are using different feature branches, that eventually will be merged into `op-energy-master` and thus, will be deployed to production instances.
+
 ## DO Deployment preparations
 
 Scripts expect to use DigitalOcean API token to perform a deploy. If you don't have any:
@@ -93,7 +107,7 @@ nix-shell ../shell.nix
 3 navigate to op-energy/nix/production and perform deploy with script `deploy.sh`. This scripts requires at least DO_TOKEN and any of SSH_KEYS_BY_NAMES or SSH_KEYS_IDS to be set:
 
 ```
-DO_TOKEN=$(cat ../DO_TOKEN) SSH_KEYS_BY_NAMES="user1@domain1 user2@domaine2" ./deploy.sh
+DO_TOKEN=$(cat ../DO_TOKEN) SSH_KEYS_BY_NAMES="user1@domain1 user2@domain2" ./deploy.sh
 ```
 
 In this example, new droplet will allow access to user root for SSH keys "user1@domain1" and "user2@domain2". By default, script will add droplet with name "op-energy" in the "nyc1" DO region. You can run `./deploy.sh` script without any variables set to get the usage reference with other variables that it can be used with.
@@ -178,8 +192,8 @@ or, you can change the branch if you want to test some feature before merging:
 cd /etc/nixos/overlays/op-energy-developoment
 git checkout master
 git checkout -b op-energy-some-feature-branch
-git submodule set-branch -b op-energy-some-feature-branch
-git submodule update --remote
+git submodule set-branch -b op-energy-some-feature-branch overlays/op-energy
+git submodule update --remote overlays/op-energy
 git commit -a -m op-energy-some-feature-branch
 nixos-rebuild switch
 ```
@@ -187,7 +201,7 @@ nixos-rebuild switch
 ## Frontend development. The fast flow
 
 General development flow can be considered as slow because it should provide reproducible environment.
-If you want to have fast development flow, you may use the following steps. Notice, that this method can't guarantee packagesto be pinned.
+If you want to have fast development flow, you may use the following steps. Notice, that this method can't guarantee packages to be pinned.
 
 1 fork the repo, checkout branch op-energy-master and create new branch with your new feature:
 
@@ -260,3 +274,61 @@ npm run start
 ```
 now backend will be running on port 8999
 you can walk `Frontend development. The fast flow` to setup frontend instance which will use such backend instance so you can use fast development flow both for frontend and backend. In this case, step 4 from frontend's development how to should be skipped.
+
+# Managing Op-Energy instances
+
+Op-energy instances consist from production and development instances.
+
+Production instances are usually may require only management in operations terms, like growing storage for blockchain.
+
+Development instances are expected to use different branchs of the `op-energy` repo that are being used to develop different features
+In order to switch branches for development instances, you need:
+
+1. create and push your feature branch for `op-energy` repo:
+
+```
+cd op-energy
+git checkout op-energy-master
+git pull
+git checkout -b op-energy-some-new-feature
+git push -u origin op-energy-some-new-feature
+```
+
+2. you need to gain collaborator rights for `https://github.com/dambaev/op-energy-development` repo;
+3. clone repo `https://github.com/dambaev/op-energy-development`:
+
+```
+git clone ssh://git@github.com/dambaev/op-energy-development
+cd op-energy-development
+git submodule init
+git submodule update --remote
+```
+
+4. switch to a branch of an appropriate instance (for example, to `op-energy-dev-instance-dev-exchange`):
+
+```
+git checkout op-energy-dev-instance-dev-exchange
+```
+
+5. set branch of `op-energy` submodule:
+
+```
+git submodule set-branch -b op-energy-some-new-feature overlays/op-energy-some-new-feature
+git update --remote overlays/op-energy
+```
+
+6. commit changes and push:
+
+```
+git commit .gitmodule overlays/op-energy -m "switching to branch op-energy-some-new-feature"
+git push
+```
+
+after that, appropriate development instance will fetch changes, update and rebuild within 10 minutes.
+
+## Current associate list of branch - dev instances
+
+Here goes an association list betweeb `op-energy-development` branches and appropriate development instances:
+
+1. `op-energy-dev-instance-dev-exchange` - `dev-exchange.op-energy.info`;
+2. `op-energy-dev-instance-198.211.107.192` - `198.211.107.192`;
