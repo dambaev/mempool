@@ -1,0 +1,25 @@
+<div class="tetris-blockspan">
+  <div class="fire-block">
+    <div>
+      <fa-icon *ngFor="let i of iconArray" class="left fire" [icon]="['fas', 'fire']" [fixedWidth]="true"></fa-icon>
+      <span *ngIf="totalIconCount > maxCount" class="ml-1">+{{ totalIconCount - maxCount }}</span>
+    </div>
+    <div>
+      <fa-icon *ngFor="let i of iconArray" class="left fire" [icon]="['fas', 'fire']" [fixedWidth]="true"></fa-icon>
+      <span *ngIf="totalIconCount > maxCount" class="ml-1">+{{ totalIconCount - maxCount }}</span>
+    </div>
+    <!-- <div class="water-block">
+      <fa-icon *ngFor="let i of iconArray" class="left fire" [icon]="['fas', 'tint']" [fixedWidth]="true"></fa-icon>
+      <span *ngIf="totalIconCount > maxCount" class="ml-1">+{{ totalIconCount - maxCount }}</span>
+    </div> -->
+  </div>
+  <div class="bottom-block">
+    <!-- <label>{{ hashrate.toString() }} h / sec</label> -->
+    <label>{{ timeDiff }} secs</label>
+  </div>
+  <div class="to-block">
+    {{ toBlock.height }}
+    <div class="span-block">{{ span + 1 }}</div>
+  </div>
+  <div class="from-block">{{ fromBlock.height }}</div>
+</div>

@@ -167,6 +167,18 @@ export class WebsocketService {
   fetchStatistics(historicalDate: string) {
     this.websocketSubject.next({ historicalDate });
   }
+  // this procedure should be used to ask server to send messages with the result of single player guess block game
+  startTrackSinglePlayerGuessBlock() {
+    this.websocketSubject.next( {
+      'track-single-player-guess-block': 'start'
+    });
+  }
+  // this procedure asks server to stop sending messages with the result of single player guess block game
+  stopTrackSinglePlayerGuessBlock() {
+    this.websocketSubject.next( {
+      'track-single-player-guess-block': 'start'
+    });
+  }
 
   want(data: string[], force = false) {
     if (!this.stateService.isBrowser) {
@@ -177,6 +189,13 @@ export class WebsocketService {
     }
     this.websocketSubject.next({action: 'want', data: data});
     this.lastWant = JSON.stringify(data);
+  }
+
+  checkAccountSecret( accountSecret: string) {
+    if (!this.stateService.isBrowser) {
+      return;
+    }
+    this.websocketSubject.next( {action: 'checkAccountSecret', data: [ accountSecret] });
   }
 
   goOffline() {
@@ -213,6 +232,20 @@ export class WebsocketService {
           this.stateService.blocks$.next([block, false]);
         }
       });
+    }
+    if( response.checkedAccountToken) {
+      this.stateService.accountTokenState = 'checked';
+      this.stateService.$accountToken.next( response.checkedAccountToken);
+      this.stateService.$showAccountURLWarning.next( false);
+    }
+    if( response.declinedAccountSecret) {
+      this.want(['generatedaccounttoken']);
+    }
+    if( response.generatedAccountSecret  && response.generatedAccountToken) {
+      this.stateService.accountTokenState = 'generated';
+      this.stateService.$accountSecret.next( response.generatedAccountSecret);
+      this.stateService.$accountToken.next( response.generatedAccountToken);
+      this.stateService.$showAccountURLWarning.next( true);
     }
     if( response.lastDifficultyEpochEndBlocks && response.lastDifficultyEpochEndBlocks.length) {
       const lastDifficultyEpochEndBlocks = response.lastDifficultyEpochEndBlocks;

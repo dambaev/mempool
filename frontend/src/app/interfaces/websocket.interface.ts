@@ -12,6 +12,10 @@ export interface WebsocketResponse {
   vBytesPerSecond?: number;
   lastDifficultyAdjustment?: number;
   previousRetarget?: number;
+  generatedAccountSecret?: string;
+  generatedAccountToken?: string;
+  checkedAccountToken?: string;
+  declinedAccountSecret?: string;
   action?: string;
   data?: string[];
   tx?: Transaction;
@@ -24,6 +28,7 @@ export interface WebsocketResponse {
   'track-asset'?: string;
   'watch-mempool'?: boolean;
   'track-bisq-market'?: string;
+  'track-single-player-guess-block'?: 'start' | 'stop';
 }
 
 export interface MempoolBlock {

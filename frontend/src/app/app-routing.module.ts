@@ -1,8 +1,10 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { StartComponent } from './components/start/start.component';
+import { StartV2Component } from './components/start-v2/start-v2.component';
 import { TransactionComponent } from './components/transaction/transaction.component';
 import { BlockComponent } from './components/block/block.component';
+import { ParimutuelBetComponent } from './components/parimutuel-bet/parimutuel-bet.component';
 import { AddressComponent } from './components/address/address.component';
 import { MasterPageComponent } from './components/master-page/master-page.component';
 import { AboutComponent } from './components/about/about.component';
@@ -13,6 +15,7 @@ import { AssetComponent } from './components/asset/asset.component';
 import { AssetsComponent } from './assets/assets.component';
 import { StatusViewComponent } from './components/status-view/status-view.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { SetAccountSecretComponent } from './components/setaccountsecret/setaccountsecret.component';
 import { LatestBlocksComponent } from './components/latest-blocks/latest-blocks.component';
 import { DocsComponent } from './components/docs/docs.component';
 import { TermsOfServiceComponent } from './components/terms-of-service/terms-of-service.component';
@@ -23,8 +26,19 @@ import { SponsorComponent } from './components/sponsor/sponsor.component';
 import { LiquidMasterPageComponent } from './components/liquid-master-page/liquid-master-page.component';
 import { PushTransactionComponent } from './components/push-transaction/push-transaction.component';
 import { PoolRankingComponent } from './components/pool-ranking/pool-ranking.component';
+import { ObservedBlockDetailComponent } from './components/observed-block-detail/observed-block-detail.component';
+import { ObservedBlockspanDetailComponent } from './components/observed-blockspan-detail/observed-blockspan-detail.component';
+import { StrikeDetailComponent } from './components/strike-detail/strike-detail.component';
+import { BlockchainObservedBlocksComponent } from './components/blockchain-observed-blocks/blockchain-observed-blocks.component';
+import { BlockspansHomeComponent } from './components/blockspans-home/blockspans-home.component';
+import { BlockspansHomeAddstrikeComponent } from './components/blockspans-home-addstrike/blockspans-home-addstrike.component';
+import { PreviewComponent } from './components/preview/preview.component';
 
 let routes: Routes = [
+  {
+    path: 'account/:accountsecret',
+    component: SetAccountSecretComponent,
+  },
   {
     path: '',
     component: MasterPageComponent,
@@ -42,12 +56,20 @@ let routes: Routes = [
             component: DashboardComponent,
           },
           {
+            path: 'bets/diffview/:ids',
+            component: DashboardComponent,
+          },
+          {
             path: 'tx/:id',
             component: TransactionComponent
           },
           {
             path: 'block/:id',
             component: BlockComponent
+          },
+          {
+            path: 'bet-parimutuel/:block/:nlocktime',
+            component: ParimutuelBetComponent
           },
           {
             path: 'mempool-block/:id',
@@ -58,6 +80,40 @@ let routes: Routes = [
       {
         path: 'blocks',
         component: LatestBlocksComponent,
+      },
+      {
+        path: 'tetris',
+        component: StartV2Component,
+        children: [
+          {
+            path: 'blocks',
+            component: BlockchainObservedBlocksComponent,
+          },
+          {
+            path: 'blocks/:id',
+            component: ObservedBlockDetailComponent
+          },
+          {
+            path: 'blockspans/:span',
+            component: BlockspansHomeComponent,
+          },
+          {
+            path: 'blockspans/:span/:tip',
+            component: BlockspansHomeComponent,
+          },
+          {
+            path: 'add_strike/:span/:tip',
+            component: BlockspansHomeAddstrikeComponent,
+          },
+          {
+            path: 'blockspan/:from/:to',
+            component: ObservedBlockspanDetailComponent
+          },
+          {
+            path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+            component: StrikeDetailComponent
+          },
+        ]
       },
       {
         path: 'mining/pools',
@@ -130,12 +186,20 @@ let routes: Routes = [
                 component: DashboardComponent
               },
               {
+                path: 'bets/diffview/:ids',
+                component: DashboardComponent,
+              },
+              {
                 path: 'tx/:id',
                 component: TransactionComponent
               },
               {
                 path: 'block/:id',
                 component: BlockComponent
+              },
+              {
+                path: 'bet-parimutuel/:block/:nlocktime',
+                component: ParimutuelBetComponent
               },
               {
                 path: 'mempool-block/:id',
@@ -146,6 +210,40 @@ let routes: Routes = [
           {
             path: 'blocks',
             component: LatestBlocksComponent,
+          },
+          {
+            path: 'tetris',
+            component: StartV2Component,
+            children: [
+              {
+                path: 'blocks',
+                component: BlockchainObservedBlocksComponent,
+              },
+              {
+                path: 'blocks/:id',
+                component: ObservedBlockDetailComponent
+              },
+              {
+                path: 'blockspans/:span',
+                component: BlockspansHomeComponent,
+              },
+              {
+                path: 'blockspans/:span/:tip',
+                component: BlockspansHomeComponent,
+              },
+              {
+                path: 'add_strike/:span/:tip',
+                component: BlockspansHomeAddstrikeComponent,
+              },
+              {
+                path: 'blockspan/:from/:to',
+                component: ObservedBlockspanDetailComponent
+              },
+              {
+                path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+                component: StrikeDetailComponent
+              },
+            ]
           },
           {
             path: 'mining/pools',
@@ -187,6 +285,10 @@ let routes: Routes = [
         component: StatusViewComponent
       },
       {
+        path: 'preview',
+        component: PreviewComponent,
+      },
+      {
         path: '**',
         redirectTo: ''
       },
@@ -195,6 +297,10 @@ let routes: Routes = [
   {
     path: 'signet',
     children: [
+      {
+        path: 'account/:accountsecret',
+        component: SetAccountSecretComponent,
+      },
       {
         path: '',
         component: MasterPageComponent,
@@ -212,12 +318,20 @@ let routes: Routes = [
                 component: DashboardComponent
               },
               {
+                path: 'bets/diffview/:ids',
+                component: DashboardComponent,
+              },
+              {
                 path: 'tx/:id',
                 component: TransactionComponent
               },
               {
                 path: 'block/:id',
                 component: BlockComponent
+              },
+              {
+                path: 'bet-parimutuel/:block/:nlocktime',
+                component: ParimutuelBetComponent
               },
               {
                 path: 'mempool-block/:id',
@@ -228,6 +342,40 @@ let routes: Routes = [
           {
             path: 'blocks',
             component: LatestBlocksComponent,
+          },
+          {
+            path: 'tetris',
+            component: StartV2Component,
+            children: [
+              {
+                path: 'blocks',
+                component: BlockchainObservedBlocksComponent,
+              },
+              {
+                path: 'blocks/:id',
+                component: ObservedBlockDetailComponent
+              },
+              {
+                path: 'blockspans/:span',
+                component: BlockspansHomeComponent,
+              },
+              {
+                path: 'blockspans/:span/:tip',
+                component: BlockspansHomeComponent,
+              },
+              {
+                path: 'add_strike/:span/:tip',
+                component: BlockspansHomeAddstrikeComponent,
+              },
+              {
+                path: 'blockspan/:from/:to',
+                component: ObservedBlockspanDetailComponent
+              },
+              {
+                path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+                component: StrikeDetailComponent
+              },
+            ]
           },
           {
             path: 'mining/pools',
@@ -269,6 +417,10 @@ let routes: Routes = [
         component: StatusViewComponent
       },
       {
+        path: 'preview',
+        component: PreviewComponent,
+      },
+      {
         path: '**',
         redirectTo: ''
       },
@@ -281,6 +433,10 @@ let routes: Routes = [
   {
     path: 'status',
     component: StatusViewComponent
+  },
+  {
+    path: 'preview',
+    component: PreviewComponent,
   },
   {
     path: '**',
@@ -314,6 +470,10 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
             component: DashboardComponent
           },
           {
+            path: 'bets/diffview/:ids',
+            component: DashboardComponent,
+          },
+          {
             path: 'tx/push',
             component: PushTransactionComponent,
           },
@@ -326,6 +486,10 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
             component: BlockComponent
           },
           {
+            path: 'bet-parimutuel/:block/:nlocktime',
+            component: ParimutuelBetComponent
+          },
+          {
             path: 'mempool-block/:id',
             component: MempoolBlockComponent
           },
@@ -334,6 +498,40 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
       {
         path: 'blocks',
         component: LatestBlocksComponent,
+      },
+      {
+        path: 'tetris',
+        component: StartV2Component,
+        children: [
+          {
+            path: 'blocks',
+            component: BlockchainObservedBlocksComponent,
+          },
+          {
+            path: 'blocks/:id',
+            component: ObservedBlockDetailComponent
+          },
+          {
+            path: 'blockspans/:span',
+            component: BlockspansHomeComponent,
+          },
+          {
+            path: 'blockspans/:span/:tip',
+            component: BlockspansHomeComponent,
+          },
+          {
+            path: 'add_strike/:span/:tip',
+            component: BlockspansHomeAddstrikeComponent,
+          },
+          {
+            path: 'blockspan/:from/:to',
+            component: ObservedBlockspanDetailComponent
+          },
+          {
+            path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+            component: StrikeDetailComponent
+          },
+        ]
       },
       {
         path: 'graphs',
@@ -393,6 +591,10 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
     path: 'testnet',
     children: [
       {
+        path: 'account/:accountsecret',
+        component: SetAccountSecretComponent,
+      },
+      {
         path: '',
         component: LiquidMasterPageComponent,
         children: [
@@ -403,6 +605,10 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
               {
                 path: '',
                 component: DashboardComponent
+              },
+              {
+                path: 'bets/diffview/:ids',
+                component: DashboardComponent,
               },
               {
                 path: 'tx/push',
@@ -417,6 +623,10 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
                 component: BlockComponent
               },
               {
+                path: 'bet-parimutuel/:block/:nlocktime',
+                component: ParimutuelBetComponent
+              },
+              {
                 path: 'mempool-block/:id',
                 component: MempoolBlockComponent
               },
@@ -425,6 +635,40 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
           {
             path: 'blocks',
             component: LatestBlocksComponent,
+          },
+          {
+            path: 'tetris',
+            component: StartV2Component,
+            children: [
+              {
+                path: 'blocks',
+                component: BlockchainObservedBlocksComponent,
+              },
+              {
+                path: 'blocks/:id',
+                component: ObservedBlockDetailComponent
+              },
+              {
+                path: 'blockspans/:span',
+                component: BlockspansHomeComponent,
+              },
+              {
+                path: 'blockspans/:span/:tip',
+                component: BlockspansHomeComponent,
+              },
+              {
+                path: 'add_strike/:span/:tip',
+                component: BlockspansHomeAddstrikeComponent,
+              },
+              {
+                path: 'blockspan/:from/:to',
+                component: ObservedBlockspanDetailComponent
+              },
+              {
+                path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+                component: StrikeDetailComponent
+              },
+            ]
           },
           {
             path: 'graphs',
@@ -488,6 +732,10 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
         path: 'status',
         component: StatusViewComponent
       },
+      {
+        path: 'preview',
+        component: PreviewComponent,
+      },
     ]
   },
   {
@@ -497,6 +745,10 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
   {
     path: 'status',
     component: StatusViewComponent
+  },
+  {
+    path: 'preview',
+    component: PreviewComponent,
   },
   {
     path: '**',
