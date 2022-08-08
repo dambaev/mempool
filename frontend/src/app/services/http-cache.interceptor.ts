@@ -1,9 +1,10 @@
 import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { HttpInterceptor, HttpEvent, HttpRequest, HttpHandler, HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { HttpInterceptor, HttpEvent, HttpRequest, HttpHandler, HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { Observable, of, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 import { TransferState, makeStateKey } from '@angular/platform-browser';
 import { isPlatformBrowser } from '@angular/common';
+import { ToastrService } from 'ngx-toastr';
 
 @Injectable()
 export class HttpCacheInterceptor implements HttpInterceptor {
@@ -11,6 +12,7 @@ export class HttpCacheInterceptor implements HttpInterceptor {
 
   constructor(
     private transferState: TransferState,
+    private toastr: ToastrService,
     @Inject(PLATFORM_ID) private platformId: any,
   ) { }
 
@@ -32,11 +34,19 @@ export class HttpCacheInterceptor implements HttpInterceptor {
     }
 
     return next.handle(request)
-      .pipe(tap((event: HttpEvent<any>) => {
-        if (!this.isBrowser && event instanceof HttpResponse) {
-          let keyId = request.url.split('/').slice(3).join('/');
-          this.transferState.set<any>(makeStateKey('/' + keyId), event);
-        }
-      }));
+      .pipe(
+        tap((event: HttpEvent<any>) => {
+          if (!this.isBrowser && event instanceof HttpResponse) {
+            let keyId = request.url.split('/').slice(3).join('/');
+            this.transferState.set<any>(makeStateKey('/' + keyId), event);
+          }
+        }),
+        catchError((error: HttpErrorResponse) => {
+          if (Number(error.status) !== 200) {
+            this.toastr.error(error.error, 'Failed!');
+          }
+          return throwError(error);
+        })
+      );
   }
 }

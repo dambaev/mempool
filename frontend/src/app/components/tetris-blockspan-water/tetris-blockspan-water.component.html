@@ -1,4 +1,4 @@
-<div class="tetris-blockspan">
+<a class="tetris-blockspan" [routerLink]="blockspanDetailLink()">
   <div class="fire-block">
     <div>
       <fa-icon *ngFor="let i of iconArray" class="left fire" [icon]="['fas', 'fire']" [fixedWidth]="true"></fa-icon>
@@ -22,4 +22,4 @@
     <div class="span-block">{{ span + 1 }}</div>
   </div>
   <div class="from-block">{{ fromBlock.height }}</div>
-</div>
+</a>

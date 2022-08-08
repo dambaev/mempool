@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, Input } from '@a
 import { StateService } from 'src/app/services/state.service';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { Block } from '../../interfaces/electrs.interface';
+import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
 
 export const MAX_COUNT = 14;
 @Component({
@@ -50,6 +51,7 @@ export class TetrisBlockspanWaterComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
+    private relativeUrlPipe: RelativeUrlPipe,
     public stateService: StateService,
   ) { }
 
@@ -69,6 +71,10 @@ export class TetrisBlockspanWaterComponent implements OnInit, OnDestroy {
       hexValue += str;
     }
     return hexValue;
+  }
+
+  blockspanDetailLink() {
+    return this.relativeUrlPipe.transform(`/tetris/blockspan/${this.fromBlock.height}/${this.toBlock.height}`);
   }
 
 }
