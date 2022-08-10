@@ -1,5 +1,5 @@
-import logger from '../logger';
-import { DB } from '../database';
+import logger from '../../logger';
+import { DB } from '../../database';
 import {exec} from 'child_process';
 import * as sha256 from 'crypto-js/sha256';
 

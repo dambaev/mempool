@@ -1,11 +1,11 @@
-import config from './config';
-import bitcoinApi from './api/bitcoin/bitcoin-api-factory';
-import logger from './logger';
-import { IBitcoinApi } from './api/bitcoin/bitcoin-api.interface';
-import bitcoinClient from './api/bitcoin/bitcoin-client';
-import blocks from './api/blocks';
+import config from '../config';
+import bitcoinApi from '../api/bitcoin/bitcoin-api-factory';
+import logger from '../logger';
+import { IBitcoinApi } from '../api/bitcoin/bitcoin-api.interface';
+import bitcoinClient from '../api/bitcoin/bitcoin-client';
+import blocks from '../api/blocks';
 
-import { DB } from './database';
+import { DB } from '../database';
 
 interface IChainStat {
   blockHeight: number;
