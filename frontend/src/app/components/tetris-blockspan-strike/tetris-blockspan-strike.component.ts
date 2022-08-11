@@ -55,7 +55,8 @@ export class TetrisBlockspanStrikeComponent implements OnInit, OnDestroy {
   }
 
   blockspanDetailLink() {
-    return this.relativeUrlPipe.transform(`/tetris/blockspan/${this.fromBlock}/${this.toBlock}`);
+    // return this.relativeUrlPipe.transform(`/tetris/blockspan/${this.fromBlock}/${this.toBlock}`);
+    return this.relativeUrlPipe.transform(`/tetris/block/${this.fromBlock}`);
   }
 
   strikeDetailLink() {

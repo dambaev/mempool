@@ -86,6 +86,10 @@ let routes: Routes = [
         component: StartV2Component,
         children: [
           {
+            path: 'block/:id',
+            component: BlockComponent
+          },
+          {
             path: 'blocks',
             component: BlockchainObservedBlocksComponent,
           },
@@ -215,6 +219,10 @@ let routes: Routes = [
             path: 'tetris',
             component: StartV2Component,
             children: [
+              {
+                path: 'block/:id',
+                component: BlockComponent
+              },
               {
                 path: 'blocks',
                 component: BlockchainObservedBlocksComponent,
@@ -347,6 +355,10 @@ let routes: Routes = [
             path: 'tetris',
             component: StartV2Component,
             children: [
+              {
+                path: 'block/:id',
+                component: BlockComponent
+              },
               {
                 path: 'blocks',
                 component: BlockchainObservedBlocksComponent,
@@ -504,6 +516,10 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
         component: StartV2Component,
         children: [
           {
+            path: 'block/:id',
+            component: BlockComponent
+          },
+          {
             path: 'blocks',
             component: BlockchainObservedBlocksComponent,
           },
@@ -640,6 +656,10 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
             path: 'tetris',
             component: StartV2Component,
             children: [
+              {
+                path: 'block/:id',
+                component: BlockComponent
+              },
               {
                 path: 'blocks',
                 component: BlockchainObservedBlocksComponent,
