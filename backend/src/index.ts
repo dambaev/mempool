@@ -27,8 +27,7 @@ import syncAssets from './sync-assets';
 import icons from './api/liquid/icons';
 import { Common } from './api/common';
 
-import chainStats from './chainstats';
-import opEnergyApiService from './api/op-energy.service';
+import opEnergyIndex from './op-energy/index';
 
 class Server {
   private wss: WebSocket.Server | undefined;
@@ -144,11 +143,7 @@ class Server {
       await memPool.$updateMempool();
       blocks.$generateBlockDatabase();
 
-      try {
-        await chainStats.$updateChainstats();
-      } catch (e) {
-        logger.debug( '$updateChainstats error: ${( e instanceof Error ? e.message : e)}');
-      }
+      await opEnergyIndex.runMainUpdateLoop();
       setTimeout(this.runMainUpdateLoop.bind(this), config.MEMPOOL.POLL_RATE_MS);
       this.currentBackendRetryInterval = 5;
     } catch (e) {
@@ -185,18 +180,14 @@ class Server {
     memPool.setMempoolChangedCallback(websocketHandler.handleMempoolChange.bind(websocketHandler));
     fiatConversion.setProgressChangedCallback(websocketHandler.handleNewConversionRates.bind(websocketHandler));
     loadingIndicators.setProgressChangedCallback(websocketHandler.handleLoadingChanged.bind(websocketHandler));
-    opEnergyApiService.setNewTimeStrikeCallback(websocketHandler.handleNewTimeStrike.bind(websocketHandler));
-    opEnergyApiService.setNewTimeSlowFastGuessCallback(websocketHandler.handleNewTimeSlowFastGuess.bind(websocketHandler));
+    if (this.wss) {
+      opEnergyIndex.setUpWebsocketHandling( this.wss); // op-energy hook
+    }
   }
 
   setUpHttpApiRoutes() {
+    opEnergyIndex.setUpHttpApiRoutes( this.app);
     this.app
-      .get(config.MEMPOOL.API_URL_PREFIX + 'strike/block/mediantime', routes.$getTimeStrikesByBlock)
-      .get(config.MEMPOOL.API_URL_PREFIX + 'strike/mediantime', routes.$getTimeStrikes)
-      .post(config.MEMPOOL.API_URL_PREFIX + 'strike/mediantime', routes.$postTimeStrike)
-      .get(config.MEMPOOL.API_URL_PREFIX + 'slowfastguess/mediantime', routes.$getSlowFastGuesses)
-      .post(config.MEMPOOL.API_URL_PREFIX + 'slowfastguess/mediantime', routes.$postSlowFastGuess)
-      .post(config.MEMPOOL.API_URL_PREFIX + 'user/displayname', routes.$postUserDisplayName)
       .get(config.MEMPOOL.API_URL_PREFIX + 'transaction-times', routes.getTransactionTimes)
       .get(config.MEMPOOL.API_URL_PREFIX + 'cpfp/:txId', routes.getCpfpInfo)
       .get(config.MEMPOOL.API_URL_PREFIX + 'difficulty-adjustment', routes.getDifficultyChange)
