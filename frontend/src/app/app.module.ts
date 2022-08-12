@@ -6,6 +6,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { NgxEchartsModule } from 'ngx-echarts';
 import { FormsModule } from '@angular/forms';
 import { ToastrModule } from 'ngx-toastr';
+import { AngularSvgIconModule } from 'angular-svg-icon';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './components/app/app.component';
@@ -63,7 +64,7 @@ import { DifficultyComponent } from './components/difficulty/difficulty.componen
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { faFilter, faAngleDown, faAngleUp, faAngleRight, faAngleLeft, faBolt, faChartArea, faCogs, faCubes, faHammer, faDatabase, faExchangeAlt, faInfoCircle,
   faLink, faList, faSearch, faCaretUp, faCaretDown, faTachometerAlt, faThList, faTint, faTv, faAngleDoubleDown, faSortUp, faAngleDoubleUp, faChevronDown, faFileAlt,
-  faRedoAlt, faArrowAltCircleRight, faExternalLinkAlt, faBook, faListUl, faFire, faSnowflake, faBurn, faSmoking
+  faRedoAlt, faArrowAltCircleRight, faExternalLinkAlt, faBook, faListUl, faFire, faSnowflake, faBurn, faSmoking, faCloud
 } from '@fortawesome/free-solid-svg-icons';
 import { ApiDocsComponent } from './components/docs/api-docs.component';
 import { DocsComponent } from './components/docs/docs.component';
@@ -88,10 +89,16 @@ import { ObservedBlockspanDetailComponent } from './components/observed-blockspa
 import { StrikeDetailComponent } from './components/strike-detail/strike-detail.component';
 import { TetrisBlockspanComponent } from './components/tetris-blockspan/tetris-blockspan.component';
 import { TetrisBlockspanWaterComponent } from './components/tetris-blockspan-water/tetris-blockspan-water.component';
+import { TetrisEnergyBlockComponent } from './components/tetris-energy-block/tetris-energy-block.component';
 import { TetrisBlockspanStrikeComponent } from './components/tetris-blockspan-strike/tetris-blockspan-strike.component';
 import { TetrisBlockspanNavigatorComponent } from './components/tetris-blockspan-navigator/tetris-blockspan-navigator.component';
 import { TetrisAddStrikeComponent } from './components/tetris-add-strike/tetris-add-strike.component';
 import { PreviewComponent } from './components/preview/preview.component';
+import { BlockspanComponent } from './components/new/blockspan/blockspan.component';
+import { TankBoxComponent } from './components/new/tank-box/tank-box.component';
+import { EnergyComponent } from './components/new/energy/energy.component';
+import { StrikeComponent } from './components/new/strike/strike.component';
+import { BlockspanDetailComponent } from './components/new/blockspan-detail/blockspan-detail.component';
 
 @NgModule({
   declarations: [
@@ -156,11 +163,17 @@ import { PreviewComponent } from './components/preview/preview.component';
     BetPieChartComponent,
     TetrisBlockspanComponent,
     TetrisBlockspanWaterComponent,
+    TetrisEnergyBlockComponent,
     TetrisBlockspanStrikeComponent,
     TetrisBlockspanNavigatorComponent,
     TetrisAddStrikeComponent,
     PreviewComponent,
     SetAccountSecretComponent,
+    BlockspanComponent,
+    TankBoxComponent,
+    EnergyComponent,
+    StrikeComponent,
+    BlockspanDetailComponent,
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'serverApp' }),
@@ -177,7 +190,8 @@ import { PreviewComponent } from './components/preview/preview.component';
     NgxEchartsModule.forRoot({
       echarts: () => import('echarts')
     }),
-    ToastrModule.forRoot()
+    ToastrModule.forRoot(),
+    AngularSvgIconModule.forRoot(),
   ],
   providers: [
     OpEnergyApiService,
@@ -231,5 +245,6 @@ export class AppModule {
     library.addIcons(faSnowflake);
     library.addIcons(faBurn);
     library.addIcons(faSmoking);
+    library.addIcons(faCloud);
   }
 }

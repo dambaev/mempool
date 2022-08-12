@@ -115,8 +115,8 @@ export interface Block {
   feeRange?: number[];
   reward?: number;
   coinbaseTx?: Transaction;
-  matchRate: number;
-  stage: number;
+  matchRate?: number;
+  stage?: number;
 }
 
 export interface Address {
