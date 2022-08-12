@@ -28,7 +28,6 @@ import { PushTransactionComponent } from './components/push-transaction/push-tra
 import { PoolRankingComponent } from './components/pool-ranking/pool-ranking.component';
 import { ObservedBlockDetailComponent } from './components/observed-block-detail/observed-block-detail.component';
 import { ObservedBlockspanDetailComponent } from './components/observed-blockspan-detail/observed-blockspan-detail.component';
-import { BlockspanDetailComponent } from './components/new/blockspan-detail/blockspan-detail.component';
 import { StrikeDetailComponent } from './components/strike-detail/strike-detail.component';
 import { BlockchainObservedBlocksComponent } from './components/blockchain-observed-blocks/blockchain-observed-blocks.component';
 import { BlockspansHomeComponent } from './components/blockspans-home/blockspans-home.component';
@@ -113,10 +112,6 @@ let routes: Routes = [
           {
             path: 'blockspan/:from/:to',
             component: ObservedBlockspanDetailComponent
-          },
-          {
-            path: 'energy/:from/:to',
-            component: BlockspanDetailComponent
           },
           {
             path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
@@ -253,10 +248,6 @@ let routes: Routes = [
                 component: ObservedBlockspanDetailComponent
               },
               {
-                path: 'energy/:from/:to',
-                component: BlockspanDetailComponent
-              },
-              {
                 path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
                 component: StrikeDetailComponent
               },
@@ -391,10 +382,6 @@ let routes: Routes = [
               {
                 path: 'blockspan/:from/:to',
                 component: ObservedBlockspanDetailComponent
-              },
-              {
-                path: 'energy/:from/:to',
-                component: BlockspanDetailComponent
               },
               {
                 path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
@@ -557,10 +544,6 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
             component: ObservedBlockspanDetailComponent
           },
           {
-            path: 'energy/:from/:to',
-            component: BlockspanDetailComponent
-          },
-          {
             path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
             component: StrikeDetailComponent
           },
@@ -700,10 +683,6 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
               {
                 path: 'blockspan/:from/:to',
                 component: ObservedBlockspanDetailComponent
-              },
-              {
-                path: 'energy/:from/:to',
-                component: BlockspanDetailComponent
               },
               {
                 path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',

@@ -34,8 +34,4 @@ export class PreviewComponent implements OnInit {
   futureStrikeDetailLink() {
     return this.relativeUrlPipe.transform('/tetris/strike/89778/120000/120000/1652239330/1656641994');
   }
-
-  pastEnergyDetailLink() {
-    return this.relativeUrlPipe.transform('/tetris/energy/89778/89791');
-  }
 }

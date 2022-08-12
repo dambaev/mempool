@@ -60,16 +60,10 @@ export class ObservedBlockspanDetailComponent implements OnInit, OnDestroy {
   }
 
   get chainworkDiff(): bigint {
-    if (!this.fromBlock.chainwork || !this.toBlock.chainwork) {
-      return BigInt(0);
-    }
     return BigInt(this.getHexValue(this.toBlock.chainwork)) - BigInt(this.getHexValue(this.fromBlock.chainwork));
   }
 
   get hashrate(): bigint {
-    if (!this.timeDiff) {
-      return BigInt(0);
-    }
     return this.chainworkDiff / BigInt(this.timeDiff);
   }
 
@@ -149,12 +143,8 @@ export class ObservedBlockspanDetailComponent implements OnInit, OnDestroy {
               return of([fromBlockInCache, toBlockInCache]);
             }
             return combineLatest([
-              this.electrsApiService.getBlockHashFromHeight$(parseInt(fromBlockHash, 10)).pipe(
-                catchError(() => of(fromBlockHash)),
-              ),
-              this.electrsApiService.getBlockHashFromHeight$(parseInt(toBlockHash, 10)).pipe(
-                catchError(() => of(toBlockHash)),
-              )
+              this.electrsApiService.getBlockHashFromHeight$(parseInt(fromBlockHash, 10)),
+              this.electrsApiService.getBlockHashFromHeight$(parseInt(toBlockHash, 10))
             ])
               .pipe(
                 switchMap(([fromHash, toHash]) => {
@@ -164,12 +154,8 @@ export class ObservedBlockspanDetailComponent implements OnInit, OnDestroy {
                     this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/tetris/blockspan/`, fromHash, toHash]).toString()
                   );
                   return combineLatest([
-                    this.electrsApiService.getBlock$(fromHash).pipe(
-                      catchError(() => of(fromHash)),
-                    ),
-                    this.electrsApiService.getBlock$(toHash).pipe(
-                      catchError(() => of(toHash)),
-                    )
+                    this.electrsApiService.getBlock$(fromHash),
+                    this.electrsApiService.getBlock$(toHash)
                   ]);
                 })
               );
@@ -182,26 +168,15 @@ export class ObservedBlockspanDetailComponent implements OnInit, OnDestroy {
           }
 
           return combineLatest([
-            this.electrsApiService.getBlock$(fromBlockHash).pipe(
-              catchError(() => of(fromBlockHash)),
-            ),
-            this.electrsApiService.getBlock$(toBlockHash).pipe(
-              catchError(() => of(toBlockHash)),
-            )
+            this.electrsApiService.getBlock$(fromBlockHash),
+            this.electrsApiService.getBlock$(toBlockHash)
           ]);
         }
       }),
     )
     .subscribe(([fromBlock, toBlock]: [Block, Block]) => {
       this.fromBlock = fromBlock;
-      if (typeof toBlock == 'string') {
-        this.toBlock = {
-          ...this.fromBlock,
-          height: toBlock,
-        };
-      } else {
-        this.toBlock = toBlock;
-      }
+      this.toBlock = toBlock;
       this.blockHeight = fromBlock.height;
       this.nextBlockHeight = fromBlock.height + 1;
       this.setNextAndPreviousBlockLink();
