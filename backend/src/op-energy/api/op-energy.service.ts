@@ -60,6 +60,9 @@ export class OpEnergyApiService {
     };
   }
   public verifyBlockHeight( num: number): BlockHeight {
+    if( isNaN( num)) {
+      throw new Error('verifyBlockHeight: NaN');
+    }
     if( num < 0) {
       throw new Error('verifyBlockHeight: negative');
     }
