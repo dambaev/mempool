@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { ElectrsApiService } from '../../services/electrs-api.service';
+import { ElectrsApiService } from '../../../services/electrs-api.service';
 import { switchMap, tap, debounceTime, catchError, map, take } from 'rxjs/operators';
-import { Block, Transaction, Vout } from '../../interfaces/electrs.interface';
+import { Block, Transaction, Vout } from '../../../interfaces/electrs.interface';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
-import { StateService } from '../../services/state.service';
+import { StateService } from '../../../services/state.service';
 import { SeoService } from 'src/app/services/seo.service';
 import { WebsocketService } from 'src/app/services/websocket.service';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
@@ -14,11 +14,11 @@ import { TimeStrike } from 'src/app/interfaces/op-energy.interface';
 import { OpEnergyApiService } from 'src/app/services/op-energy.service';
 
 @Component({
-  selector: 'app-observed-blockspan-detail',
-  templateUrl: './observed-blockspan-detail.component.html',
-  styleUrls: ['./observed-blockspan-detail.component.scss']
+  selector: 'app-blockspan-detail',
+  templateUrl: './blockspan-detail.component.html',
+  styleUrls: ['./blockspan-detail.component.scss']
 })
-export class ObservedBlockspanDetailComponent implements OnInit, OnDestroy {
+export class BlockspanDetailComponent implements OnInit, OnDestroy {
   network = '';
   fromBlock: Block;
   toBlock: Block;
@@ -46,6 +46,7 @@ export class ObservedBlockspanDetailComponent implements OnInit, OnDestroy {
   networkChangedSubscription: Subscription;
 
   timeStrikes: TimeStrike[] = [];
+  showStrikes: boolean;
 
   get span(): number {
     return (this.toBlock.height - this.fromBlock.height);
@@ -161,7 +162,7 @@ export class ObservedBlockspanDetailComponent implements OnInit, OnDestroy {
                   this.fromBlockHash = fromHash;
                   this.toBlockHash = toHash;
                   this.location.replaceState(
-                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/tetris/blockspan/`, fromHash, toHash]).toString()
+                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/tetris/energy/`, fromHash, toHash]).toString()
                   );
                   return combineLatest([
                     this.electrsApiService.getBlock$(fromHash).pipe(
@@ -256,6 +257,7 @@ export class ObservedBlockspanDetailComponent implements OnInit, OnDestroy {
           ...strike,
           elapsedTime: strike.nLockTime - this.fromBlock.mediantime
         }));
+        console.log(111111111, this.timeStrikes)
       });
   }
 
@@ -268,19 +270,19 @@ export class ObservedBlockspanDetailComponent implements OnInit, OnDestroy {
       return;
     }
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight - 2);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/blockspan/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/tetris/energy/'),
       block ? block.id : this.fromBlock.previousblockhash], { state: { data: { block, blockHeight: this.nextBlockHeight - 2 } } });
   }
 
   navigateToNextBlock() {
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/blockspan/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/tetris/energy/'),
       block ? block.id : this.nextBlockHeight], { state: { data: { block, blockHeight: this.nextBlockHeight } } });
   }
 
   navigateToBlockByNumber() {
     const block = this.latestBlocks.find((b) => b.height === this.blockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/blockspan/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/tetris/energy/'),
       block ? block.id : this.blockHeight], { state: { data: { block, blockHeight: this.blockHeight } } });
   }
 
@@ -333,5 +335,9 @@ export class ObservedBlockspanDetailComponent implements OnInit, OnDestroy {
 
   goDetail(fromBlock, strike) {
     this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike/'), fromBlock.height, strike.blockHeight, strike.blockHeight, strike.nLockTime, strike.creationTime]);
+  }
+
+  toggleStrikes() {
+    this.showStrikes = !this.showStrikes;
   }
 }

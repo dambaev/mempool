@@ -1,0 +1,28 @@
+<a class="tetris-blockspan" [routerLink]="blockspanDetailLink()">
+  <div class="energy">
+    <div class="fire-block">
+      <fa-icon *ngFor="let i of iconArray" class="left fire" [icon]="['fas', 'fire']" [fixedWidth]="true"></fa-icon>
+      <span *ngIf="totalIconCount > maxCount" class="ml-1">+{{ totalIconCount - maxCount }}</span>
+    </div>
+    <div class="seconds-block">
+      <div class="block-top">1651234234234</div>
+      <div class="span-block">527</div>
+      <div class="block-bottom">1651234234789</div>
+      <div class="block-footer">seconds</div>
+    </div>
+    <div class="utc-block">
+      <div class="block-top">2022-05-11 00:43:18</div>
+      <div class="span-block">8:47</div>
+      <div class="block-bottom">2022-05-10 00:35:27</div>
+      <div class="block-footer">utc time</div>
+      <div class="block-footer">energy</div>
+    </div>
+  </div>
+  <div class="blocks">
+    <div class="to-block">
+      {{ toBlock.height }}
+      <div class="span-block">{{ span + 1 }}</div>
+    </div>
+    <div class="from-block">{{ fromBlock.height }}</div>
+  </div>
+</a>
