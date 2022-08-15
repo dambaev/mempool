@@ -2101,6 +2101,15 @@ let
         sha1 = "4a5282ac164729e93619bcfd3ad151f817ce91f5";
       };
     };
+    "angular-svg-icon-13.0.0" = {
+      name = "angular-svg-icon";
+      packageName = "angular-svg-icon";
+      version = "13.0.0";
+      src = fetchurl {
+        url = "https://registry.npmjs.org/angular-svg-icon/-/angular-svg-icon-13.0.0.tgz";
+        sha512 = "4ufGPmPIykkvz4HDY9kMO9I+BVEshe84oP46lxN5D4rvdHkC4WqfZdF9/Byd4kVqumkTzelPlrGG2rnc8b6b7g==";
+      };
+    };
     "ansi-colors-4.1.1" = {
       name = "ansi-colors";
       packageName = "ansi-colors";
@@ -12497,6 +12506,11 @@ let
       (sources."zrender-5.2.1" // {
         dependencies = [
           sources."tslib-2.3.0"
+        ];
+      })
+      ( sources."angular-svg-icon-13.0.0" // {
+        dependencies = [
+          sources."tslib-2.3.1"
         ];
       })
     ];
