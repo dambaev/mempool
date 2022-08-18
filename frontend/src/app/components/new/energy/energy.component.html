@@ -1,4 +1,4 @@
 <div class="energy-container">
-  <app-blockspan *ngIf="fromBlock && toBlock" [fromBlock]="fromBlock" [toBlock]="toBlock"></app-blockspan>
-  <app-tank-box [totalIconCount]="totalIconCount" [time]="toHHMMSS(toBlock.mediantime - fromBlock.mediantime)" [isUnknown]="!timeDiff"></app-tank-box>
+  <app-blockspan *ngIf="fromBlock && toBlock" [fromBlock]="fromBlock" [toBlock]="toBlock" [routerLink]="blockspanDetailLink()"></app-blockspan>
+  <app-tank-box [totalIconCount]="totalIconCount" [time]="toHHMMSS(toBlock.mediantime - fromBlock.mediantime)" [isUnknown]="!timeDiff" [routerLink]="blockspanDetailLink()"></app-tank-box>
 </div>

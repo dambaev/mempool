@@ -62,4 +62,8 @@ export class EnergyComponent implements OnInit, OnDestroy {
     if (seconds < 10) {strSeconds = "0"+seconds;}
     return strHours+':'+strMinutes+':'+strSeconds;
   }
+
+  blockspanDetailLink() {
+    return this.relativeUrlPipe.transform(`/tetris/block/${this.fromBlock.height}`);
+  }
 }

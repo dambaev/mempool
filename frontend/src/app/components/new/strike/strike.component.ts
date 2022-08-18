@@ -100,4 +100,8 @@ export class StrikeComponent implements OnInit, OnDestroy {
     if (seconds < 10) {strSeconds = "0"+seconds;}
     return strHours+':'+strMinutes+':'+strSeconds;
   }
+
+  strikeDetailLink() {
+    return this.relativeUrlPipe.transform(`/tetris/strike/${this.fromBlock.height}/${this.toBlock.height}/${this.strike.blockHeight}/${this.strike.nLockTime}/${this.strike.creationTime}`);
+  }
 }

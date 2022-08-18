@@ -5,7 +5,7 @@
     src="./resources/smoke.svg"
     [svgStyle]="{'width.px':40,'height.px':40,'fill':'#e0e0e0'}">
   </svg-icon>
-  <div class="strike-container--boiler">
+  <div class="strike-container--boiler" [routerLink]="strikeDetailLink()">
     <span *ngIf="isUnknown">?????</span>
     <ng-container *ngIf="!isUnknown">
       <fa-icon *ngFor="let i of iconArray" class="left fire" [icon]="['fas', 'fire']" [fixedWidth]="true"></fa-icon>
@@ -16,5 +16,5 @@
     src="./resources/pipe.svg"
     [svgStyle]="{'width.px':40,'height.px':40,'fill':'#e0e0e0'}">
   </svg-icon>
-  <app-tank-box [type]="strikeType" [totalIconCount]="totalIconCountWithStrike" [time]="toHHMMSS(strike.nLockTime - fromBlock.mediantime)" [isUnknown]="!timeDiffWithStrike"></app-tank-box>
+  <app-tank-box [type]="strikeType" [totalIconCount]="totalIconCountWithStrike" [time]="toHHMMSS(strike.nLockTime - fromBlock.mediantime)" [isUnknown]="!timeDiffWithStrike" [routerLink]="strikeDetailLink()"></app-tank-box>
 </div>
