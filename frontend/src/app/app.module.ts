@@ -98,7 +98,7 @@ import { BlockspanComponent } from './components/new/blockspan/blockspan.compone
 import { TankBoxComponent } from './components/new/tank-box/tank-box.component';
 import { EnergyComponent } from './components/new/energy/energy.component';
 import { StrikeComponent } from './components/new/strike/strike.component';
-import { BlockspanDetailComponent } from './components/new/blockspan-detail/blockspan-detail.component';
+import { EnergySummaryComponent } from './components/new/energy-summary/energy-summary.component';
 
 @NgModule({
   declarations: [
@@ -173,7 +173,7 @@ import { BlockspanDetailComponent } from './components/new/blockspan-detail/bloc
     TankBoxComponent,
     EnergyComponent,
     StrikeComponent,
-    BlockspanDetailComponent,
+    EnergySummaryComponent,
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'serverApp' }),

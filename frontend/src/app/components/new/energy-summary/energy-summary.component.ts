@@ -14,11 +14,11 @@ import { TimeStrike } from 'src/app/interfaces/op-energy.interface';
 import { OpEnergyApiService } from 'src/app/services/op-energy.service';
 
 @Component({
-  selector: 'app-blockspan-detail',
-  templateUrl: './blockspan-detail.component.html',
-  styleUrls: ['./blockspan-detail.component.scss']
+  selector: 'app-energy-summary',
+  templateUrl: './energy-summary.component.html',
+  styleUrls: ['./energy-summary.component.scss']
 })
-export class BlockspanDetailComponent implements OnInit, OnDestroy {
+export class EnergySummaryComponent implements OnInit, OnDestroy {
   network = '';
   fromBlock: Block;
   toBlock: Block;
@@ -162,7 +162,7 @@ export class BlockspanDetailComponent implements OnInit, OnDestroy {
                   this.fromBlockHash = fromHash;
                   this.toBlockHash = toHash;
                   this.location.replaceState(
-                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/tetris/energy/`, fromHash, toHash]).toString()
+                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/tetris/energy_summary/`, fromHash, toHash]).toString()
                   );
                   return combineLatest([
                     this.electrsApiService.getBlock$(fromHash).pipe(
@@ -270,19 +270,19 @@ export class BlockspanDetailComponent implements OnInit, OnDestroy {
       return;
     }
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight - 2);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/energy/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/tetris/energy_summary/'),
       block ? block.id : this.fromBlock.previousblockhash], { state: { data: { block, blockHeight: this.nextBlockHeight - 2 } } });
   }
 
   navigateToNextBlock() {
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/energy/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/tetris/energy_summary/'),
       block ? block.id : this.nextBlockHeight], { state: { data: { block, blockHeight: this.nextBlockHeight } } });
   }
 
   navigateToBlockByNumber() {
     const block = this.latestBlocks.find((b) => b.height === this.blockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/energy/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/tetris/energy_summary/'),
       block ? block.id : this.blockHeight], { state: { data: { block, blockHeight: this.blockHeight } } });
   }
 
