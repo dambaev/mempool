@@ -29,6 +29,7 @@ import { PoolRankingComponent } from './components/pool-ranking/pool-ranking.com
 import { ObservedBlockDetailComponent } from './components/observed-block-detail/observed-block-detail.component';
 import { ObservedBlockspanDetailComponent } from './components/observed-blockspan-detail/observed-blockspan-detail.component';
 import { EnergySummaryComponent } from './components/new/energy-summary/energy-summary.component';
+import { EnergyDetailComponent } from './components/new/energy-detail/energy-detail.component';
 import { StrikeDetailComponent } from './components/strike-detail/strike-detail.component';
 import { BlockchainObservedBlocksComponent } from './components/blockchain-observed-blocks/blockchain-observed-blocks.component';
 import { BlockspansHomeComponent } from './components/blockspans-home/blockspans-home.component';
@@ -117,6 +118,10 @@ let routes: Routes = [
           {
             path: 'energy_summary/:from/:to',
             component: EnergySummaryComponent
+          },
+          {
+            path: 'energy_detail/:from/:to',
+            component: EnergyDetailComponent
           },
           {
             path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
@@ -257,6 +262,10 @@ let routes: Routes = [
                 component: EnergySummaryComponent
               },
               {
+                path: 'energy_detail/:from/:to',
+                component: EnergyDetailComponent
+              },
+              {
                 path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
                 component: StrikeDetailComponent
               },
@@ -395,6 +404,10 @@ let routes: Routes = [
               {
                 path: 'energy_summary/:from/:to',
                 component: EnergySummaryComponent
+              },
+              {
+                path: 'energy_detail/:from/:to',
+                component: EnergyDetailComponent
               },
               {
                 path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
@@ -561,6 +574,10 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
             component: EnergySummaryComponent
           },
           {
+            path: 'energy_detail/:from/:to',
+            component: EnergyDetailComponent
+          },
+          {
             path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
             component: StrikeDetailComponent
           },
@@ -704,6 +721,10 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
               {
                 path: 'energy_summary/:from/:to',
                 component: EnergySummaryComponent
+              },
+              {
+                path: 'energy_detail/:from/:to',
+                component: EnergyDetailComponent
               },
               {
                 path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',

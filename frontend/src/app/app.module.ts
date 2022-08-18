@@ -99,6 +99,7 @@ import { TankBoxComponent } from './components/new/tank-box/tank-box.component';
 import { EnergyComponent } from './components/new/energy/energy.component';
 import { StrikeComponent } from './components/new/strike/strike.component';
 import { EnergySummaryComponent } from './components/new/energy-summary/energy-summary.component';
+import { EnergyDetailComponent } from './components/new/energy-detail/energy-detail.component';
 
 @NgModule({
   declarations: [
@@ -174,6 +175,7 @@ import { EnergySummaryComponent } from './components/new/energy-summary/energy-s
     EnergyComponent,
     StrikeComponent,
     EnergySummaryComponent,
+    EnergyDetailComponent,
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'serverApp' }),
