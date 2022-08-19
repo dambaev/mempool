@@ -13,6 +13,7 @@ import { Block } from '../../../interfaces/electrs.interface';
 export class EnergyComponent implements OnInit, OnDestroy {
   @Input() fromBlock: Block;
   @Input() toBlock: Block;
+  @Input() isDetailed: boolean;
 
   get span(): number {
     return (this.toBlock.height - this.fromBlock.height);
@@ -46,24 +47,11 @@ export class EnergyComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
   }
 
-  toHHMMSS(secs) {
-    if (!secs) {
-      return '??:??:??';
-    }
-    let sec_num = parseInt(secs, 10); // don't forget the second param
-    let hours   = Math.floor(sec_num / 3600);
-    let minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-    let seconds = sec_num - (hours * 3600) - (minutes * 60);
-    let strHours = hours.toString();
-    let strMinutes = minutes.toString();
-    let strSeconds = seconds.toString();
-    if (hours   < 10) {strHours   = "0"+hours;}
-    if (minutes < 10) {strMinutes = "0"+minutes;}
-    if (seconds < 10) {strSeconds = "0"+seconds;}
-    return strHours+':'+strMinutes+':'+strSeconds;
+  blockDetailLink() {
+    return this.relativeUrlPipe.transform(`/tetris/block/${this.fromBlock.height}`);
   }
 
-  blockspanDetailLink() {
-    return this.relativeUrlPipe.transform(`/tetris/block/${this.fromBlock.height}`);
+  energyDetailLink() {
+    return this.relativeUrlPipe.transform(`/tetris/energy_detail/${this.fromBlock.height}/${this.toBlock.height}`);
   }
 }

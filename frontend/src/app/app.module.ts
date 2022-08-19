@@ -86,7 +86,7 @@ import { TenminBlockComponent } from './components/tenmin-block/tenmin-block.com
 import { ObservedBlockComponent } from './components/observed-block/observed-block.component';
 import { ObservedBlockDetailComponent } from './components/observed-block-detail/observed-block-detail.component';
 import { ObservedBlockspanDetailComponent } from './components/observed-blockspan-detail/observed-blockspan-detail.component';
-import { StrikeDetailComponent } from './components/strike-detail/strike-detail.component';
+import { StrikeDetailOldComponent } from './components/strike-detail-old/strike-detail-old.component';
 import { TetrisBlockspanComponent } from './components/tetris-blockspan/tetris-blockspan.component';
 import { TetrisBlockspanWaterComponent } from './components/tetris-blockspan-water/tetris-blockspan-water.component';
 import { TetrisEnergyBlockComponent } from './components/tetris-energy-block/tetris-energy-block.component';
@@ -95,11 +95,12 @@ import { TetrisBlockspanNavigatorComponent } from './components/tetris-blockspan
 import { TetrisAddStrikeComponent } from './components/tetris-add-strike/tetris-add-strike.component';
 import { PreviewComponent } from './components/preview/preview.component';
 import { BlockspanComponent } from './components/new/blockspan/blockspan.component';
-import { TankBoxComponent } from './components/new/tank-box/tank-box.component';
+import { BaseBoxComponent } from './components/new/base-box/base-box.component';
 import { EnergyComponent } from './components/new/energy/energy.component';
 import { StrikeComponent } from './components/new/strike/strike.component';
 import { EnergySummaryComponent } from './components/new/energy-summary/energy-summary.component';
 import { EnergyDetailComponent } from './components/new/energy-detail/energy-detail.component';
+import { StrikeDetailComponent } from './components/new/strike-detail/strike-detail.component';
 
 @NgModule({
   declarations: [
@@ -160,7 +161,7 @@ import { EnergyDetailComponent } from './components/new/energy-detail/energy-det
     ObservedBlockComponent,
     ObservedBlockDetailComponent,
     ObservedBlockspanDetailComponent,
-    StrikeDetailComponent,
+    StrikeDetailOldComponent,
     BetPieChartComponent,
     TetrisBlockspanComponent,
     TetrisBlockspanWaterComponent,
@@ -171,11 +172,12 @@ import { EnergyDetailComponent } from './components/new/energy-detail/energy-det
     PreviewComponent,
     SetAccountSecretComponent,
     BlockspanComponent,
-    TankBoxComponent,
+    BaseBoxComponent,
     EnergyComponent,
     StrikeComponent,
     EnergySummaryComponent,
     EnergyDetailComponent,
+    StrikeDetailComponent,
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'serverApp' }),

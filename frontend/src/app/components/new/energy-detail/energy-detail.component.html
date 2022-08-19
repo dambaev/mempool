@@ -1,9 +1,8 @@
 <div class="observed-blockspan-detail">
-  Energy Detail
   <div class="observed-blockspan-detail--top" *ngIf="fromBlock && toBlock">
     <div class="blockspan">
       <div style="margin-bottom: 110px;">
-        <app-energy [fromBlock]="fromBlock" [toBlock]="toBlock"></app-energy>
+        <app-energy [fromBlock]="fromBlock" [toBlock]="toBlock" [isDetailed]="true"></app-energy>
       </div>
     </div>
     <div class="blockspan-table">

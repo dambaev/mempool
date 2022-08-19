@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { ElectrsApiService } from '../../services/electrs-api.service';
+import { ElectrsApiService } from '../../../services/electrs-api.service';
 import { switchMap, tap, debounceTime, catchError, map, take } from 'rxjs/operators';
-import { Block, Transaction, Vout } from '../../interfaces/electrs.interface';
+import { Block, Transaction, Vout } from '../../../interfaces/electrs.interface';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
-import { StateService } from '../../services/state.service';
+import { StateService } from '../../../services/state.service';
 import { SeoService } from 'src/app/services/seo.service';
 import { WebsocketService } from 'src/app/services/websocket.service';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
@@ -76,6 +76,30 @@ export class StrikeDetailComponent implements OnInit, OnDestroy {
 
   get canGuess(): boolean {
     return this.stateService.latestBlockHeight > 0 && this.strike.blockHeight > this.stateService.latestBlockHeight;
+  }
+
+  get spanWithStrike(): number {
+    return (this.strike.blockHeight - this.fromBlock.height);
+  }
+
+  get timeDiffWithStrike(): number {
+    return this.strike.nLockTime - this.fromBlock.mediantime;
+  }
+
+  get energyDiffWithStrike(): number {
+    return ((this.spanWithStrike * 600 - this.timeDiffWithStrike) / (this.spanWithStrike * 600)) * 100;
+  }
+
+  get totalIconCountWithStrike() {
+    let count = Math.round((6 + this.energyDiffWithStrike / 5) / 2);
+    if (count < 0) {
+      count = 0;
+    }
+    return count;
+  }
+
+  get strikeType(): 'Energy' | 'Strike' | 'Strike_Boiling' {
+    return this.strike.nLockTime > this.toBlock.mediantime ? 'Strike_Boiling' : 'Strike';
   }
 
   constructor(
@@ -172,7 +196,7 @@ export class StrikeDetailComponent implements OnInit, OnDestroy {
                   this.fromBlockHash = fromHash;
                   this.toBlockHash = toHash;
                   this.location.replaceState(
-                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/tetris/strike/`, fromHash, toHash, this.strike.blockHeight, this.strike.nLockTime, this.strike.creationTime]).toString()
+                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/tetris/strike_detail/`, fromHash, toHash, this.strike.blockHeight, this.strike.nLockTime, this.strike.creationTime]).toString()
                   );
                   return combineLatest([
                     this.electrsApiService.getBlock$(fromHash).pipe(
@@ -269,19 +293,19 @@ export class StrikeDetailComponent implements OnInit, OnDestroy {
       return;
     }
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight - 2);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike_detail/'),
       block ? block.id : this.fromBlock.previousblockhash], { state: { data: { block, blockHeight: this.nextBlockHeight - 2 } } });
   }
 
   navigateToNextBlock() {
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike_detail/'),
       block ? block.id : this.nextBlockHeight], { state: { data: { block, blockHeight: this.nextBlockHeight } } });
   }
 
   navigateToBlockByNumber() {
     const block = this.latestBlocks.find((b) => b.height === this.blockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike_detail/'),
       block ? block.id : this.blockHeight], { state: { data: { block, blockHeight: this.blockHeight } } });
   }
 

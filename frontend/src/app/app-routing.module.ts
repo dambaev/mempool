@@ -30,7 +30,8 @@ import { ObservedBlockDetailComponent } from './components/observed-block-detail
 import { ObservedBlockspanDetailComponent } from './components/observed-blockspan-detail/observed-blockspan-detail.component';
 import { EnergySummaryComponent } from './components/new/energy-summary/energy-summary.component';
 import { EnergyDetailComponent } from './components/new/energy-detail/energy-detail.component';
-import { StrikeDetailComponent } from './components/strike-detail/strike-detail.component';
+import { StrikeDetailComponent } from './components/new/strike-detail/strike-detail.component';
+import { StrikeDetailOldComponent } from './components/strike-detail-old/strike-detail-old.component';
 import { BlockchainObservedBlocksComponent } from './components/blockchain-observed-blocks/blockchain-observed-blocks.component';
 import { BlockspansHomeComponent } from './components/blockspans-home/blockspans-home.component';
 import { BlockspansHomeAddstrikeComponent } from './components/blockspans-home-addstrike/blockspans-home-addstrike.component';
@@ -124,8 +125,12 @@ let routes: Routes = [
             component: EnergyDetailComponent
           },
           {
-            path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+            path: 'strike_detail/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
             component: StrikeDetailComponent
+          },
+          {
+            path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+            component: StrikeDetailOldComponent
           },
         ]
       },
@@ -266,8 +271,12 @@ let routes: Routes = [
                 component: EnergyDetailComponent
               },
               {
-                path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+                path: 'strike_detail/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
                 component: StrikeDetailComponent
+              },
+              {
+                path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+                component: StrikeDetailOldComponent
               },
             ]
           },
@@ -410,8 +419,12 @@ let routes: Routes = [
                 component: EnergyDetailComponent
               },
               {
-                path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+                path: 'strike_detail/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
                 component: StrikeDetailComponent
+              },
+              {
+                path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+                component: StrikeDetailOldComponent
               },
             ]
           },
@@ -578,8 +591,12 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
             component: EnergyDetailComponent
           },
           {
-            path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+            path: 'strike_detail/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
             component: StrikeDetailComponent
+          },
+          {
+            path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+            component: StrikeDetailOldComponent
           },
         ]
       },
@@ -727,8 +744,12 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
                 component: EnergyDetailComponent
               },
               {
-                path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+                path: 'strike_detail/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
                 component: StrikeDetailComponent
+              },
+              {
+                path: 'strike/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
+                component: StrikeDetailOldComponent
               },
             ]
           },

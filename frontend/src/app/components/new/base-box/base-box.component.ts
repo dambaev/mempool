@@ -5,17 +5,19 @@ import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.
 
 export const MAX_COUNT = 14;
 @Component({
-  selector: 'app-tank-box',
-  templateUrl: './tank-box.component.html',
-  styleUrls: ['./tank-box.component.scss'],
+  selector: 'app-base-box',
+  templateUrl: './base-box.component.html',
+  styleUrls: ['./base-box.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TankBoxComponent implements OnInit, OnDestroy {
+export class BaseBoxComponent implements OnInit, OnDestroy {
   @Input() type: 'Energy' | 'Strike' | 'Strike_Boiling' = 'Energy';
   @Input() color = 'red';
   @Input() totalIconCount: number;
-  @Input() time: string;
+  @Input() fromTime: number;
+  @Input() toTime: number;
   @Input() isUnknown: boolean;
+  @Input() isDetailed: boolean;
   maxCount = MAX_COUNT;
 
   get iconArray() {
@@ -25,6 +27,10 @@ export class TankBoxComponent implements OnInit, OnDestroy {
 
   get icon() {
     return this.type === 'Energy' ? 'fire' : this.type === 'Strike' ? 'tint' : 'cloud';
+  }
+
+  get timeSpan() {
+    return this.toHHMMSS(this.toTime - this.fromTime);
   }
 
   constructor(
@@ -37,5 +43,22 @@ export class TankBoxComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+  }
+
+  toHHMMSS(secs) {
+    if (!secs) {
+      return '??:??:??';
+    }
+    let sec_num = parseInt(secs, 10); // don't forget the second param
+    let hours   = Math.floor(sec_num / 3600);
+    let minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+    let seconds = sec_num - (hours * 3600) - (minutes * 60);
+    let strHours = hours.toString();
+    let strMinutes = minutes.toString();
+    let strSeconds = seconds.toString();
+    if (hours   < 10) {strHours   = "0"+hours;}
+    if (minutes < 10) {strMinutes = "0"+minutes;}
+    if (seconds < 10) {strSeconds = "0"+seconds;}
+    return strHours+':'+strMinutes+':'+strSeconds;
   }
 }

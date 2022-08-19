@@ -1,31 +1,33 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { ElectrsApiService } from '../../../services/electrs-api.service';
+import { ElectrsApiService } from '../../services/electrs-api.service';
 import { switchMap, tap, debounceTime, catchError, map, take } from 'rxjs/operators';
-import { Block, Transaction, Vout } from '../../../interfaces/electrs.interface';
+import { Block, Transaction, Vout } from '../../interfaces/electrs.interface';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
-import { StateService } from '../../../services/state.service';
+import { StateService } from '../../services/state.service';
 import { SeoService } from 'src/app/services/seo.service';
 import { WebsocketService } from 'src/app/services/websocket.service';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
 import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
-import { TimeStrike } from 'src/app/interfaces/op-energy.interface';
+import { SlowFastGuess, TimeStrike } from 'src/app/interfaces/op-energy.interface';
 import { OpEnergyApiService } from 'src/app/services/op-energy.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
-  selector: 'app-energy-summary',
-  templateUrl: './energy-summary.component.html',
-  styleUrls: ['./energy-summary.component.scss']
+  selector: 'app-strike-detail-old',
+  templateUrl: './strike-detail-old.component.html',
+  styleUrls: ['./strike-detail-old.component.scss']
 })
-export class EnergySummaryComponent implements OnInit, OnDestroy {
+export class StrikeDetailOldComponent implements OnInit, OnDestroy {
   network = '';
   fromBlock: Block;
-  toBlock: Block;
+  toBlock: Block | any;
   blockHeight: number;
   nextBlockHeight: number;
   fromBlockHash: string;
   toBlockHash: string;
+  strike: TimeStrike;
   isLoadingBlock = true;
   latestBlock: Block;
   latestBlocks: Block[] = [];
@@ -45,8 +47,12 @@ export class EnergySummaryComponent implements OnInit, OnDestroy {
   blocksSubscription: Subscription;
   networkChangedSubscription: Subscription;
 
-  timeStrikes: TimeStrike[] = [];
-  showStrikes: boolean;
+  slowFastGuesses: SlowFastGuess[] = [];
+  currentActiveGuess: 'slow' | 'fast' | null = null;
+
+  get strikeElapsedTime(): number {
+    return (this.strike.nLockTime - this.fromBlock.mediantime);
+  }
 
   get span(): number {
     return (this.toBlock.height - this.fromBlock.height);
@@ -61,17 +67,15 @@ export class EnergySummaryComponent implements OnInit, OnDestroy {
   }
 
   get chainworkDiff(): bigint {
-    if (!this.fromBlock.chainwork || !this.toBlock.chainwork) {
-      return BigInt(0);
-    }
     return BigInt(this.getHexValue(this.toBlock.chainwork)) - BigInt(this.getHexValue(this.fromBlock.chainwork));
   }
 
   get hashrate(): bigint {
-    if (!this.timeDiff) {
-      return BigInt(0);
-    }
     return this.chainworkDiff / BigInt(this.timeDiff);
+  }
+
+  get canGuess(): boolean {
+    return this.stateService.latestBlockHeight > 0 && this.strike.blockHeight > this.stateService.latestBlockHeight;
   }
 
   constructor(
@@ -79,6 +83,7 @@ export class EnergySummaryComponent implements OnInit, OnDestroy {
     private location: Location,
     private router: Router,
     private modalService: NgbModal,
+    private toastr: ToastrService,
     private opEnergyApiService: OpEnergyApiService,
     private electrsApiService: ElectrsApiService,
     public stateService: StateService,
@@ -115,6 +120,11 @@ export class EnergySummaryComponent implements OnInit, OnDestroy {
       switchMap((params: ParamMap) => {
         const fromBlockHash: string = params.get('from') || '';
         const toBlockHash: string = params.get('to') || '';
+        this.strike = {
+          blockHeight: +params.get('strikeBlockHeight'),
+          nLockTime: +params.get('strikeMedianTime'),
+          creationTime: +params.get('strikeCreationTime'),
+        };
         this.fromBlock = undefined;
         this.toBlock = undefined;
         this.page = 1;
@@ -162,7 +172,7 @@ export class EnergySummaryComponent implements OnInit, OnDestroy {
                   this.fromBlockHash = fromHash;
                   this.toBlockHash = toHash;
                   this.location.replaceState(
-                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/tetris/energy_summary/`, fromHash, toHash]).toString()
+                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/tetris/strike/`, fromHash, toHash, this.strike.blockHeight, this.strike.nLockTime, this.strike.creationTime]).toString()
                   );
                   return combineLatest([
                     this.electrsApiService.getBlock$(fromHash).pipe(
@@ -195,14 +205,7 @@ export class EnergySummaryComponent implements OnInit, OnDestroy {
     )
     .subscribe(([fromBlock, toBlock]: [Block, Block]) => {
       this.fromBlock = fromBlock;
-      if (typeof toBlock == 'string') {
-        this.toBlock = {
-          ...this.fromBlock,
-          height: toBlock,
-        };
-      } else {
-        this.toBlock = toBlock;
-      }
+      this.toBlock = toBlock;
       this.blockHeight = fromBlock.height;
       this.nextBlockHeight = fromBlock.height + 1;
       this.setNextAndPreviousBlockLink();
@@ -217,7 +220,7 @@ export class EnergySummaryComponent implements OnInit, OnDestroy {
       this.transactions = null;
 
       this.stateService.$accountToken.pipe(take(1)).subscribe(res => {
-        this.getTimeStrikes();
+        this.getGuesses();
       })
     }),
     (error) => {
@@ -250,14 +253,10 @@ export class EnergySummaryComponent implements OnInit, OnDestroy {
     this.networkChangedSubscription.unsubscribe();
   }
 
-  getTimeStrikes() {
-    this.opEnergyApiService.$listTimeStrikesByBlockHeight(this.toBlock.height)
-      .subscribe((timeStrikes: TimeStrike[]) => {
-        this.timeStrikes = timeStrikes.map(strike => ({
-          ...strike,
-          elapsedTime: strike.nLockTime - this.fromBlock.mediantime
-        }));
-        console.log(111111111, this.timeStrikes)
+  getGuesses() {
+    this.opEnergyApiService.$listSlowFastGuesses(this.strike)
+      .subscribe((slowFastGuess: SlowFastGuess[]) => {
+        this.slowFastGuesses = slowFastGuess;
       });
   }
 
@@ -270,19 +269,19 @@ export class EnergySummaryComponent implements OnInit, OnDestroy {
       return;
     }
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight - 2);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/energy_summary/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike/'),
       block ? block.id : this.fromBlock.previousblockhash], { state: { data: { block, blockHeight: this.nextBlockHeight - 2 } } });
   }
 
   navigateToNextBlock() {
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/energy_summary/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike/'),
       block ? block.id : this.nextBlockHeight], { state: { data: { block, blockHeight: this.nextBlockHeight } } });
   }
 
   navigateToBlockByNumber() {
     const block = this.latestBlocks.find((b) => b.height === this.blockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/energy_summary/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike/'),
       block ? block.id : this.blockHeight], { state: { data: { block, blockHeight: this.blockHeight } } });
   }
 
@@ -333,11 +332,12 @@ export class EnergySummaryComponent implements OnInit, OnDestroy {
     return hexValue;
   }
 
-  goDetail(fromBlock, strike) {
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike_detail/'), fromBlock.height, strike.blockHeight, strike.blockHeight, strike.nLockTime, strike.creationTime]);
-  }
-
-  toggleStrikes() {
-    this.showStrikes = !this.showStrikes;
+  guess(guess: 'slow' | 'fast') {
+    this.currentActiveGuess = guess;
+    this.opEnergyApiService.$slowFastGuess(guess, this.strike)
+      .subscribe((slowFastGuess: SlowFastGuess) => {
+        this.slowFastGuesses = [...this.slowFastGuesses, slowFastGuess];
+        this.toastr.success('Guessed successfully!', 'Success!');
+      });
   }
 }

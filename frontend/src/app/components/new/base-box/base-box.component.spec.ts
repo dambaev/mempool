@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { TankBoxComponent } from './tank-box.component';
+import { BaseBoxComponent } from './base-box.component';
 
-describe('TankBoxComponent', () => {
-  let component: TankBoxComponent;
-  let fixture: ComponentFixture<TankBoxComponent>;
+describe('BaseBoxComponent', () => {
+  let component: BaseBoxComponent;
+  let fixture: ComponentFixture<BaseBoxComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ TankBoxComponent ]
+      declarations: [ BaseBoxComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(TankBoxComponent);
+    fixture = TestBed.createComponent(BaseBoxComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

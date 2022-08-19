@@ -334,6 +334,6 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
   }
 
   goDetail(fromBlock, strike) {
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike/'), fromBlock.height, strike.blockHeight, strike.blockHeight, strike.nLockTime, strike.creationTime]);
+    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike_detail/'), fromBlock.height, strike.blockHeight, strike.blockHeight, strike.nLockTime, strike.creationTime]);
   }
 }

@@ -102,6 +102,6 @@ export class StrikeComponent implements OnInit, OnDestroy {
   }
 
   strikeDetailLink() {
-    return this.relativeUrlPipe.transform(`/tetris/strike/${this.fromBlock.height}/${this.toBlock.height}/${this.strike.blockHeight}/${this.strike.nLockTime}/${this.strike.creationTime}`);
+    return this.relativeUrlPipe.transform(`/tetris/strike_detail/${this.fromBlock.height}/${this.toBlock.height}/${this.strike.blockHeight}/${this.strike.nLockTime}/${this.strike.creationTime}`);
   }
 }

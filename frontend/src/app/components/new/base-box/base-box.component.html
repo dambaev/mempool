@@ -1,0 +1,24 @@
+<div class="tank-box {{type}}">
+  <div class="tank-box--top" [ngStyle]="{'background-color': this.color}">
+    <span *ngIf="isUnknown">?????</span>
+    <ng-container *ngIf="!isUnknown">
+      <fa-icon *ngFor="let i of iconArray" class="left fire" [icon]="['fas', this.icon]" [fixedWidth]="true"></fa-icon>
+      <span *ngIf="totalIconCount > maxCount" class="ml-1">+{{ totalIconCount - maxCount }}</span>
+    </ng-container>
+  </div>
+  <div *ngIf="!isDetailed" class="tank-box--bottom" [ngStyle]="{'background-color': this.color}">
+    <div>{{ timeSpan }}</div>
+  </div>
+  <ng-container *ngIf="isDetailed">
+    <div class="tank-box--middle" [ngStyle]="{'background-color': this.color}">
+      <div class="to-block">{{ toTime }}</div>
+      <div class="span-block">{{ toTime - fromTime }}</div>
+      <div class="from-block">{{ fromTime }}</div>
+    </div>
+    <div class="tank-box--middle" [ngStyle]="{'background-color': this.color}">
+      <div class="to-block">{{ toTime * 1000 | date:'yyyy-MM-dd HH:mm' }}</div>
+      <div class="span-block">{{ timeSpan }}</div>
+      <div class="from-block">{{ fromTime * 1000 | date:'yyyy-MM-dd HH:mm' }}</div>
+    </div>
+  </ng-container>
+</div>

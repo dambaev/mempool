@@ -26,6 +26,41 @@
     }
   }
 
+  &--middle {
+    position: relative;
+    height: 50%;
+
+    .to-block,
+    .from-block {
+      height: 50%;
+      background-color: red;
+      border: 1px solid black;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: black;
+      font-weight: 700;
+    }
+  
+    .span-block {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: black;
+      font-weight: bold;
+      position: absolute;
+      width: 50%;
+      height: 30%;
+      background-color: orange;
+      top: 50%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-50%);
+      z-index: 1;
+      border: 1px solid black;
+    }
+  }
+
   &--bottom {
     height: 50%;
     background-color: red;
@@ -65,6 +100,13 @@
 
       fa-icon {
         color: #fff;
+      }
+    }
+
+    .tank-box--middle {
+      .to-block,
+      .from-block {
+        background-color: #eeeeee !important;
       }
     }
 

@@ -16,5 +16,5 @@
     src="./resources/pipe.svg"
     [svgStyle]="{'width.px':40,'height.px':40,'fill':'#e0e0e0'}">
   </svg-icon>
-  <app-tank-box [type]="strikeType" [totalIconCount]="totalIconCountWithStrike" [time]="toHHMMSS(strike.nLockTime - fromBlock.mediantime)" [isUnknown]="!timeDiffWithStrike" [routerLink]="strikeDetailLink()"></app-tank-box>
+  <app-base-box [type]="strikeType" [totalIconCount]="totalIconCountWithStrike" [fromTime]="fromBlock.mediantime" [toTime]="strike.nLockTime" [isUnknown]="!timeDiffWithStrike" [routerLink]="strikeDetailLink()"></app-base-box>
 </div>
