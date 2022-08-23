@@ -1,6 +1,6 @@
 import { ILoadingIndicators } from '../services/state.service';
 import { Block, Transaction } from './electrs.interface';
-import { TimeStrike, SlowFastGuess } from './op-energy.interface';
+import { TimeStrike, SlowFastGuess, SlowFastGuessOutcome } from './op-energy.interface';
 
 export interface WebsocketResponse {
   block?: Block;
@@ -34,6 +34,7 @@ export interface WebsocketResponse {
   'track-time-strike-stop'?: TimeStrike;
   timeStrike?: TimeStrike;
   timeSlowFastGuess?: SlowFastGuess;
+  timeSlowFastGuessOutcome?: SlowFastGuessOutcome;
 }
 
 export interface MempoolBlock {

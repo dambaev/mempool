@@ -7,7 +7,7 @@ import { Subscription } from 'rxjs';
 import { ApiService } from './api.service';
 import { take } from 'rxjs/operators';
 import { TransferState, makeStateKey } from '@angular/platform-browser';
-import { TimeStrike } from '../interfaces/op-energy.interface';
+import { TimeStrike, SlowFastGuessOutcome } from '../interfaces/op-energy.interface';
 
 const OFFLINE_RETRY_AFTER_MS = 10000;
 const OFFLINE_PING_CHECK_AFTER_MS = 30000;
@@ -244,6 +244,10 @@ export class WebsocketService {
     if ( response.timeSlowFastGuess) {
       const slowFastGuess = response.timeSlowFastGuess;
       this.stateService.timeSlowFastGuesses$.next( slowFastGuess);
+    }
+    if ( response.timeSlowFastGuessOutcome) {
+      const slowFastGuessOutcome = response.timeSlowFastGuessOutcome;
+      this.stateService.timeSlowFastGuessesOutcome$.next( slowFastGuessOutcome);
     }
     if (response.blocks && response.blocks.length) {
       const blocks = response.blocks;
