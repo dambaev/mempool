@@ -257,7 +257,12 @@ export class EnergySummaryComponent implements OnInit, OnDestroy {
           ...strike,
           elapsedTime: strike.nLockTime - this.fromBlock.mediantime
         }));
-        console.log(111111111, this.timeStrikes)
+        // Manually add a strike that is higher energy just to show what happens when it doesn't boil
+        const highEnergyStrike = {
+          ...this.timeStrikes[0],
+          nLockTime: this.toBlock.mediantime - 30
+        }
+        this.timeStrikes.unshift(highEnergyStrike);
       });
   }
 
