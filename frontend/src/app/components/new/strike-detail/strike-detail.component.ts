@@ -364,4 +364,8 @@ export class StrikeDetailComponent implements OnInit, OnDestroy {
         this.toastr.success('Guessed successfully!', 'Success!');
       });
   }
+
+  strikeDetailLink() {
+    return this.relativeUrlPipe.transform(`/tetris/strike_detail/${this.fromBlock.height}/${this.toBlock.height}/${this.strike.blockHeight}/${this.strike.nLockTime}/${this.strike.creationTime}`);
+  }
 }

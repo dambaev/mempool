@@ -14,7 +14,7 @@
         src="./resources/pipe.svg"
         [svgStyle]="{'width.px':60,'height.px':60,'fill':'#e0e0e0'}">
       </svg-icon>
-      <app-base-box [type]="strikeType" [totalIconCount]="totalIconCountWithStrike" [fromTime]="fromBlock.mediantime" [toTime]="toBlock.mediantime" [isDetailed]="true"></app-base-box>
+      <app-base-box [type]="strikeType" [totalIconCount]="totalIconCountWithStrike" [fromTime]="fromBlock.mediantime" [toTime]="toBlock.mediantime" [isDetailed]="true" [link]="strikeDetailLink()"></app-base-box>
       <ng-container *ngIf="canGuess">
         <h3 class="text-center mt-4 mb-4">Guess</h3>
         <div class="guess-btns">

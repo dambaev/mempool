@@ -18,6 +18,7 @@ export class BaseBoxComponent implements OnInit, OnDestroy {
   @Input() toTime: number;
   @Input() isUnknown: boolean;
   @Input() isDetailed: boolean;
+  @Input() link: string;
   maxCount = MAX_COUNT;
 
   get iconArray() {

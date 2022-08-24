@@ -5,16 +5,16 @@
     src="./resources/smoke.svg"
     [svgStyle]="{'width.px':40,'height.px':40,'fill':'#e0e0e0'}">
   </svg-icon>
-  <div class="strike-container--boiler" [routerLink]="strikeDetailLink()">
+  <a class="strike-container--boiler" [routerLink]="strikeDetailLink()">
     <span *ngIf="isUnknown">?????</span>
     <ng-container *ngIf="!isUnknown">
       <fa-icon *ngFor="let i of iconArray" class="left fire" [icon]="['fas', 'fire']" [fixedWidth]="true"></fa-icon>
       <span *ngIf="totalIconCount > maxCount" class="ml-1">+{{ totalIconCount - maxCount }}</span>
     </ng-container>
-  </div>
+  </a>
   <svg-icon
     src="./resources/pipe.svg"
     [svgStyle]="{'width.px':40,'height.px':40,'fill':'#e0e0e0'}">
   </svg-icon>
-  <app-base-box [type]="strikeType" [totalIconCount]="totalIconCountWithStrike" [fromTime]="fromBlock.mediantime" [toTime]="strike.nLockTime" [isUnknown]="!timeDiffWithStrike" [routerLink]="strikeDetailLink()"></app-base-box>
+  <app-base-box [type]="strikeType" [totalIconCount]="totalIconCountWithStrike" [fromTime]="fromBlock.mediantime" [toTime]="strike.nLockTime" [isUnknown]="!timeDiffWithStrike" [link]="strikeDetailLink()"></app-base-box>
 </div>

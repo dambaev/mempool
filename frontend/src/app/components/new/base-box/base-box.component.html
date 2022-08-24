@@ -1,4 +1,4 @@
-<div class="tank-box {{type}}">
+<a class="tank-box {{type}}" [routerLink]="link">
   <div class="tank-box--top" [ngStyle]="{'background-color': this.color}">
     <span *ngIf="isUnknown">?????</span>
     <ng-container *ngIf="!isUnknown">
@@ -21,4 +21,4 @@
       <div class="from-block">{{ fromTime * 1000 | date:'yyyy-MM-dd HH:mm' }}</div>
     </div>
   </ng-container>
-</div>
+</a>
