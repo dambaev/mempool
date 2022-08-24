@@ -15,3 +15,9 @@ export interface SlowFastGuess {
   userId: number;
 }
 
+export interface SlowFastGuessOutcome {
+  outcome: "slow" | "fast";
+  blockHeight: number;
+  nLockTime: number;
+}
+
