@@ -43,7 +43,7 @@ export class HttpCacheInterceptor implements HttpInterceptor {
         }),
         catchError((error: HttpErrorResponse) => {
           if (Number(error.status) !== 200) {
-            this.toastr.error(error.error, 'Failed!');
+            this.toastr.error(error.error, 'Failed!', {disableTimeOut: true});
           }
           return throwError(error);
         })
