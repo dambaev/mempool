@@ -1,8 +1,36 @@
 <div class="observed-blockspan-detail">
   <div class="observed-blockspan-detail--top" *ngIf="fromBlock && toBlock">
     <div class="blockspan">
-      <div style="margin-bottom: 110px;">
+      <div class="d-flex" style="margin-bottom: 110px;">
         <app-energy [fromBlock]="fromBlock" [toBlock]="toBlock" [isDetailed]="true"></app-energy>
+        <app-chainwork-box [fromChainwork]="fromBlock.chainwork" [toChainwork]="toBlock.chainwork" [isDetailed]="true" [link]="energyDetailLink()"></app-chainwork-box>
+      </div>
+    </div>
+    <div class="blockspan-table">
+      <div class="content">
+        <table class="table table-borderless table-striped">
+          <tbody>
+            <tr>
+              <td>average</td>
+              <td>0</td>
+              <td>average</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td>std dev</td>
+              <td>0</td>
+              <td>std dev</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td colspan="2">Time</td>
+              <td colspan="2">Hashes</td>
+            </tr>
+            <tr>
+              <td colspan="4">Statistics(last 100 blockspans)</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
     <!-- <div class="blockspan-table">

@@ -8,18 +8,18 @@
     </ng-container>
   </div>
   <div *ngIf="!isDetailed" class="tank-box--bottom" [ngStyle]="{'background-color': this.color}">
-    <div>{{ timeSpan }}</div>
+    <div>{{ chainworkDiff }}</div>
   </div>
   <ng-container *ngIf="isDetailed">
     <div class="tank-box--middle" [ngStyle]="{'background-color': this.color}">
-      <div class="to-block">{{ toTime }}</div>
-      <div class="span-block">{{ toTime - fromTime }}</div>
-      <div class="from-block">{{ fromTime }}</div>
+      <div class="to-block">{{ toInDecimal }}</div>
+      <div class="span-block">{{ toInDecimal - fromInDecimal }}</div>
+      <div class="from-block">{{ fromInDecimal }}</div>
     </div>
     <div class="tank-box--middle" [ngStyle]="{'background-color': this.color}">
-      <div class="to-block">{{ toTime * 1000 | date:'yyyy-MM-dd HH:mm' }}</div>
-      <div class="span-block">{{ timeSpan }}</div>
-      <div class="from-block">{{ fromTime * 1000 | date:'yyyy-MM-dd HH:mm' }}</div>
+      <div class="to-block">{{ toChainwork }}</div>
+      <div class="span-block">{{ chainworkDiff.toString() }}(Hex)</div>
+      <div class="from-block">{{ fromChainwork }}</div>
     </div>
   </ng-container>
 </a>

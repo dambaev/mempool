@@ -96,6 +96,7 @@ import { TetrisAddStrikeComponent } from './components/tetris-add-strike/tetris-
 import { PreviewComponent } from './components/preview/preview.component';
 import { BlockspanComponent } from './components/new/blockspan/blockspan.component';
 import { BaseBoxComponent } from './components/new/base-box/base-box.component';
+import { ChainworkBoxComponent } from './components/new/chainwork-box/chainwork-box.component';
 import { EnergyComponent } from './components/new/energy/energy.component';
 import { StrikeComponent } from './components/new/strike/strike.component';
 import { EnergySummaryComponent } from './components/new/energy-summary/energy-summary.component';
@@ -173,6 +174,7 @@ import { StrikeDetailComponent } from './components/new/strike-detail/strike-det
     SetAccountSecretComponent,
     BlockspanComponent,
     BaseBoxComponent,
+    ChainworkBoxComponent,
     EnergyComponent,
     StrikeComponent,
     EnergySummaryComponent,
