@@ -18,8 +18,9 @@
     </div>
     <div class="tank-box--middle" [ngStyle]="{'background-color': this.color}">
       <div class="to-block">{{ toChainwork }}</div>
-      <div class="span-block">{{ chainworkDiff.toString() }}(Hex)</div>
+      <div class="span-block">{{ chainworkDiff.toString(16) }}(Hex)</div>
       <div class="from-block">{{ fromChainwork }}</div>
     </div>
   </ng-container>
+  <div class="tank-box--footer">Hashes</div>
 </a>

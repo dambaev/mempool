@@ -83,6 +83,13 @@
     }
   }
 
+  &--footer {
+    background: red;
+    color: black;
+    text-align: center;
+    font-weight: bold;
+  }
+
   &.Strike {
     .tank-box--top {
       background-color: #6fa8dc !important;
