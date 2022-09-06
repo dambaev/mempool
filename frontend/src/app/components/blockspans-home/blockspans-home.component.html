@@ -7,7 +7,7 @@
       <span>
         <div>
           <div *ngIf="pastBlocks[0] && lastPastBlock" class="future-blocks">
-            <app-tetris-blockspan-water [fromBlock]="pastBlocks[0]" [toBlock]="lastPastBlock"></app-tetris-blockspan-water>
+            <app-energy [fromBlock]="pastBlocks[0]" [toBlock]="lastPastBlock"></app-energy>
             <!-- <app-tetris-blockspan-strike *ngFor="let strike of timeStrikes" [fromBlock]="pastBlocks[0].height" [toBlock]="strike.blockHeight" [elapsedTime]="strike.elapsedTime"></app-tetris-blockspan-strike> -->
           </div>
           <div>
@@ -24,7 +24,7 @@
           </div>
           <div class="blocks-container blockchain-blocks-container" *ngIf="(loadingBlocks$ | async) === false && pastBlocks.length; else loadingBlocksTemplate">
             <div *ngFor="let i of indexArray;" >
-              <app-tetris-blockspan-water *ngIf="pastBlocks[i - 1] && pastBlocks[i]" [fromBlock]="pastBlocks[i]" [toBlock]="pastBlocks[i - 1]" [ngStyle]="blockStyles[(i - 1) / 2]" (click)="goDetail(pastBlocks[i], pastBlocks[i - 1])"></app-tetris-blockspan-water>
+              <app-energy *ngIf="pastBlocks[i - 1] && pastBlocks[i]" [fromBlock]="pastBlocks[i]" [toBlock]="pastBlocks[i - 1]" [ngStyle]="blockStyles[(i - 1) / 2]" (click)="goDetail(pastBlocks[i], pastBlocks[i - 1])"></app-energy>
             </div>
             <div [hidden]="!arrowVisible" id="arrow-up" [style.transition]="transition" [ngStyle]="{'left': arrowLeftPx + 'px' }"></div>
           </div>
