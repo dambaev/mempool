@@ -22,5 +22,5 @@
       <div class="from-block">{{ fromTime * 1000 | date:'yyyy-MM-dd HH:mm' }}</div>
     </div>
   </ng-container>
-  <div class="tank-box--footer">Time</div>
+  <div class="tank-box--footer" [ngStyle]="{'background-color': this.color}">Time</div>
 </a>
