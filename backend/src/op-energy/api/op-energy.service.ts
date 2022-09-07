@@ -2,6 +2,8 @@ import logger from '../../logger';
 import { DB } from '../../database';
 import {exec} from 'child_process';
 import * as sha256 from 'crypto-js/sha256';
+import blocks from '../../api/blocks';
+import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 
 import { SlowFastGuessValue, BlockHeight, NLockTime, UserId, TimeStrikeDB, AlphaNumString, TimeStrikeId, AccountToken, TimeStrike, SlowFastGuess } from './interfaces/op-energy.interface';
 
@@ -316,6 +318,70 @@ export class OpEnergyApiService {
       throw new Error( 'generateRandomHash: generated hash is not alpha-number');
     }
     return newHash;
+  }
+  // searchs strikes and slow/fast guesses under blockHeightTip - 6
+  async $slowFastGamePersistOutcome( UUID: string) {
+    const blockHeightTip = await bitcoinApi.$getBlockHeightTip();
+    const confirmedHeight = Math.max( blockHeightTip - 6, 0);
+
+    try {
+      return await DB.$with_accountPool( UUID, async (connection) => {
+        const [timestrikeguesses] = await DB.$accountPool_query<any>( UUID, connection, 'SELECT id,user_id,block_height,nlocktime,UNIX_TIMESTAMP(creation_time) as creation_time FROM timestrikes WHERE block_height <= ?', [ confirmedHeight ]);
+        for( var i = 0; i < timestrikeguesses.length; i++) {
+          const blockHash = await bitcoinApi.$getBlockHash(timestrikeguesses[i].block_height);
+          const block = await bitcoinApi.$getBlock(blockHash);
+          const [[timestrikehistory_id]] = await DB.$accountPool_query<any>( UUID, connection
+            , 'INSERT INTO timestrikeshistory (user_id, block_height, nlocktime, mediantime, creation_time, archivetime) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), NOW()) returning id'
+            , [ timestrikeguesses[i].user_id, timestrikeguesses[i].block_height, timestrikeguesses[i].nlocktime, block.mediantime, timestrikeguesses[i].creation_time ]
+          ); // store result into separate table
+          let wrong_results = 0;
+          let right_results = 0;
+          const [guesses] = await DB.$accountPool_query<any>( UUID, connection
+            , 'SELECT id,user_id,timestrike_id,guess,UNIX_TIMESTAMP(creation_time) as creation_time FROM slowfastguesses WHERE timestrike_id = ?'
+            , [ timestrikeguesses[i].id ]
+          );
+          for( var j = 0; j < guesses.length; j++) {
+            var result = 0; // wrong
+            if( block.mediantime <= guesses[j].nlocktime && guesses[j].guess == 1) { // guessed fast and it was actually faster
+              result = 1; // right
+              right_results++;
+            } else
+            if( block.mediantime > guesses[j].nlocktime && guesses[j].guess == 0) { // guess slow and it was actually slower
+              result = 1; // right
+              right_results++;
+            } else {
+              wrong_results ++;
+            }
+            await DB.$accountPool_query<any>( UUID, connection
+              , 'INSERT INTO slowfastresults (user_id,timestrikehistory_id,guess,result,creation_time) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?))'
+              , [ guesses[j].user_id
+                , timestrikehistory_id.id
+                , guesses[j].guess
+                , result // result is being stored here
+                , guesses[j].creation_time
+                ]
+            );
+            await DB.$accountPool_query<any>( UUID, connection
+              , 'DELETE FROM slowfastguesses WHERE id=?'
+              , [ guesses[j].id
+                ]
+            );
+          }
+          await DB.$accountPool_query<any>( UUID, connection
+            , 'UPDATE timestrikeshistory SET wrong_results = ?, right_results = ? WHERE id = ?'
+            , [ wrong_results, right_results, timestrikehistory_id.id ]
+          ); // persist some statistics
+          await DB.$accountPool_query<any>( UUID, connection, 'DELETE FROM timestrikes WHERE id = ?;' , [ timestrikeguesses[i].id ]); // remove time strike guess as it now in the timestrikehistory table
+        }
+      });
+    } catch(e) {
+      throw new Error(`${UUID} OpEnergyApiService.$singlePlayerPersistOutcome: failed to query DB: ${e instanceof Error? e.message : e}`);
+    }
+  }
+  async $persistOutcome( UUID: string) {
+    // currently, it is assumed, that timestrikes and timestrikeshistory tables are only being used by slow/fast game.
+    // NOTE: in the future, it maybe that other games will be using those tables. In this case, we will need to move cleanup of the timestrike table here instead of doing it in the $slowFastGamePersistOutcome
+    await this.$slowFastGamePersistOutcome( UUID); // persist outcome for slow fast game
   }
 
 }

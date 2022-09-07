@@ -3,7 +3,7 @@ import { DB } from '../database';
 import logger from '../logger';
 
 class OpEnergyDatabaseMigration {
-  private static currentVersion = 6;
+  private static currentVersion = 7;
 
   public async $initializeOrMigrateDatabase( UUID: string): Promise<void> {
     logger.info(`${UUID}: OE MIGRATION: running migrations`);
@@ -45,6 +45,11 @@ class OpEnergyDatabaseMigration {
       }
       case 5: {
         await this.$createTableSinglePlayerGuesses( UUID);
+        break;
+      }
+      case 6: {
+        await this.$createTableTimestrikeHistory(UUID);
+        await this.$createTableSinglePlayerResults(UUID);
         break;
       }
       default: {
@@ -189,6 +194,57 @@ class OpEnergyDatabaseMigration {
       throw new Error( err_msg);
     }
     logger.info( 'OE MOGRATION: OpEneryDatabaseMigration.$createTableSinglePlayerGuesses completed');
+  }
+  private async $createTableTimestrikeHistory(UUID: string){
+    const query = `CREATE TABLE IF NOT EXISTS \`timestrikeshistory\` (
+      \`id\` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+      \`user_id\` int(11) UNSIGNED NOT NULL,
+      \`block_height\` int(11) UNSIGNED NOT NULL,
+      \`nlocktime\` int(11) UNSIGNED NOT NULL,
+      \`mediantime\` int(11) UNSIGNED NOT NULL,
+      \`creation_time\` datetime NOT NULL,
+      \`archivetime\` datetime NOT NULL,
+      \`wrong_results\` int(11) UNSIGNED,
+      \`right_results\` int(11) UNSIGNED,
+      PRIMARY KEY(id),
+      UNIQUE INDEX(block_height, nlocktime),
+      FOREIGN KEY (user_id)
+        REFERENCES users(id)
+    ) ENGINE=InnoDB CHARSET=utf8`;
+    try {
+      await DB.$with_accountPool( UUID, async (connection) => {
+        await DB.$accountPool_query<any>(UUID, connection, query, []);
+      });
+    } catch(e) {
+      let err_msg = `OE MIGRATION: $createTableTimestrikeHistory error ${( e instanceof Error ? e.message : e)}`;
+      throw new Error( err_msg);
+    }
+    logger.info( 'OE MOGRATION: OpEneryDatabaseMigration.$createTableTimestrikeHistory completed');
+  }
+  private async $createTableSinglePlayerResults(UUID: string){
+    const query = `CREATE TABLE IF NOT EXISTS \`slowfastresults\` (
+      \`id\` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+      \`user_id\` int(11) UNSIGNED NOT NULL,
+      \`timestrikehistory_id\` int(11) UNSIGNED NOT NULL,
+      \`guess\` int(1) UNSIGNED NOT NULL,
+      \`result\` int(1) UNSIGNED NOT NULL,
+      \`creation_time\` datetime NOT NULL,
+      PRIMARY KEY(id),
+      UNIQUE INDEX(user_id,timestrikehistory_id),
+      FOREIGN KEY (user_id)
+        REFERENCES users(id),
+      FOREIGN KEY (timestrikehistory_id)
+        REFERENCES timestrikeshistory(id)
+    ) ENGINE=InnoDB CHARSET=utf8`;
+    try {
+      await DB.$with_accountPool( UUID, async (connection) => {
+        await DB.$accountPool_query<any>(UUID, connection, query, []);
+      });
+    } catch(e) {
+      let err_msg = `OE MIGRATION: $createTableSinglePlayerResults error ${( e instanceof Error ? e.message : e)}`;
+      throw new Error( err_msg);
+    }
+    logger.info( 'OE MOGRATION: OpEneryDatabaseMigration.$createTableSinglePlayerResults completed');
   }
 
 }

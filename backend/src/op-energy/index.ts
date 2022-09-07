@@ -11,6 +11,7 @@ import { BlockExtended, TransactionExtended, WebsocketResponse, MempoolBlock,
 import {exec} from 'child_process';
 import * as sha256 from 'crypto-js/sha256';
 import { TimeStrike, SlowFastGuess } from './api/interfaces/op-energy.interface';
+import blocks from '../api/blocks';
 
 import opEnergyApiService from './api/op-energy.service';
 
@@ -18,13 +19,15 @@ class OpEnergyIndex {
 
   private wss: WebSocket.Server | undefined;
   
-  public setUpHttpApiRoutes( app: Express) {
+  public async setUpHttpApiRoutes( app: Express) {
     opEnergyRoutes.setUpHttpApiRoutes( app);
+    await opEnergyApiService.$persistOutcome( "init" );
   }
   public setUpWebsocketHandling( wss: WebSocket.Server) {
     this.wss = wss;
     opEnergyApiService.setNewTimeStrikeCallback(this.handleNewTimeStrike.bind(websocketHandler));
     opEnergyApiService.setNewTimeSlowFastGuessCallback(this.handleNewTimeSlowFastGuess.bind(websocketHandler));
+    blocks.setNewBlockCallback( this.handleNewBlock);
   }
   public async runMainUpdateLoop() {
     try {
@@ -211,6 +214,9 @@ class OpEnergyIndex {
       }
       client.send(JSON.stringify({ timeSlowFastGuess: timeSlowFastGuess} ));
     });
+  }
+  async handleNewBlock( block: BlockExtended, txIds: string[], transactions: TransactionExtended[]) {
+      await opEnergyApiService.$persistOutcome( "handleNewBlock callback");
   }
 }
 
