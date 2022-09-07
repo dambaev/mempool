@@ -23,10 +23,6 @@ export class PreviewComponent implements OnInit {
     return this.relativeUrlPipe.transform('/tetris/blockspans/1');
   }
 
-  blockspanDetailLink() {
-    return this.relativeUrlPipe.transform('/tetris/blockspan/89778/89791');
-  }
-
   pastStrikeDetailLink() {
     return this.relativeUrlPipe.transform('/tetris/strike_detail/89778/89791/89791/1652239330/1656641994');
   }
