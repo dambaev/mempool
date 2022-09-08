@@ -14,10 +14,17 @@ export const MAX_COUNT = 14;
 export class BlockspanComponent implements OnInit, OnDestroy {
   @Input() fromBlock: Block;
   @Input() toBlock: Block;
-  @Input() link: string;
 
   get span(): number {
     return (this.toBlock.height - this.fromBlock.height);
+  }
+
+  get fromDetailLink() {
+    return this.relativeUrlPipe.transform(`/tetris/block/${this.fromBlock.height}`);
+  }
+
+  get toDetailLink() {
+    return this.relativeUrlPipe.transform(`/tetris/block/${this.toBlock.height}`);
   }
 
   constructor(

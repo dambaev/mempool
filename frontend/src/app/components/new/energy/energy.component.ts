@@ -47,10 +47,6 @@ export class EnergyComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
   }
 
-  blockDetailLink() {
-    return this.relativeUrlPipe.transform(`/tetris/block/${this.fromBlock.height}`);
-  }
-
   energyDetailLink() {
     return this.relativeUrlPipe.transform(`/tetris/energy_detail/${this.fromBlock.height}/${this.toBlock.height}`);
   }
