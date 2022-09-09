@@ -204,8 +204,8 @@ class OpEnergyDatabaseMigration {
       \`mediantime\` int(11) UNSIGNED NOT NULL,
       \`creation_time\` datetime NOT NULL,
       \`archivetime\` datetime NOT NULL,
-      \`wrong_results\` int(11) UNSIGNED,
-      \`right_results\` int(11) UNSIGNED,
+      \`wrong_results\` int(11) UNSIGNED NOT NULL,
+      \`right_results\` int(11) UNSIGNED NOT NULL,
       PRIMARY KEY(id),
       UNIQUE INDEX(block_height, nlocktime),
       FOREIGN KEY (user_id)

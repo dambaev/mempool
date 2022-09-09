@@ -5,7 +5,7 @@ import * as sha256 from 'crypto-js/sha256';
 import blocks from '../../api/blocks';
 import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 
-import { SlowFastGuessValue, BlockHeight, NLockTime, UserId, TimeStrikeDB, AlphaNumString, TimeStrikeId, AccountToken, TimeStrike, SlowFastGuess } from './interfaces/op-energy.interface';
+import { SlowFastGuessValue, BlockHeight, NLockTime, UserId, TimeStrikeDB, AlphaNumString, TimeStrikeId, AccountToken, TimeStrike, SlowFastGuess, TimeStrikesHistory, SlowFastResult } from './interfaces/op-energy.interface';
 
 export class OpEnergyApiService {
   // those arrays contains callbacks, which will be called when appropriate entity will be created
@@ -319,6 +319,59 @@ export class OpEnergyApiService {
     }
     return newHash;
   }
+
+  public async $getTimeStrikesHistory( UUID: string): Promise<TimeStrikesHistory[]> {
+    const query = 'SELECT timestrikeshistory.id,user_id,users.display_name,block_height,nlocktime,mediantime,UNIX_TIMESTAMP(timestrikeshistory.creation_time) as creation_time,UNIX_TIMESTAMP(archivetime) as archivetime\
+                   FROM timestrikeshistory INNER JOIN users ON timestrikeshistory.user_id = users.id';
+    try {
+      return await DB.$with_accountPool( UUID, async (connection) => {
+        const [result] = await DB.$accountPool_query<any>( UUID, connection, query, [ ]);
+        return result.map( (record) => {
+          return ({
+            'owner': record.display_name,
+            'blockHeight': record.block_height,
+            'nLockTime': record.nlocktime,
+            'mediantime': record.mediantime,
+            'creationTime': record.creation_time,
+            'archiveTime': record.archivetime,
+            'wrongResults': record.wrongResults,
+            'rightResults': record.rightResults,
+          } as TimeStrikesHistory)
+        });
+      });
+    } catch(e) {
+      throw new Error(`OpEnergyApiService.$getTimeStrikesHistory: failed to query DB: ${e instanceof Error? e.message : e}`);
+    }
+  }
+
+  public async $getSlowFastResult( UUID: string, accountToken: AccountToken, blockHeight: BlockHeight, nlockTime: NLockTime): Promise<SlowFastResult | null> {
+    const userId = await this.$getUserIdByAccountToken( UUID, accountToken);
+    const query = 'SELECT slowfastresults.id,timestrikeshistory.block_height,timestrikeshistory.nlocktime,guess,result,slowfastresults.user_id,users.display_name,UNIX_TIMESTAMP(slowfastresults.creation_time) as creation_time\
+                   FROM slowfastresults\
+                   INNER JOIN timestrikeshistory ON slowfastresults.timestrikehistory_id = timestrikeshistory.id\
+                   INNER JOIN users ON slowfastresults.user_id = users.id\
+                   WHERE slowfastresults.user_id = ? AND timestrikeshistory.block_height = ? AND timestrikeshistory.nlocktime = ?';
+    try {
+      return await DB.$with_accountPool( UUID, async (connection) => {
+        const [results] = await DB.$accountPool_query<any>( UUID, connection, query, [ userId.userId, blockHeight.value, nlockTime.value ]);
+        if (results.length < 1) {
+          return null;
+        } else {
+          let [record] = results;
+          return ({
+            'guess': record.guess == 0? "slow" : "fast",
+            'result': record.result == 0? "wrong" : "right",
+            'blockHeight': record.block_height,
+            'nLockTime': record.nlocktime,
+            'creationTime': record.creation_time,
+          } as SlowFastResult);
+        }
+      });
+    } catch(e) {
+      throw new Error(`OpEnergyApiService.$getSlowFastGuesses: failed to query DB: ${e instanceof Error? e.message : e}`);
+    }
+  }
+
   // searchs strikes and slow/fast guesses under blockHeightTip - 6
   async $slowFastGamePersistOutcome( UUID: string) {
     const blockHeightTip = await bitcoinApi.$getBlockHeightTip();
@@ -326,19 +379,19 @@ export class OpEnergyApiService {
 
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
-        const [timestrikeguesses] = await DB.$accountPool_query<any>( UUID, connection, 'SELECT id,user_id,block_height,nlocktime,UNIX_TIMESTAMP(creation_time) as creation_time FROM timestrikes WHERE block_height <= ?', [ confirmedHeight ]);
-        for( var i = 0; i < timestrikeguesses.length; i++) {
-          const blockHash = await bitcoinApi.$getBlockHash(timestrikeguesses[i].block_height);
+        const [timestrikesguesses] = await DB.$accountPool_query<any>( UUID, connection, 'SELECT id,user_id,block_height,nlocktime,UNIX_TIMESTAMP(creation_time) as creation_time FROM timestrikes WHERE block_height <= ?', [ confirmedHeight ]);
+        for( var i = 0; i < timestrikesguesses.length; i++) {
+          const blockHash = await bitcoinApi.$getBlockHash(timestrikesguesses[i].block_height);
           const block = await bitcoinApi.$getBlock(blockHash);
           const [[timestrikehistory_id]] = await DB.$accountPool_query<any>( UUID, connection
-            , 'INSERT INTO timestrikeshistory (user_id, block_height, nlocktime, mediantime, creation_time, archivetime) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), NOW()) returning id'
-            , [ timestrikeguesses[i].user_id, timestrikeguesses[i].block_height, timestrikeguesses[i].nlocktime, block.mediantime, timestrikeguesses[i].creation_time ]
+            , 'INSERT INTO timestrikeshistory (user_id, block_height, nlocktime, mediantime, creation_time, archivetime, wrong_results, right_results) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), NOW(),0,0) returning id'
+            , [ timestrikesguesses[i].user_id, timestrikesguesses[i].block_height, timestrikesguesses[i].nlocktime, block.mediantime, timestrikesguesses[i].creation_time ]
           ); // store result into separate table
           let wrong_results = 0;
           let right_results = 0;
           const [guesses] = await DB.$accountPool_query<any>( UUID, connection
             , 'SELECT id,user_id,timestrike_id,guess,UNIX_TIMESTAMP(creation_time) as creation_time FROM slowfastguesses WHERE timestrike_id = ?'
-            , [ timestrikeguesses[i].id ]
+            , [ timestrikesguesses[i].id ]
           );
           for( var j = 0; j < guesses.length; j++) {
             var result = 0; // wrong
@@ -346,7 +399,7 @@ export class OpEnergyApiService {
               result = 1; // right
               right_results++;
             } else
-            if( block.mediantime > guesses[j].nlocktime && guesses[j].guess == 0) { // guess slow and it was actually slower
+            if( block.mediantime > timestrikesguesses[i].nlocktime && guesses[j].guess == 0) { // guess slow and it was actually slower
               result = 1; // right
               right_results++;
             } else {
@@ -371,7 +424,7 @@ export class OpEnergyApiService {
             , 'UPDATE timestrikeshistory SET wrong_results = ?, right_results = ? WHERE id = ?'
             , [ wrong_results, right_results, timestrikehistory_id.id ]
           ); // persist some statistics
-          await DB.$accountPool_query<any>( UUID, connection, 'DELETE FROM timestrikes WHERE id = ?;' , [ timestrikeguesses[i].id ]); // remove time strike guess as it now in the timestrikehistory table
+          await DB.$accountPool_query<any>( UUID, connection, 'DELETE FROM timestrikes WHERE id = ?;' , [ timestrikesguesses[i].id ]); // remove time strike guess as it now in the timestrikehistory table
         }
       });
     } catch(e) {

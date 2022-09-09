@@ -21,3 +21,22 @@ export interface SlowFastGuessOutcome {
   nLockTime: number;
 }
 
+
+export interface TimeStrikesHistory {
+  owner: string;
+  blockHeight: number;
+  nLockTime: number;
+  mediantime: number;
+  creationTime: number;
+  archiveTime: number;
+  wrongResults: number;
+  rightResults: number;
+};
+
+export interface SlowFastResult {
+  guess : "slow" | "fast";
+  result: "wrong" | "right";
+  blockHeight: number;
+  nLockTime: number;
+  creationTime: number;
+}

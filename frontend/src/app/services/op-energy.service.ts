@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpParams, HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { TimeStrike, SlowFastGuess } from '../interfaces/op-energy.interface';
+import { TimeStrike, SlowFastGuess, TimeStrikesHistory, SlowFastResult } from '../interfaces/op-energy.interface';
 import { StateService } from './state.service';
 
 @Injectable({
@@ -146,6 +146,29 @@ export class OpEnergyApiService {
       observe: 'body',
       responseType: 'json',
     });
+  }
+
+  // returns list of strikes results or throws error in case of failure
+  $listTimeStrikesHistory( ): Observable<TimeStrikesHistory[]> {
+    return this.httpClient.get<TimeStrikesHistory[]>(this.apiBaseUrl + this.apiBasePath + '/api/v1/strikeshistory/mediantime', {});
+  }
+
+  // returns list of the slow/fast guess results for a given timelocked block
+  $listSlowFastResults( timeStrikesHistory: TimeStrikesHistory): Observable<SlowFastResult | null> {
+    var accountToken;
+    // get account token from the state service
+    let subscription = this.stateService.$accountToken.subscribe( newAccountToken => {
+      accountToken = newAccountToken;
+    });
+    subscription.unsubscribe();
+
+    let params = {
+      account_token: accountToken,
+      block_height: timeStrikesHistory.blockHeight,
+      nlocktime: timeStrikesHistory.nLockTime,
+    };
+
+    return this.httpClient.get<SlowFastResult | null>(this.apiBaseUrl + this.apiBasePath + '/api/v1/slowfastresults/mediantime', {params});
   }
 
 }
