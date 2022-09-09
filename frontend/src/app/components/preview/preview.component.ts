@@ -35,6 +35,10 @@ export class PreviewComponent implements OnInit {
     return this.relativeUrlPipe.transform('/tetris/energy_summary/89778/89791');
   }
 
+  futureEnergySummaryLink() {
+    return this.relativeUrlPipe.transform('/tetris/energy_summary/89778/120000');
+  }
+
   pastEnergyDetailLink() {
     return this.relativeUrlPipe.transform('/tetris/energy_detail/89778/89791');
   }

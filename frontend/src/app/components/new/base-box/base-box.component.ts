@@ -47,7 +47,7 @@ export class BaseBoxComponent implements OnInit, OnDestroy {
   }
 
   toHHMMSS(secs) {
-    if (!secs) {
+    if (secs <= 0) {
       return '??:??:??';
     }
     let sec_num = parseInt(secs, 10); // don't forget the second param
