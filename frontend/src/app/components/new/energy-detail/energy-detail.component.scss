@@ -49,10 +49,26 @@
       }
     }
 
+    .energy-statistics {
+      background-color: red;
+
+      .energy-font {
+        color: yellow;
+      }
+
+      .border-2 {
+        border-width:2px !important;
+      }
+    }
+
     @media (max-width: 768px) {
       flex-direction: column;
       align-items: center;
       gap: 50px;
+
+      .blockspan {
+        overflow: auto !important;
+      }
 
       .blockspan-table {
         width: 100%;
