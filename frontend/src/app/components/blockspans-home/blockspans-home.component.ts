@@ -150,6 +150,8 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
       )
     ).subscribe((blocks: any[]) => {
       this.pastBlocks = blocks;
+      this.cd.markForCheck();
+      console.log('pastBlocks...', this.pastBlocks)
       this.lastPastBlock = this.pastBlocks[0];
       this.lastPastBlock = {
         ...this.lastPastBlock,
