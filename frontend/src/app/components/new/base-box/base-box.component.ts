@@ -19,6 +19,7 @@ export class BaseBoxComponent implements OnInit, OnDestroy {
   @Input() isUnknown: boolean;
   @Input() isDetailed: boolean;
   @Input() link: string;
+  @Input() footerText = 'Time';
   maxCount = MAX_COUNT;
 
   get iconArray() {
@@ -47,7 +48,7 @@ export class BaseBoxComponent implements OnInit, OnDestroy {
   }
 
   toHHMMSS(secs) {
-    if (secs <= 0) {
+    if (!(secs > 0)) {
       return '??:??:??';
     }
     let sec_num = parseInt(secs, 10); // don't forget the second param
@@ -60,6 +61,6 @@ export class BaseBoxComponent implements OnInit, OnDestroy {
     if (hours   < 10) {strHours   = "0"+hours;}
     if (minutes < 10) {strMinutes = "0"+minutes;}
     if (seconds < 10) {strSeconds = "0"+seconds;}
-    return strHours+':'+strMinutes+':'+strSeconds;
+    return strHours + ':' + strMinutes + ':' + strSeconds;
   }
 }

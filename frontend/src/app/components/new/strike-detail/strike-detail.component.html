@@ -14,7 +14,7 @@
         src="./resources/pipe.svg"
         [svgStyle]="{'width.px':60,'height.px':60,'fill':'#e0e0e0'}">
       </svg-icon>
-      <app-base-box [type]="strikeType" [totalIconCount]="totalIconCountWithStrike" [fromTime]="fromBlock.mediantime" [toTime]="strike.nLockTime" [isDetailed]="true" color="#eeeeee" [link]="strikeDetailLink()"></app-base-box>      
+      <app-base-box footerText="Strike" [type]="strikeType" [totalIconCount]="totalIconCountWithStrike" [fromTime]="fromBlock.mediantime" [toTime]="strike.nLockTime" [isDetailed]="true" color="#eeeeee" [link]="strikeDetailLink()"></app-base-box>      
     </div>
     <div class="blockspan-table">
       <div *ngIf="canGuess">

@@ -33,7 +33,6 @@
     .to-block,
     .from-block {
       height: 50%;
-      background-color: red;
       border: 1px solid black;
       margin: auto;
       display: flex;
@@ -84,19 +83,21 @@
     color: black;
     text-align: center;
     font-weight: bold;
+    border: 1px solid black;
   }
 
   &.Strike {
-    .tank-box--top {
+    .tank-box--top,
+    .tank-box--middle,
+    .tank-box--bottom,
+    .tank-box--footer {
       background-color: #6fa8dc !important;
+    }
 
+    .tank-box--top {
       fa-icon {
         color: #cadffb;
       }
-    }
-
-    .tank-box--bottom {
-      background-color: #6fa8dc !important;
     }
   }
 
