@@ -167,6 +167,7 @@ class Blocks {
       ]);
       blockExtended.extras.medianFee = stats.feerate_percentiles[2]; // 50th percentiles
       blockExtended.extras.feeRange = [stats.minfeerate, stats.feerate_percentiles, stats.maxfeerate].flat();
+      logger.info( `stats ${JSON.stringify(stats)}`);
       blockExtended.extras.totalFees = stats.totalfee;
       blockExtended.extras.avgFee = stats.avgfee;
       blockExtended.extras.avgFeeRate = stats.avgfeerate;
