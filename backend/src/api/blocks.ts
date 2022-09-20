@@ -366,7 +366,7 @@ class Blocks {
           const blockExtended = await this.$getBlockExtended(block, transactions);
 
           newlyIndexed++;
-          logger.info( `bp0: ${blockExtended}`);
+          logger.info( `bp0: ${JSON.stringify(blockExtended)}`);
           await blocksRepository.$saveBlockInDatabase(blockExtended);
         }
 
@@ -472,7 +472,7 @@ class Blocks {
             logger.info(`Re-indexed 10 blocks and summaries. Also re-indexed the last difficulty adjustments. Will re-index latest hashrates in a few seconds.`);
             indexer.reindex();
           }
-          logger.info( `bp1: ${blockExtended}`);
+          logger.info( `bp1: ${JSON.stringify(blockExtended)}`);
           await blocksRepository.$saveBlockInDatabase(blockExtended);
 
           const lastestPriceId = await PricesRepository.$getLatestPriceId();
@@ -542,7 +542,7 @@ class Blocks {
     const transactions = await this.$getTransactionsExtended(blockHash, block.height, true);
     const blockExtended = await this.$getBlockExtended(block, transactions);
 
-    logger.info( `bp2: ${blockExtended}`);
+    logger.info( `bp2: ${JSON.stringify(blockExtended)}`);
     await blocksRepository.$saveBlockInDatabase(blockExtended);
 
     return prepareBlock(blockExtended);
@@ -579,7 +579,7 @@ class Blocks {
     const blockExtended = await this.$getBlockExtended(block, transactions);
     if (Common.indexingEnabled()) {
       delete(blockExtended['coinbaseTx']);
-      logger.info( `bp3: ${blockExtended}`);
+      logger.info( `bp3: ${JSON.stringify(blockExtended)}`);
       await blocksRepository.$saveBlockInDatabase(blockExtended);
     }
 
