@@ -94,7 +94,7 @@ class Blocks {
           transactionsFetched++;
         } catch (e) {
           if (i === 0) {
-            const msg = `Cannot fetch coinbase tx ${txIds[i]}. Reason: ` + (e instanceof Error ? e.message : e); 
+            const msg = `Cannot fetch coinbase tx ${txIds[i]}. Reason: ` + (e instanceof Error ? e.message : e);
             logger.err(msg);
             throw new Error(msg);
           } else {
@@ -366,6 +366,7 @@ class Blocks {
           const blockExtended = await this.$getBlockExtended(block, transactions);
 
           newlyIndexed++;
+          logger.info( `bp0: ${blockExtended}`);
           await blocksRepository.$saveBlockInDatabase(blockExtended);
         }
 
@@ -471,6 +472,7 @@ class Blocks {
             logger.info(`Re-indexed 10 blocks and summaries. Also re-indexed the last difficulty adjustments. Will re-index latest hashrates in a few seconds.`);
             indexer.reindex();
           }
+          logger.info( `bp1: ${blockExtended}`);
           await blocksRepository.$saveBlockInDatabase(blockExtended);
 
           const lastestPriceId = await PricesRepository.$getLatestPriceId();
@@ -540,6 +542,7 @@ class Blocks {
     const transactions = await this.$getTransactionsExtended(blockHash, block.height, true);
     const blockExtended = await this.$getBlockExtended(block, transactions);
 
+    logger.info( `bp2: ${blockExtended}`);
     await blocksRepository.$saveBlockInDatabase(blockExtended);
 
     return prepareBlock(blockExtended);
@@ -576,6 +579,7 @@ class Blocks {
     const blockExtended = await this.$getBlockExtended(block, transactions);
     if (Common.indexingEnabled()) {
       delete(blockExtended['coinbaseTx']);
+      logger.info( `bp3: ${blockExtended}`);
       await blocksRepository.$saveBlockInDatabase(blockExtended);
     }
 
