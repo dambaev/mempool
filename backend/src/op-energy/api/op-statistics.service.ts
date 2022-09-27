@@ -1,5 +1,6 @@
 import * as BlueBird from "bluebird";
 import bitcoinApi from "../../api/bitcoin/bitcoin-api-factory";
+import logger from "../../logger";
 
 export class OpStatisticService {
   constructor() {}
@@ -24,17 +25,11 @@ export class OpStatisticService {
             const nbdr =
               (blockSpan * 600 * 100) /
               (startBlock.timestamp - endBlock.timestamp);
-            console.log(
-              `start block: ${startBlockHeight}, end block: ${endBlockHeight}, span: ${blockSpan}, nbdr: ${nbdr}`
-            );
+
             nbdrStatisticsList.push(nbdr);
           } catch (error) {
-            console.log(
-              "Error while calculating nbdr",
-              startBlockHeight,
-              endBlockHeight,
-              error
-            );
+            logger.err(`Error while calculating nbdr ${error}`);
+            throw new Error("Error while calculating nbdr");
           }
         },
         {
@@ -44,15 +39,19 @@ export class OpStatisticService {
       const length = nbdrStatisticsList.length;
       const mean = nbdrStatisticsList.reduce((a, b) => a + b) / length;
       return {
-        avg: mean,
-        stddev: Math.sqrt(
-          nbdrStatisticsList.map((x) => Math.pow(x - mean, 2)).reduce((a, b) => a + b) /
-            length -
-            1
-        ),
+        nbdr: {
+          avg: mean,
+          stddev: Math.sqrt(
+            nbdrStatisticsList
+              .map((x) => Math.pow(x - mean, 2))
+              .reduce((a, b) => a + b) /
+              length -
+              1
+          ),
+        },
       };
     } catch (error) {
-      console.log("Error while calculating nbdr", error);
+      logger.err(`Error while calculating nbdr ${error}`);
       return {
         error: "Something went wrong",
         status: 500,
