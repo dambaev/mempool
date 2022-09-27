@@ -8,7 +8,7 @@
     </ng-container>
   </div>
   <div *ngIf="!isDetailed" class="tank-box--bottom" [ngStyle]="{'background-color': this.color}">
-    <div>{{ timeSpan  }}</div>
+    <div>{{ nbdr }}</div>
   </div>
   <ng-container *ngIf="isDetailed">
     <div class="tank-box--middle" [ngStyle]="{'background-color': this.color}">
@@ -18,7 +18,7 @@
     </div>
     <div class="tank-box--middle" [ngStyle]="{'background-color': this.color}">
       <div class="to-block">{{ toTime * 1000 | date:'yyyy-MM-dd HH:mm' }}</div>
-      <div class="span-block">{{ timeSpan || '?' }}</div>
+      <div class="span-block">{{ nbdr || '?' }}</div>
       <div class="from-block">{{ fromTime * 1000 | date:'yyyy-MM-dd HH:mm' }}</div>
     </div>
   </ng-container>
