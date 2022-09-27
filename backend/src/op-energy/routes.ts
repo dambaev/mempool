@@ -4,6 +4,7 @@ import * as express from 'express';
 import logger from '../logger';
 
 import opEnergyApiService from './api/op-energy.service';
+import opStatisticService from './api/op-statistics.service';
 
 class OpEnergyRoutes {
   public setUpHttpApiRoutes( app: Express) {
@@ -17,6 +18,7 @@ class OpEnergyRoutes {
       .get(config.MEMPOOL.API_URL_PREFIX + 'strikeshistory/mediantime', this.$getTimeStrikesHistory)
       .get(config.MEMPOOL.API_URL_PREFIX + 'slowfastresults/mediantime', this.$getSlowFastResults)
       .post(config.MEMPOOL.API_URL_PREFIX + 'user/displayname', this.$postUserDisplayName)
+      .get(config.MEMPOOL.API_URL_PREFIX + 'statistics/:blockheight/:span', this.$getBlockSpanStatistics)
    ;
   }
   private async $getTimeStrikes(req: Request, res: Response) {
@@ -180,6 +182,12 @@ class OpEnergyRoutes {
       res.status(404).send(`${UUID}: ${e instanceof Error? e.message : e}`);
     }
     logger.info( `${UUID}: PROFILE: end: $getTimeStrikesHistory`);
+  }
+
+  private async $getBlockSpanStatistics(req: Request, res: Response) {
+    const { blockheight, span } = req.params;
+    const statistics = await opStatisticService.calculateStatistics(parseInt(blockheight), parseInt(span));
+    res.json(statistics);
   }
 };
 
