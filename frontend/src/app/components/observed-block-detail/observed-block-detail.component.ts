@@ -130,7 +130,7 @@ export class ObservedBlockDetailComponent implements OnInit, OnDestroy {
                 switchMap((hash) => {
                   this.blockHash = hash;
                   this.location.replaceState(
-                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + '/tetris/blocks/', hash]).toString()
+                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + '/hashstrikes/blocks/', hash]).toString()
                   );
                   return this.electrsApiService.getBlock$(hash);
                 })
@@ -236,19 +236,19 @@ export class ObservedBlockDetailComponent implements OnInit, OnDestroy {
       return;
     }
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight - 2);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/blocks/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/blocks/'),
       block ? block.id : this.block.previousblockhash], { state: { data: { block, blockHeight: this.nextBlockHeight - 2 } } });
   }
 
   navigateToNextBlock() {
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/blocks/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/blocks/'),
       block ? block.id : this.nextBlockHeight], { state: { data: { block, blockHeight: this.nextBlockHeight } } });
   }
 
   navigateToBlockByNumber() {
     const block = this.latestBlocks.find((b) => b.height === this.blockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/blocks/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/blocks/'),
       block ? block.id : this.blockHeight], { state: { data: { block, blockHeight: this.blockHeight } } });
   }
 

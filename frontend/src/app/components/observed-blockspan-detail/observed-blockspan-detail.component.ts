@@ -161,7 +161,7 @@ export class ObservedBlockspanDetailComponent implements OnInit, OnDestroy {
                   this.fromBlockHash = fromHash;
                   this.toBlockHash = toHash;
                   this.location.replaceState(
-                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/tetris/blockspan/`, fromHash, toHash]).toString()
+                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/hashstrikes/blockspan/`, fromHash, toHash]).toString()
                   );
                   return combineLatest([
                     this.electrsApiService.getBlock$(fromHash).pipe(
@@ -268,19 +268,19 @@ export class ObservedBlockspanDetailComponent implements OnInit, OnDestroy {
       return;
     }
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight - 2);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/blockspan/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/blockspan/'),
       block ? block.id : this.fromBlock.previousblockhash], { state: { data: { block, blockHeight: this.nextBlockHeight - 2 } } });
   }
 
   navigateToNextBlock() {
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/blockspan/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/blockspan/'),
       block ? block.id : this.nextBlockHeight], { state: { data: { block, blockHeight: this.nextBlockHeight } } });
   }
 
   navigateToBlockByNumber() {
     const block = this.latestBlocks.find((b) => b.height === this.blockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/blockspan/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/blockspan/'),
       block ? block.id : this.blockHeight], { state: { data: { block, blockHeight: this.blockHeight } } });
   }
 
@@ -332,6 +332,6 @@ export class ObservedBlockspanDetailComponent implements OnInit, OnDestroy {
   }
 
   goDetail(fromBlock, strike) {
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike_detail/'), fromBlock.height, strike.blockHeight, strike.blockHeight, strike.nLockTime, strike.creationTime]);
+    this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/strike_detail/'), fromBlock.height, strike.blockHeight, strike.blockHeight, strike.nLockTime, strike.creationTime]);
   }
 }

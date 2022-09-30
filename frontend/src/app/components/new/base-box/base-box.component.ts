@@ -16,6 +16,7 @@ export class BaseBoxComponent implements OnInit, OnDestroy {
   @Input() totalIconCount: number;
   @Input() fromTime: number;
   @Input() toTime: number;
+  @Input() span: number;
   @Input() isUnknown: boolean;
   @Input() isDetailed: boolean;
   @Input() link: string;
@@ -33,6 +34,10 @@ export class BaseBoxComponent implements OnInit, OnDestroy {
 
   get timeSpan() {
     return this.toHHMMSS(this.toTime - this.fromTime);
+  }
+
+  get nbdr() {
+    return this.span ? (600 * this.span / (this.toTime - this.fromTime)).toFixed(2) : '???'
   }
 
   constructor(

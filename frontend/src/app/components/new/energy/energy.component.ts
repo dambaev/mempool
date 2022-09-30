@@ -48,6 +48,6 @@ export class EnergyComponent implements OnInit, OnDestroy {
   }
 
   energyDetailLink() {
-    return this.relativeUrlPipe.transform(`/tetris/energy_detail/${this.fromBlock.height}/${this.toBlock.height}`);
+    return this.relativeUrlPipe.transform(`/hashstrikes/energy_detail/${this.fromBlock.height}/${this.toBlock.height}`);
   }
 }
