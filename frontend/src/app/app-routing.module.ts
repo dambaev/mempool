@@ -85,7 +85,7 @@ let routes: Routes = [
         component: LatestBlocksComponent,
       },
       {
-        path: 'tetris',
+        path: 'hashstrikes',
         component: StartV2Component,
         children: [
           {
@@ -231,7 +231,7 @@ let routes: Routes = [
             component: LatestBlocksComponent,
           },
           {
-            path: 'tetris',
+            path: 'hashstrikes',
             component: StartV2Component,
             children: [
               {
@@ -379,7 +379,7 @@ let routes: Routes = [
             component: LatestBlocksComponent,
           },
           {
-            path: 'tetris',
+            path: 'hashstrikes',
             component: StartV2Component,
             children: [
               {
@@ -551,7 +551,7 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
         component: LatestBlocksComponent,
       },
       {
-        path: 'tetris',
+        path: 'hashstrikes',
         component: StartV2Component,
         children: [
           {
@@ -704,7 +704,7 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
             component: LatestBlocksComponent,
           },
           {
-            path: 'tetris',
+            path: 'hashstrikes',
             component: StartV2Component,
             children: [
               {

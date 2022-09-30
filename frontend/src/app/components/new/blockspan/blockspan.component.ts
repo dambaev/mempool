@@ -20,11 +20,11 @@ export class BlockspanComponent implements OnInit, OnDestroy {
   }
 
   get fromDetailLink() {
-    return this.relativeUrlPipe.transform(`/tetris/block/${this.fromBlock.height}`);
+    return this.relativeUrlPipe.transform(`/hashstrikes/block/${this.fromBlock.height}`);
   }
 
   get toDetailLink() {
-    return this.relativeUrlPipe.transform(`/tetris/block/${this.toBlock.height}`);
+    return this.relativeUrlPipe.transform(`/hashstrikes/block/${this.toBlock.height}`);
   }
 
   constructor(

@@ -172,7 +172,7 @@ export class StrikeDetailOldComponent implements OnInit, OnDestroy {
                   this.fromBlockHash = fromHash;
                   this.toBlockHash = toHash;
                   this.location.replaceState(
-                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/tetris/strike/`, fromHash, toHash, this.strike.blockHeight, this.strike.nLockTime, this.strike.creationTime]).toString()
+                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/hashstrikes/strike/`, fromHash, toHash, this.strike.blockHeight, this.strike.nLockTime, this.strike.creationTime]).toString()
                   );
                   return combineLatest([
                     this.electrsApiService.getBlock$(fromHash).pipe(
@@ -269,19 +269,19 @@ export class StrikeDetailOldComponent implements OnInit, OnDestroy {
       return;
     }
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight - 2);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/strike/'),
       block ? block.id : this.fromBlock.previousblockhash], { state: { data: { block, blockHeight: this.nextBlockHeight - 2 } } });
   }
 
   navigateToNextBlock() {
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/strike/'),
       block ? block.id : this.nextBlockHeight], { state: { data: { block, blockHeight: this.nextBlockHeight } } });
   }
 
   navigateToBlockByNumber() {
     const block = this.latestBlocks.find((b) => b.height === this.blockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/strike/'),
       block ? block.id : this.blockHeight], { state: { data: { block, blockHeight: this.blockHeight } } });
   }
 

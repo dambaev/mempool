@@ -196,7 +196,7 @@ export class StrikeDetailComponent implements OnInit, OnDestroy {
                   this.fromBlockHash = fromHash;
                   this.toBlockHash = toHash;
                   this.location.replaceState(
-                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/tetris/strike_detail/`, fromHash, toHash, this.strike.blockHeight, this.strike.nLockTime, this.strike.creationTime]).toString()
+                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/hashstrikes/strike_detail/`, fromHash, toHash, this.strike.blockHeight, this.strike.nLockTime, this.strike.creationTime]).toString()
                   );
                   return combineLatest([
                     this.electrsApiService.getBlock$(fromHash).pipe(
@@ -293,19 +293,19 @@ export class StrikeDetailComponent implements OnInit, OnDestroy {
       return;
     }
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight - 2);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike_detail/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/strike_detail/'),
       block ? block.id : this.fromBlock.previousblockhash], { state: { data: { block, blockHeight: this.nextBlockHeight - 2 } } });
   }
 
   navigateToNextBlock() {
     const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike_detail/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/strike_detail/'),
       block ? block.id : this.nextBlockHeight], { state: { data: { block, blockHeight: this.nextBlockHeight } } });
   }
 
   navigateToBlockByNumber() {
     const block = this.latestBlocks.find((b) => b.height === this.blockHeight);
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/strike_detail/'),
+    this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/strike_detail/'),
       block ? block.id : this.blockHeight], { state: { data: { block, blockHeight: this.blockHeight } } });
   }
 
@@ -366,6 +366,6 @@ export class StrikeDetailComponent implements OnInit, OnDestroy {
   }
 
   strikeDetailLink() {
-    return this.relativeUrlPipe.transform(`/tetris/strike_detail/${this.fromBlock.height}/${this.toBlock.height}/${this.strike.blockHeight}/${this.strike.nLockTime}/${this.strike.creationTime}`);
+    return this.relativeUrlPipe.transform(`/hashstrikes/strike_detail/${this.fromBlock.height}/${this.toBlock.height}/${this.strike.blockHeight}/${this.strike.nLockTime}/${this.strike.creationTime}`);
   }
 }

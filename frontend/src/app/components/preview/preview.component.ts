@@ -20,26 +20,26 @@ export class PreviewComponent implements OnInit {
   }
 
   blockspansLink() {
-    return this.relativeUrlPipe.transform('/tetris/blockspans/1');
+    return this.relativeUrlPipe.transform('/hashstrikes/blockspans/1');
   }
 
   pastStrikeDetailLink() {
-    return this.relativeUrlPipe.transform('/tetris/strike_detail/89778/89791/89791/1652239330/1656641994');
+    return this.relativeUrlPipe.transform('/hashstrikes/strike_detail/89778/89791/89791/1652239330/1656641994');
   }
 
   futureStrikeDetailLink() {
-    return this.relativeUrlPipe.transform('/tetris/strike_detail/89778/120000/120000/1652239330/1656641994');
+    return this.relativeUrlPipe.transform('/hashstrikes/strike_detail/89778/120000/120000/1652239330/1656641994');
   }
 
   pastEnergySummaryLink() {
-    return this.relativeUrlPipe.transform('/tetris/energy_summary/89778/89791');
+    return this.relativeUrlPipe.transform('/hashstrikes/energy_summary/89778/89791');
   }
 
   futureEnergySummaryLink() {
-    return this.relativeUrlPipe.transform('/tetris/energy_summary/89778/120000');
+    return this.relativeUrlPipe.transform('/hashstrikes/energy_summary/89778/120000');
   }
 
   pastEnergyDetailLink() {
-    return this.relativeUrlPipe.transform('/tetris/energy_detail/89778/89791');
+    return this.relativeUrlPipe.transform('/hashstrikes/energy_detail/89778/89791');
   }
 }

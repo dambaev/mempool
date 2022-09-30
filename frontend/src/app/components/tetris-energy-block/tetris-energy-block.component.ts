@@ -74,7 +74,7 @@ export class TetrisEnergyBlockComponent implements OnInit, OnDestroy {
   }
 
   blockspanDetailLink() {
-    return this.relativeUrlPipe.transform(`/tetris/blockspan/${this.fromBlock.height}/${this.toBlock.height}`);
+    return this.relativeUrlPipe.transform(`/hashstrikes/blockspan/${this.fromBlock.height}/${this.toBlock.height}`);
   }
 
 }

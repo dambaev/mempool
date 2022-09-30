@@ -1,7 +1,7 @@
 <div class="observed-block-detail">
   <div *ngIf="block" class="text-center bitcoin-block mined-block" id="bitcoin-block-{{ block.height }}" [ngStyle]="blockStyle">
     <div class="block-body">
-      <a [routerLink]="['/tetris/blocks/' | relativeUrl, block.id]" [state]="{ data: { block: block } }">{{ block.height }}</a>
+      <a [routerLink]="['/hashstrikes/blocks/' | relativeUrl, block.id]" [state]="{ data: { block: block } }">{{ block.height }}</a>
       <div>
         <fa-icon [icon]="['fas', 'angle-up']" [fixedWidth]="true" (click)="navigateToNextBlock()"></fa-icon>
         <button class="btn btn-sm btn-primary" (click)="open(content)">Go to</button>

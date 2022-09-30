@@ -156,7 +156,7 @@ export class BlockspansHomeAddstrikeComponent implements OnInit, OnDestroy {
         height: this.lastPastBlock.height + 1
       };
       this.location.replaceState(
-        this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/tetris/blockspans/`, this.span, tipBlock]).toString()
+        this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/hashstrikes/blockspans/`, this.span, tipBlock]).toString()
       );
 
       this.getTimeStrikes();
@@ -290,7 +290,7 @@ export class BlockspansHomeAddstrikeComponent implements OnInit, OnDestroy {
   }
 
   goDetail(fromBlock, toBlock) {
-    this.router.navigate([this.relativeUrlPipe.transform('/tetris/blockspan/'), fromBlock.height, toBlock.height]);
+    this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/blockspan/'), fromBlock.height, toBlock.height]);
   }
 
   addStrike(strike) {
