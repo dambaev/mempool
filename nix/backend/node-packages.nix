@@ -103,6 +103,15 @@ let
         sha512 = "x/7D4jDj/MMkmO6t3p2CSDXTqpwZ/jRsRiJDmaiXabrR9XRo7jwby8HRn7EyK1h24rKFFI7vI0ay4czl6bDOZQ==";
       };
     };
+    "bluebird-3.7.2" = {
+      name = "bluebird";
+      packageName = "bluebird";
+      version = "3.7.2";
+      src = fetchurl {
+        url = "https://registry.npmjs.org/bluebird/-/bluebird-3.7.2.tgz";
+        sha512 = "XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==";
+      };
+    };
     "body-parser-1.19.0" = {
       name = "body-parser";
       packageName = "body-parser";
@@ -882,7 +891,7 @@ let
     name = "mempool-backend";
     packageName = "mempool-backend";
     version = "2.4.0-dev";
-    src = ./.;
+    src = ../../backend;
     dependencies = [
       sources."sprintf-js-1.0.3"
       (sources."argparse-1.0.10" // {
@@ -901,6 +910,7 @@ let
       sources."bech32-2.0.0"
       sources."bip174-2.0.1"
       sources."bitcoinjs-lib-6.0.1"
+      sources."bluebird-3.7.2"
       sources."body-parser-1.19.0"
       sources."bs58-4.0.1"
       sources."bs58check-2.1.2"
@@ -1030,8 +1040,7 @@ in
         "!package.json"
         "!package-lock.json"
       ] args.src;
-      dontBuild = false;
-      buildPhase = "exit 1";
+      dontBuild = true;
       installPhase = "mkdir -p $out; cp -r ./* $out;";
     };
   });
