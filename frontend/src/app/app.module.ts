@@ -96,11 +96,13 @@ import { TetrisAddStrikeComponent } from './components/tetris-add-strike/tetris-
 import { PreviewComponent } from './components/preview/preview.component';
 import { BlockspanComponent } from './components/new/blockspan/blockspan.component';
 import { BaseBoxComponent } from './components/new/base-box/base-box.component';
+import { BaseBoxV2Component } from './components/new/base-box-v2/base-box-v2.component';
 import { ChainworkBoxComponent } from './components/new/chainwork-box/chainwork-box.component';
 import { EnergyComponent } from './components/new/energy/energy.component';
 import { StrikeComponent } from './components/new/strike/strike.component';
 import { EnergySummaryComponent } from './components/new/energy-summary/energy-summary.component';
 import { EnergyDetailComponent } from './components/new/energy-detail/energy-detail.component';
+import { EnergyDetailV2Component } from './components/new/energy-detail-v2/energy-detail-v2.component';
 import { StrikeDetailComponent } from './components/new/strike-detail/strike-detail.component';
 
 @NgModule({
@@ -174,11 +176,13 @@ import { StrikeDetailComponent } from './components/new/strike-detail/strike-det
     SetAccountSecretComponent,
     BlockspanComponent,
     BaseBoxComponent,
+    BaseBoxV2Component,
     ChainworkBoxComponent,
     EnergyComponent,
     StrikeComponent,
     EnergySummaryComponent,
     EnergyDetailComponent,
+    EnergyDetailV2Component,
     StrikeDetailComponent,
   ],
   imports: [
