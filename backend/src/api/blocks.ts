@@ -542,7 +542,7 @@ class Blocks {
     const blockByHash = this.getBlocks().find((b) => b.id === hash);
     if (blockByHash) {
       logger.info( `${hash}: bp0`);
-      logger.info( `${hash}: bp0: ${JSON.stringify(dbBlock}`);
+      logger.info( `${hash}: bp0: ${JSON.stringify(dbBlock)`);
       return blockByHash;
     }
 
@@ -550,7 +550,7 @@ class Blocks {
     if (Common.indexingEnabled()) {
       const dbBlock = await blocksRepository.$getBlockByHash(hash);
       logger.info( `${hash}: bp1`);
-      logger.info( `${hash}: bp1: ${JSON.stringify(dbBlock}`);
+      logger.info( `${hash}: bp1: ${JSON.stringify(dbBlock)`);
       if (dbBlock != null) {
         return prepareBlock(dbBlock);
       }
@@ -564,7 +564,7 @@ class Blocks {
     let block = await bitcoinClient.getBlock(hash);
     block = prepareBlock(block);
     logger.info( `${hash}: bp2`);
-    logger.info( `${hash}: bp2: ${JSON.stringify(dbBlock}`);
+    logger.info( `${hash}: bp2: ${JSON.stringify(dbBlock)`);
 
     // Bitcoin network, add our custom data on top
     const transactions = await this.$getTransactionsExtended(hash, block.height, true);
