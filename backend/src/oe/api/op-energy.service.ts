@@ -89,7 +89,7 @@ export class OpEnergyApiService {
   public verifyBlockHash( rawString: string): BlockHash {
     const hash = rawString.substring( 0, 63);
     if( hash.length < 64) {
-      throw new Error( 'verifyBlockHash: wrong length');
+      throw new Error( `verifyBlockHash: wrong length: ${hash}`);
     }
     return {
       'value': hash,
