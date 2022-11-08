@@ -150,7 +150,7 @@ export class OpEnergyApiService {
     this.websocketService.customMessage( {action: 'checkAccountSecret', data: [ accountSecret] });
   }
 
-  $getBlockByHash( hash: string): Observable<Block> {
+  $getBlock( hash: string): Observable<Block> {
     return this.httpClient.get<Block>(this.apiBaseUrl + this.apiBasePath + '/api/oe/block/' + hash);
   }
 
