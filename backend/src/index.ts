@@ -40,6 +40,7 @@ import bisqRoutes from './api/bisq/bisq.routes';
 import liquidRoutes from './api/liquid/liquid.routes';
 import bitcoinRoutes from './api/bitcoin/bitcoin.routes';
 import fundingTxFetcher from "./tasks/lightning/sync-tasks/funding-tx-fetcher";
+import opBlockHeaderService from './oe/service/op-block-header.service';
 
 class Server {
   private wss: WebSocket.Server | undefined;
@@ -176,6 +177,7 @@ class Server {
 
       await opEnergyIndex.runMainUpdateLoop();
 
+      await opBlockHeaderService.$syncOlderBlockHeader();
       setTimeout(this.runMainUpdateLoop.bind(this), config.MEMPOOL.POLL_RATE_MS);
       this.currentBackendRetryInterval = 5;
     } catch (e) {

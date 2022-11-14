@@ -24,6 +24,12 @@ let
         example = "mempoolacc";
         description = "Account database name of the instance";
       };
+      block_spans_db_name = lib.mkOption {
+        default = null;
+        type = lib.types.str;
+        example = "sblockspans";
+        description = "Block span database name of the instance";
+      };
       db_user = lib.mkOption {
         default = null;
         type = lib.types.str;
@@ -90,6 +96,10 @@ in
         { name = "${cfg.account_db_name}";
         }
       ) eachInstance
+      ) ++ (lib.mapAttrsToList (name: cfg:
+        { name = "${cfg.block_spans_db_name}";
+        }
+      ) eachInstance
       );
       ensureUsers = ( lib.mapAttrsToList (name: cfg:
         { name = "${cfg.db_user}";
@@ -102,6 +112,13 @@ in
         { name = "${cfg.db_user}";
           ensurePermissions = {
             "${cfg.account_db_name}.*" = "ALL PRIVILEGES";
+          };
+        }
+      ) eachInstance
+      ) ++ ( lib.mapAttrsToList (name: cfg:
+        { name = "${cfg.db_user}";
+          ensurePermissions = {
+            "${cfg.block_spans_db_name}.*" = "ALL PRIVILEGES";
           };
         }
       ) eachInstance
@@ -133,6 +150,11 @@ in
           if [ ! -d "${config.services.mysql.dataDir}/${cfg.account_db_name}" ]; then
             ( echo 'CREATE DATABASE `${cfg.account_db_name}`;'
               echo 'use `${cfg.account_db_name}`;'
+            ) | mysql -uroot
+          fi
+          if [ ! -d "${config.services.mysql.dataDir}/${cfg.block_spans_db_name}" ]; then
+            ( echo 'CREATE DATABASE `${cfg.block_spans_db_name}`;'
+              echo 'use `${cfg.block_spans_db_name}`;'
             ) | mysql -uroot
           fi
           cat "${initial_script cfg}" | mysql -uroot

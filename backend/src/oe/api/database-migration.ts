@@ -2,7 +2,7 @@ import { DB } from '../database';
 import logger from '../../logger';
 
 class OpEnergyDatabaseMigration {
-  private static currentVersion = 6;
+  private static currentVersion = 7;
 
   public async $initializeOrMigrateDatabase( UUID: string): Promise<void> {
     logger.info(`${UUID}: OE MIGRATION: running migrations`);
@@ -44,6 +44,10 @@ class OpEnergyDatabaseMigration {
       }
       case 5: {
         await this.$createTableSinglePlayerGuesses( UUID);
+        break;
+      }
+      case 6: {
+        await this.$createTableBlockHeaders(UUID);
         break;
       }
       default: {
@@ -188,6 +192,31 @@ class OpEnergyDatabaseMigration {
       throw new Error( err_msg);
     }
     logger.info( 'OE MOGRATION: OpEneryDatabaseMigration.$createTableSinglePlayerGuesses completed');
+  }
+
+  private async $createTableBlockHeaders(UUID: string): Promise<void>{
+    const query = `CREATE TABLE \`blockheaders\` (
+      \`height\` int unsigned NOT NULL DEFAULT 0,
+      \`version\` int unsigned NOT NULL DEFAULT 0,
+      \`previous_block_hash\` varchar(65) DEFAULT NULL,
+      \`merkle_root\` varchar(65) NOT NULL DEFAULT '',
+      \`timestamp\` timestamp NOT NULL DEFAULT current_timestamp(),
+      \`difficulty\` double unsigned NOT NULL DEFAULT 0,
+      \`nonce\` bigint(20) unsigned NOT NULL DEFAULT 0,
+      \`reward\` bigint(20) unsigned NOT NULL DEFAULT 0,
+      \`mediantime\` bigint(20) unsigned,
+      \`chainwork\` varchar(65),
+      PRIMARY KEY (\`height\`)
+    );`;
+    try {
+      await DB.$with_blockSpanPool( UUID, async (connection) => {
+        await DB.$blockSpanPool_query<any>(UUID, connection, query, []);
+      });
+    } catch(e) {
+      const err_msg = `OE MIGRATION: $createTableBlockHeaders error ${( e instanceof Error ? e.message : e)}`;
+      throw new Error( err_msg);
+    }
+    logger.info( 'OE MOGRATION: OpEneryDatabaseMigration.$createTableBlockHeaders completed');
   }
 
 }

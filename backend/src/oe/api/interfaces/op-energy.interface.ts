@@ -73,3 +73,16 @@ export interface SlowFastGuessValue {
 export interface BlockHash {
   value: string;
 }
+
+export interface BlockHeader {
+  height: number;
+  version: number;
+  previousBlockHash: string;
+  merkleRoot: string;
+  timestamp: number;
+  difficulty: number;
+  nonce: number;
+  reward: number;
+  chainWork: string;
+  medianTime: number;
+}
