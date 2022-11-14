@@ -28,6 +28,7 @@ import icons from './api/liquid/icons';
 import { Common } from './api/common';
 
 import opEnergyIndex from './op-energy/index';
+import opBlockHeaderService from './op-energy/service/op-block-header.service';
 
 class Server {
   private wss: WebSocket.Server | undefined;
@@ -144,6 +145,7 @@ class Server {
       blocks.$generateBlockDatabase();
 
       await opEnergyIndex.runMainUpdateLoop();
+      await opBlockHeaderService.$syncOlderBlockHeader();
       setTimeout(this.runMainUpdateLoop.bind(this), config.MEMPOOL.POLL_RATE_MS);
       this.currentBackendRetryInterval = 5;
     } catch (e) {

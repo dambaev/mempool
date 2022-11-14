@@ -68,3 +68,14 @@ export interface NLockTime {
 export interface SlowFastGuessValue {
   value: number;
 }
+
+export interface BlockHeader {
+  height: number;
+  version: number;
+  previousBlockHash: string;
+  merkleRoot: string;
+  timestamp: number;
+  difficulty: number;
+  nonce: number;
+  reward: number;
+}

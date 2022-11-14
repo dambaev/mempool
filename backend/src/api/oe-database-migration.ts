@@ -3,7 +3,7 @@ import { DB } from '../database';
 import logger from '../logger';
 
 class OpEnergyDatabaseMigration {
-  private static currentVersion = 7;
+  private static currentVersion = 8;
 
   public async $initializeOrMigrateDatabase( UUID: string): Promise<void> {
     logger.info(`${UUID}: OE MIGRATION: running migrations`);
@@ -52,8 +52,12 @@ class OpEnergyDatabaseMigration {
         await this.$createTableSinglePlayerResults(UUID);
         break;
       }
+      case 7: {
+        await this.$createTableBlockHeaders(UUID);
+        break;
+      }
       default: {
-        throw new Error( `${UUID} OE MIGRATION: OpEnergyDatabaseMigration.$createOrMigrateTables: unsupported revision requested: ` + JSON.stringify(revision));
+        throw new Error( `${UUID} OE MIGR ATION: OpEnergyDatabaseMigration.$createOrMigrateTables: unsupported revision requested: ` + JSON.stringify(revision));
       }
     }
     await this.$increaseRevision( revision);
@@ -245,6 +249,29 @@ class OpEnergyDatabaseMigration {
       throw new Error( err_msg);
     }
     logger.info( 'OE MOGRATION: OpEneryDatabaseMigration.$createTableSinglePlayerResults completed');
+  }
+
+  private async $createTableBlockHeaders(UUID: string){
+    const query = `CREATE TABLE \`blockheaders\` (
+      \`height\` int unsigned NOT NULL DEFAULT 0,
+      \`version\` int unsigned NOT NULL DEFAULT 0,
+      \`previous_block_hash\` varchar(65) DEFAULT NULL,
+      \`merkle_root\` varchar(65) NOT NULL DEFAULT '',
+      \`timestamp\` timestamp NOT NULL DEFAULT current_timestamp(),
+      \`difficulty\` double unsigned NOT NULL DEFAULT 0,
+      \`nonce\` bigint(20) unsigned NOT NULL DEFAULT 0,
+      \`reward\` bigint(20) unsigned NOT NULL DEFAULT 0,
+      PRIMARY KEY (\`height\`)
+    );`;
+    try {
+      await DB.$with_blockSpanPool( UUID, async (connection) => {
+        await DB.$blockSpanPool_query<any>(UUID, connection, query, []);
+      });
+    } catch(e) {
+      let err_msg = `OE MIGRATION: $createTableBlockHeaders error ${( e instanceof Error ? e.message : e)}`;
+      throw new Error( err_msg);
+    }
+    logger.info( 'OE MOGRATION: OpEneryDatabaseMigration.$createTableBlockHeaders completed');
   }
 
 }

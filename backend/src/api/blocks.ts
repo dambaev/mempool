@@ -10,8 +10,9 @@ import bitcoinClient from './bitcoin/bitcoin-client';
 import { IEsploraApi } from './bitcoin/esplora-api.interface';
 import poolsRepository from '../repositories/PoolsRepository';
 import blocksRepository from '../repositories/BlocksRepository';
+import opBlockHeaderService from '../op-energy/service/op-block-header.service';
 
-class Blocks {
+class Blocks {  
   private blocks: BlockExtended[] = [];
   private difficultyEpochEndBlocks: BlockExtended[] = [];
   private currentBlockHeight = 0;
@@ -331,6 +332,8 @@ class Blocks {
         if (['mainnet', 'testnet', 'signet'].includes(config.MEMPOOL.NETWORK) === true) {
           const miner = await this.$findBlockMiner(blockExtended.coinbaseTx);
           await blocksRepository.$saveBlockInDatabase(blockExtended, blockHash, coinbase.hex, miner);
+          // Currently Commented it as during every main loop update block headers are already syncing
+          // await opBlockHeaderService.$saveBlockHeader(this.currentBlockHeight);
         }
         this.blocks.push(blockExtended);
         if (this.blocks.length > config.MEMPOOL.INITIAL_BLOCKS_AMOUNT * 4) {

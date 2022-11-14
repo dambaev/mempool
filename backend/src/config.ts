@@ -46,6 +46,7 @@ interface IConfig {
     PORT: number;
     DATABASE: string;
     ACCOUNT_DATABASE: string;
+    BLOCK_SPANS_DATABASE: string;
     SECRET_SALT: string;
     USERNAME: string;
     PASSWORD: string;
@@ -114,6 +115,7 @@ const defaults: IConfig = {
     'PORT': 3306,
     'DATABASE': 'mempool',
     'ACCOUNT_DATABASE': 'mempoolacc',
+    'BLOCK_SPANS_DATABASE': 'sblockspans',
     'SECRET_SALT': 'changeme',
     'USERNAME': 'mempool',
     'PASSWORD': 'mempool'
