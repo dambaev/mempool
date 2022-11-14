@@ -3,37 +3,24 @@
     <div class="blockspan">
       <div class="d-flex" style="margin-bottom: 110px;">
         <app-energy [fromBlock]="fromBlock" [toBlock]="toBlock" [isDetailed]="true"></app-energy>
-        <app-chainwork-box [fromChainwork]="fromBlock.chainwork" [toChainwork]="toBlock.chainwork" [isDetailed]="true" [link]="energyDetailLink()"></app-chainwork-box>
+        <app-chainwork-box [fromChainwork]="fromBlock.chainwork" [toChainwork]="toBlock.chainwork" [isDetailed]="true"
+          [link]="energyDetailLink()"></app-chainwork-box>
+        <div class="app-block-statistics">
+          <div class="tank-box--middle nbdr-statistics">
+          </div>
+          <div class="tank-box--middle nbdr-avg-statistics border-left border-dark text-center">
+            <div class="nbdr-avg pt-4">
+              <div>Average: {{ nbdrAvg }} </div>
+              <div>Stddev: {{ nbdrStddev }}</div>
+              <div class="pt-2">Last 100 blockspans</div>
+            </div>
+            <div class="tank-box--footer text-center border-top border-dark pt-1"
+              [ngStyle]="{'background-color': this.color}">
+              Statistics</div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="blockspan-table">
-      <div class="content">
-        <table class="table table-borderless energy-statistics text-dark">
-          <tbody>
-            <tr>
-              <td class="font-weight-bold ">Average</td>
-              <td class="border-dark border-right border-2 energy-font">123</td>
-              <td class="font-weight-bold">Average</td>
-              <td class="energy-font">123</td>
-            </tr>
-            <tr class="border-dark">
-              <td class="font-weight-bold">Std dev</td>
-              <td class="border-dark border-right border-2 energy-font">123</td>
-              <td class="font-weight-bold">Std dev</td>
-              <td class="energy-font">123</td>
-            </tr>
-            <tr class="border-dark border-top border-2">
-              <td colspan="2" class="text-center font-weight-bold border-dark border-right border-2">Time</td>
-              <td colspan="2" class="text-center font-weight-bold border-dark border-left">Hashes</td>
-            </tr>
-            <tr class="border-dark border-top border-2">
-              <td colspan="4" class="text-center font-weight-bold">Statistics(last 100 blockspans)</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <!-- <div class="blockspan-table">
+      <!-- <div class="blockspan-table">
       <h3>Blockspan < {{ fromBlock.height }} - {{ toBlock.height }} ></h3>
       <div class="content">
         <table class="table table-borderless table-striped">
@@ -84,5 +71,5 @@
         </table>
       </div>
     </div> -->
+    </div>
   </div>
-</div>

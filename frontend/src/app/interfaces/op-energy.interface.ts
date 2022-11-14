@@ -40,3 +40,9 @@ export interface SlowFastResult {
   nLockTime: number;
   creationTime: number;
 }
+export interface NbdrStatistics {
+  nbdr: {
+    avg: number,
+    stddev: number
+  }
+}

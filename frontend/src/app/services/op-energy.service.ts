@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpParams, HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { TimeStrike, SlowFastGuess, TimeStrikesHistory, SlowFastResult } from '../interfaces/op-energy.interface';
+import { TimeStrike, SlowFastGuess, TimeStrikesHistory, SlowFastResult, NbdrStatistics } from '../interfaces/op-energy.interface';
 import { StateService } from './state.service';
 
 @Injectable({
@@ -171,4 +171,25 @@ export class OpEnergyApiService {
     return this.httpClient.get<SlowFastResult | null>(this.apiBaseUrl + this.apiBasePath + '/api/v1/slowfastresults/mediantime', {params});
   }
 
+  // returns nbdr statics for last 100 blocks 
+  $getNbdrStatistics(
+    blockHeight: number,
+    span: number
+  ): Observable<NbdrStatistics | null> {
+    var accountToken;
+    // get account token from the state service
+    let subscription = this.stateService.$accountToken.subscribe(
+      (newAccountToken) => {
+        accountToken = newAccountToken;
+      }
+    );
+
+    subscription.unsubscribe();
+
+    return this.httpClient.get<NbdrStatistics | null>(
+      this.apiBaseUrl + this.apiBasePath +
+        `/api/v1/statistics/${blockHeight}/${span}`,
+      {}
+    );
+  }
 }

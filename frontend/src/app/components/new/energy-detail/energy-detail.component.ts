@@ -1,3 +1,4 @@
+import { ToastrService } from "ngx-toastr";
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
@@ -10,7 +11,7 @@ import { SeoService } from 'src/app/services/seo.service';
 import { WebsocketService } from 'src/app/services/websocket.service';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
 import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
-import { TimeStrike } from 'src/app/interfaces/op-energy.interface';
+import { NbdrStatistics, TimeStrike } from 'src/app/interfaces/op-energy.interface';
 import { OpEnergyApiService } from 'src/app/services/op-energy.service';
 
 @Component({
@@ -47,6 +48,8 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
 
   timeStrikes: TimeStrike[] = [];
   showStrikes: boolean;
+  color = 'red';
+  statistics: NbdrStatistics;
 
   get span(): number {
     return (this.toBlock.height - this.fromBlock.height);
@@ -85,6 +88,7 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
     private seoService: SeoService,
     private websocketService: WebsocketService,
     private relativeUrlPipe: RelativeUrlPipe,
+    private toaster: ToastrService,
   ) { }
 
   ngOnInit() {
@@ -219,6 +223,7 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
       this.stateService.$accountToken.pipe(take(1)).subscribe(res => {
         this.getTimeStrikes();
       })
+      this.getNbdrStatistics();
     }),
     (error) => {
       this.error = error;
@@ -339,5 +344,27 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
 
   energyDetailLink() {
     return this.relativeUrlPipe.transform(`/hashstrikes/energy_detail/${this.fromBlock.height}/${this.toBlock.height}`);
+  }
+
+  getNbdrStatistics() {
+    this.opEnergyApiService
+      .$getNbdrStatistics(this.fromBlock.height, this.span + 1)
+      .subscribe(
+        (statistics) => (this.statistics = statistics),
+        (err) => {
+          this.toaster.error(
+            "Error occurred while fetching nbdr statistics!",
+            "Failed!"
+          );
+        }
+      );
+  }
+
+  get nbdrAvg(): string {
+    return this.statistics?.nbdr?.avg?.toFixed(2) || '-';
+  }
+
+  get nbdrStddev(): string {
+    return this.statistics?.nbdr?.stddev.toFixed(2) || '-';
   }
 }
