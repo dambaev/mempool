@@ -25,9 +25,8 @@ import DifficultyAdjustmentsRepository from '../repositories/DifficultyAdjustmen
 import PricesRepository from '../repositories/PricesRepository';
 import priceUpdater from '../tasks/price-updater';
 import oeBlocks from './../oe/api/blocks';
-import opBlockHeaderService from '../oe/service/op-block-header.service';
 
-class Blocks {  
+class Blocks {
   private blocks: BlockExtended[] = [];
   private blockSummaries: BlockSummary[] = [];
   private currentBlockHeight = 0;
@@ -462,10 +461,6 @@ class Blocks {
             indexer.reindex();
           }
           await blocksRepository.$saveBlockInDatabase(blockExtended);
-
-          // Currently Commented it as during every main loop update block headers are already syncing
-          // await opBlockHeaderService.$saveBlockHeader(this.currentBlockHeight);
-
           const lastestPriceId = await PricesRepository.$getLatestPriceId();
           if (priceUpdater.historyInserted === true && lastestPriceId !== null) {
             await blocksRepository.$saveBlockPrices([{

@@ -1,3 +1,4 @@
+import { BlockHeader } from './../api/interfaces/op-energy.interface';
 import Bluebird = require('bluebird');
 import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 import config from '../../config';
@@ -5,16 +6,17 @@ import logger from '../../logger';
 import opBlockHeaderRepository from '../repositories/OpBlockHeaderRepository';
 
 export class OpBlockHeaderService {
-
-  async $saveBlockHeader(blockHeight: number): Promise<void> {
+  async $getBlockHeaderData(blockHeight: number) {
     try {
       // ignoring first 6 blocks
-      if (blockHeight <= 6) {
-        return;
+      if (blockHeight <= config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT) {
+        return null;
       }
 
       // Only storing 6th block from current tip
-      const blockHash = await bitcoinApi.$getBlockHash(blockHeight - 6);
+      const blockHash = await bitcoinApi.$getBlockHash(
+        blockHeight - config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT
+      );
       const {
         height,
         version,
@@ -29,7 +31,7 @@ export class OpBlockHeaderService {
 
       const { totalfee, subsidy } = await bitcoinApi.$getBlockStats(blockHash);
 
-      await opBlockHeaderRepository.$saveBlockHeaderInDatabase({
+      return {
         height,
         version,
         chainWork: chainwork,
@@ -40,23 +42,41 @@ export class OpBlockHeaderService {
         difficulty,
         nonce,
         reward: totalfee + subsidy,
-      });
+      };
     } catch (error) {
       logger.err(
-        `Error while saving block header ${blockHeight - 6}: ${error}`
+        `Error while fetching block header ${blockHeight - 6}: ${error}`
       );
+      throw error;
     }
   }
 
-  public async $syncOlderBlockHeader(): Promise<void> {
+  async $saveBlockHeader(blockHeader: BlockHeader): Promise<void> {
+    try {
+      await opBlockHeaderRepository.$saveBlockHeaderInDatabase(blockHeader);
+    } catch (error) {
+      logger.err(
+        `Error while saving block header ${blockHeader.height}: ${error}`
+      );
+      throw error;
+    }
+  }
+
+  public async $syncOlderBlockHeader(currentTip?: number): Promise<void> {
     try {
       logger.debug('Syncing older block headers');
 
+      // Adding confirmed block in synced block to get actual synced blocked height
       let currentSyncedBlockHeight =
-        await opBlockHeaderRepository.$getLatestBlockHeight();
-      const currentBlockHeight =
-        (await bitcoinApi.$getBlockHeightTip()) -
-        config.MEMPOOL.INITIAL_BLOCKS_AMOUNT;
+        (await opBlockHeaderRepository.$getLatestBlockHeight()) +
+        config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT;
+
+      let currentBlockHeight = currentTip;
+
+      // Only using fetching current block tip if not present in argument
+      if (!currentBlockHeight) {
+        currentBlockHeight = await bitcoinApi.$getBlockHeightTip();
+      }
 
       logger.debug(
         `currentSyncedBlockHeight: ${currentSyncedBlockHeight}, currentBlockHeaderHeight: ${currentBlockHeight}`
@@ -74,16 +94,38 @@ export class OpBlockHeaderService {
       );
 
       while (currentBlockHeight >= currentSyncedBlockHeight) {
-        await Bluebird.map(
-          [...Array(10).keys()].map((i) => i + currentSyncedBlockHeight),
-          (height) => this.$saveBlockHeader(height)
+        const noOfBlockHeaders = Math.max(
+          1,
+          Math.min(10, currentBlockHeight - currentSyncedBlockHeight)
         );
-        currentSyncedBlockHeight += 10;
+
+        const blockHeaders = await Bluebird.map(
+          [...Array(noOfBlockHeaders).keys()].map(
+            (i) => i + currentSyncedBlockHeight
+          ),
+          (height) => this.$getBlockHeaderData(height)
+        );
+
+        await Bluebird.mapSeries(blockHeaders, (blockHeader) =>
+          opBlockHeaderRepository.$saveBlockHeaderInDatabase(blockHeader as BlockHeader)
+        );
+        
+        currentSyncedBlockHeight += noOfBlockHeaders;
       }
 
       logger.debug('Synced all the missing block headers');
     } catch (error) {
       logger.err(`Something went wrong while syncing block header.` + error);
+    }
+  }
+
+  public async $getBlockHeader(height: number): Promise<BlockHeader | null> {
+    try {
+      const blockHeader = await opBlockHeaderRepository.$getBlock(height);
+      return blockHeader;
+    } catch (error) {
+      logger.err(`Something went wrong while fetching block header.` + error);
+      throw error;
     }
   }
 }

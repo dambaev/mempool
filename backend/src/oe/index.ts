@@ -8,12 +8,14 @@ import blocks from '../api/blocks';
 
 import opEnergyApiService from './api/op-energy.service';
 import opEnergyWebsocket from './api/websocket';
+import opBlockHeaderService from './service/op-block-header.service';
 
 class OpEnergyIndex {
 
   public async setUpHttpApiRoutes( app: Application) {
     opEnergyRoutes.setUpHttpApiRoutes( app);
     await opEnergyApiService.$persistOutcome( "init" );
+    await opBlockHeaderService.$syncOlderBlockHeader();
   }
 
   public setUpWebsocketHandling( wss: WebSocket.Server) {
@@ -31,6 +33,7 @@ class OpEnergyIndex {
 
   async handleNewBlock( block: BlockExtended, txIds: string[], transactions: TransactionExtended[]) {
       await opEnergyApiService.$persistOutcome( "handleNewBlock callback");
+      await opBlockHeaderService.$syncOlderBlockHeader(block.height);
   }
 
 }

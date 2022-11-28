@@ -177,7 +177,6 @@ class Server {
 
       await opEnergyIndex.runMainUpdateLoop();
 
-      await opBlockHeaderService.$syncOlderBlockHeader();
       setTimeout(this.runMainUpdateLoop.bind(this), config.MEMPOOL.POLL_RATE_MS);
       this.currentBackendRetryInterval = 5;
     } catch (e) {

@@ -1,7 +1,7 @@
-import {Promise} from "bluebird";
-import bitcoinApi from "../../api/bitcoin/bitcoin-api-factory";
-import logger from "../../logger";
-import {BlockHeight} from "./interfaces/op-energy.interface";
+import { Promise } from 'bluebird';
+import logger from '../../logger';
+import opBlockHeaderService from '../service/op-block-header.service';
+import { BlockHeader, BlockHeight } from './interfaces/op-energy.interface';
 
 export class OpStatisticService {
   constructor() {}
@@ -15,14 +15,12 @@ export class OpStatisticService {
           const startBlockHeight = blockHeight.value - i * blockSpan;
           const endBlockHeight = startBlockHeight - blockSpan + 1;
           try {
-            const startblockHash = await bitcoinApi.$getBlockHash(
+            const startBlock = (await opBlockHeaderService.$getBlockHeader(
               startBlockHeight - blockSpan - i
-            );
-            const startBlock = await bitcoinApi.$getBlock(startblockHash);
-            const endblockHash = await bitcoinApi.$getBlockHash(
+            )) as BlockHeader;
+            const endBlock = (await opBlockHeaderService.$getBlockHeader(
               endBlockHeight - 1 - blockSpan - i
-            );
-            const endBlock = await bitcoinApi.$getBlock(endblockHash);
+            )) as BlockHeader;
             const nbdr =
               (blockSpan * 600 * 100) /
               (startBlock.timestamp - endBlock.timestamp);
@@ -30,11 +28,11 @@ export class OpStatisticService {
             nbdrStatisticsList.push(nbdr);
           } catch (error) {
             logger.err(`Error while calculating nbdr ${error}`);
-            throw new Error("Error while calculating nbdr");
+            throw new Error('Error while calculating nbdr');
           }
         },
         {
-          concurrency: 20,
+          concurrency: 5,
         }
       );
       const length = nbdrStatisticsList.length;
@@ -46,15 +44,14 @@ export class OpStatisticService {
             nbdrStatisticsList
               .map((x) => Math.pow(x - mean, 2))
               .reduce((a, b) => a + b) /
-              length -
-              1
+              (length - 1)
           ),
         },
       };
     } catch (error) {
       logger.err(`Error while calculating nbdr ${error}`);
       return {
-        error: "Something went wrong",
+        error: 'Something went wrong',
         status: 500,
       };
     }
