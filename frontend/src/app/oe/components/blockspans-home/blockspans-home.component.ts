@@ -7,9 +7,10 @@ import { StateService } from 'src/app/services/state.service';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { specialBlocks } from 'src/app/app.constants';
 import { ElectrsApiService } from 'src/app/services/electrs-api.service';
-import { switchMap, skip, map } from 'rxjs/operators';
+import { switchMap, skip, map, take } from 'rxjs/operators';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
 import { OpEnergyApiService } from 'src/app/oe/services/op-energy.service';
+import { OeStateService } from 'src/app/oe/services/state.service';
 import { TimeStrike } from 'src/app/oe/interfaces/op-energy.interface';
 
 interface PastBlock extends Block {
@@ -77,6 +78,7 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
     private location: Location,
     private toastr: ToastrService,
     public stateService: StateService,
+    private oeStateService: OeStateService,
     private route: ActivatedRoute,
     private router: Router,
     private relativeUrlPipe: RelativeUrlPipe,
@@ -109,12 +111,16 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
       switchMap((params: ParamMap) =>
         params.get('tip')
         ? of({...params})
-        : this.stateService.blocks$.pipe(
-            map(block => ({
-              ...params,
-              tip: block[0].height
-            }))
-          ))
+        : this.oeStateService.latestReceivedBlock$
+            .pipe(take(1)) // don't follow any future update of this object
+            .pipe(
+              switchMap((block: Block) => of ({
+                  ...params,
+                  tip: block.height
+                })
+              )
+            )
+      )
     ).subscribe((params: any) => {
       const span: string = params.params.span || '';
       const tip: string = params.params.tip || params.tip || '';
