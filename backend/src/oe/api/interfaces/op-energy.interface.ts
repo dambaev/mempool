@@ -77,6 +77,7 @@ export interface BlockHash {
 export interface BlockHeader {
   height: number;
   version: number;
+  currentBlockHash: string;
   previousBlockHash: string;
   merkleRoot: string;
   timestamp: number;
@@ -85,4 +86,8 @@ export interface BlockHeader {
   reward: number;
   chainWork: string;
   medianTime: number;
+}
+
+export interface ConfirmedBlockHeight {
+  value: number
 }

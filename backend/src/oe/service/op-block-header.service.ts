@@ -1,4 +1,4 @@
-import { BlockHeader } from './../api/interfaces/op-energy.interface';
+import { BlockHeader, BlockHeight, ConfirmedBlockHeight } from './../api/interfaces/op-energy.interface';
 import Bluebird = require('bluebird');
 import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 import config from '../../config';
@@ -6,16 +6,12 @@ import logger from '../../logger';
 import opBlockHeaderRepository from '../repositories/OpBlockHeaderRepository';
 
 export class OpBlockHeaderService {
-  async $getBlockHeaderData(blockHeight: number) {
+  async $getBlockHeaderData(blockHeight: ConfirmedBlockHeight) {
     try {
-      // ignoring first 6 blocks
-      if (blockHeight <= config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT) {
-        return null;
-      }
 
       // Only storing 6th block from current tip
       const blockHash = await bitcoinApi.$getBlockHash(
-        blockHeight - config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT
+        blockHeight.value
       );
       const {
         height,
@@ -42,47 +38,35 @@ export class OpBlockHeaderService {
         difficulty,
         nonce,
         reward: totalfee + subsidy,
+        currentBlockHash: blockHash
       };
     } catch (error) {
       logger.err(
-        `Error while fetching block header ${blockHeight - 6}: ${error}`
+        `Error while fetching block header ${blockHeight.value}: ${error}`
       );
       throw error;
     }
   }
 
-  async $saveBlockHeader(blockHeader: BlockHeader): Promise<void> {
-    try {
-      await opBlockHeaderRepository.$saveBlockHeaderInDatabase(blockHeader);
-    } catch (error) {
-      logger.err(
-        `Error while saving block header ${blockHeader.height}: ${error}`
-      );
-      throw error;
-    }
-  }
-
-  public async $syncOlderBlockHeader(currentTip?: number): Promise<void> {
+  public async $syncOlderBlockHeader(UUID: string, currentTip?: number): Promise<void> {
     try {
       logger.debug('Syncing older block headers');
 
-      // Adding confirmed block in synced block to get actual synced blocked height
-      let currentSyncedBlockHeight =
-        (await opBlockHeaderRepository.$getLatestBlockHeight()) +
-        config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT;
+      let { value: currentSyncedBlockHeight } = await opBlockHeaderRepository.$getLatestBlockHeight(UUID);
 
-      let currentBlockHeight = currentTip;
 
       // Only using fetching current block tip if not present in argument
-      if (!currentBlockHeight) {
-        currentBlockHeight = await bitcoinApi.$getBlockHeightTip();
+      if (!currentTip) {
+        currentTip = await bitcoinApi.$getBlockHeightTip();
       }
+      const { value: latestConfirmedBlockHeight } = this.verifyConfirmedBlockHeight(currentTip - config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT, { value: currentTip });
+
 
       logger.debug(
-        `currentSyncedBlockHeight: ${currentSyncedBlockHeight}, currentBlockHeaderHeight: ${currentBlockHeight}`
+        `currentSyncedBlockHeight: ${currentSyncedBlockHeight}, latestConfirmedBlockHeight: ${latestConfirmedBlockHeight}`
       );
 
-      if (currentSyncedBlockHeight >= currentBlockHeight) {
+      if (currentSyncedBlockHeight >= latestConfirmedBlockHeight) {
         logger.debug('Already synced block headers.');
         return;
       }
@@ -90,26 +74,26 @@ export class OpBlockHeaderService {
       currentSyncedBlockHeight += 1;
 
       logger.debug(
-        `Syncing block header from #${currentSyncedBlockHeight} to #${currentBlockHeight}`
+        `Syncing block header from #${currentSyncedBlockHeight} to #${latestConfirmedBlockHeight}`
       );
 
-      while (currentBlockHeight >= currentSyncedBlockHeight) {
+      while (latestConfirmedBlockHeight >= currentSyncedBlockHeight) {
         const noOfBlockHeaders = Math.max(
           1,
-          Math.min(10, currentBlockHeight - currentSyncedBlockHeight)
+          Math.min(10, latestConfirmedBlockHeight - currentSyncedBlockHeight)
         );
 
         const blockHeaders = await Bluebird.map(
           [...Array(noOfBlockHeaders).keys()].map(
             (i) => i + currentSyncedBlockHeight
           ),
-          (height) => this.$getBlockHeaderData(height)
+          (height) => this.$getBlockHeaderData({ value: height })
         );
 
         await Bluebird.mapSeries(blockHeaders, (blockHeader) =>
-          opBlockHeaderRepository.$saveBlockHeaderInDatabase(blockHeader as BlockHeader)
+          opBlockHeaderRepository.$saveBlockHeaderInDatabase(UUID, blockHeader as BlockHeader)
         );
-        
+
         currentSyncedBlockHeight += noOfBlockHeaders;
       }
 
@@ -119,14 +103,24 @@ export class OpBlockHeaderService {
     }
   }
 
-  public async $getBlockHeader(height: number): Promise<BlockHeader | null> {
+  public async $getBlockHeader(UUID: string, height: number): Promise<BlockHeader | null> {
     try {
-      const blockHeader = await opBlockHeaderRepository.$getBlock(height);
+      const blockHeader = await opBlockHeaderRepository.$getBlock(UUID, height);
       return blockHeader;
     } catch (error) {
       logger.err(`Something went wrong while fetching block header.` + error);
       throw error;
     }
+  }
+
+  public verifyConfirmedBlockHeight(blockHeight: number, currentTip: BlockHeight): ConfirmedBlockHeight {
+    if (blockHeight <= config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT) {
+      throw new Error('block height haven\'t been confirmed');
+    }
+    if (blockHeight > currentTip.value - config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT) {
+      throw new Error('block height haven\'t been confirmed');
+    }
+    return { value: blockHeight };
   }
 }
 

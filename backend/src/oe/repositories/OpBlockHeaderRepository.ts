@@ -1,17 +1,15 @@
 import logger from '../../logger';
-import { BlockHeader }  from '../api/interfaces/op-energy.interface';
-import opEnergyApiService from '../api/op-energy.service';
+import { BlockHeader, ConfirmedBlockHeight } from '../api/interfaces/op-energy.interface';
 import { DB } from '../database';
 
 class OpBlockHeaderRepository {
   /**
-   * Save indexed block data in the databasen
+   * Save indexed block data in the database
    */
   public async $saveBlockHeaderInDatabase(
+    UUID: string,
     blockHeader: BlockHeader
   ): Promise<void> {
-    
-    const UUID = await opEnergyApiService.$generateRandomHash();
 
     const {
       height,
@@ -23,25 +21,26 @@ class OpBlockHeaderRepository {
       nonce,
       reward,
       medianTime,
-      chainWork
+      chainWork,
+      currentBlockHash
     } = blockHeader;
 
     try {
       const query = `INSERT INTO blockheaders(
-        height,  version, previous_block_hash, merkle_root,
+        height, version, current_block_hash, previous_block_hash, merkle_root,
         timestamp,  difficulty, nonce, reward, mediantime, chainwork
       ) VALUE (
-        ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
         FROM_UNIXTIME(?), ?, ?, ?, ?, ?
       )`;
 
-      const params: (string|number)[] = [
-        height, version, previousBlockHash, merkleRoot, timestamp, difficulty, 
+      const params: (string | number)[] = [
+        height, version, currentBlockHash, previousBlockHash, merkleRoot, timestamp, difficulty,
         nonce, reward, medianTime, chainWork
       ];
 
-      await DB.$with_blockSpanPool( UUID, async (connection) => {
-        await DB.$blockSpanPool_query( UUID, connection, query, params);
+      await DB.$with_blockSpanPool(UUID, async (connection) => {
+        await DB.$profile_query(UUID, connection, query, params, 'blockSpanPool.query');
       });
     } catch (error) {
       logger.err('$saveBlockHeaderInDatabase() error' + (error instanceof Error ? error.message : error));
@@ -49,33 +48,30 @@ class OpBlockHeaderRepository {
     }
   }
 
-  public async $getLatestBlockHeight(): Promise<number> {
+  public async $getLatestBlockHeight(UUID: string): Promise<ConfirmedBlockHeight> {
     try {
       const query = `select height from blockheaders order by height desc limit 1`;
-      const UUID = await opEnergyApiService.$generateRandomHash();
-      return await DB.$with_blockSpanPool( UUID, async (connection) => {
-        const [result] = await DB.$blockSpanPool_query( UUID, connection, query, []);
-        return result[0] ? result[0]['height'] : 0;
+      return await DB.$with_blockSpanPool(UUID, async (connection) => {
+        const [result] = await DB.$profile_query(UUID, connection, query, [], 'blockSpanPool.query');
+        return { value: result[0] ? result[0]['height'] : 0};
       });
-      return 0;
-    } catch(error) {
+    } catch (error) {
       logger.err(`Something went wrong while finding latest block height.` + error);
       throw error;
     }
   }
 
-  public async $getBlock(height: number): Promise<BlockHeader> {
+  public async $getBlock(UUID: string, height: number): Promise<BlockHeader> {
     try {
       const query = `select * from blockheaders where height = ?`;
       const params: (number)[] = [
         height
       ];
-      const UUID = await opEnergyApiService.$generateRandomHash();
-      return await DB.$with_blockSpanPool( UUID, async (connection) => {
-        const [result] = await DB.$blockSpanPool_query( UUID, connection, query, params);
+      return await DB.$with_blockSpanPool(UUID, async (connection) => {
+        const [result] = await DB.$profile_query(UUID, connection, query, params, 'blockSpanPool.query');
         return result[0];
       });
-    } catch(error) {
+    } catch (error) {
       logger.err(`Something went wrong while finding latest block height.` + error);
       throw error;
     }

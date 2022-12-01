@@ -461,6 +461,7 @@ class Blocks {
             indexer.reindex();
           }
           await blocksRepository.$saveBlockInDatabase(blockExtended);
+
           const lastestPriceId = await PricesRepository.$getLatestPriceId();
           if (priceUpdater.historyInserted === true && lastestPriceId !== null) {
             await blocksRepository.$saveBlockPrices([{

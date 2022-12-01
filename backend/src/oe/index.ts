@@ -15,7 +15,7 @@ class OpEnergyIndex {
   public async setUpHttpApiRoutes( app: Application) {
     opEnergyRoutes.setUpHttpApiRoutes( app);
     await opEnergyApiService.$persistOutcome( "init" );
-    await opBlockHeaderService.$syncOlderBlockHeader();
+    await opBlockHeaderService.$syncOlderBlockHeader('init');
   }
 
   public setUpWebsocketHandling( wss: WebSocket.Server) {
@@ -33,7 +33,7 @@ class OpEnergyIndex {
 
   async handleNewBlock( block: BlockExtended, txIds: string[], transactions: TransactionExtended[]) {
       await opEnergyApiService.$persistOutcome( "handleNewBlock callback");
-      await opBlockHeaderService.$syncOlderBlockHeader(block.height);
+      await opBlockHeaderService.$syncOlderBlockHeader('handleNewBlock callback', block.height);
   }
 
 }

@@ -24,13 +24,6 @@ export class DB {
     return ({ value: connection} as PrivatePoolConnection);
   }
 
-  public static async $accountPool_query<T extends RowDataPacket[][] | RowDataPacket[] | OkPacket | OkPacket[] | ResultSetHeader>( UUID: string, connection: PrivatePoolConnection, query: string, args: any | any[] | { [param: string]: any }): Promise<[T, FieldPacket[]]> {
-    logger.info( `${UUID} PROFILE: start: accountPool.query`);
-    var result = await connection.value.query<T>( query, args);
-    logger.info( `${UUID} PROFILE: end: accountPool.query`);
-    return result;
-  }
-
   private static accountPool_release(UUID: string, connection: PrivatePoolConnection) {
     logger.info( `${UUID} PROFILE: start: accountPool.release`);
     connection.value.release();
@@ -56,28 +49,28 @@ export class DB {
   private static async $blockSpanPool_getConnection(UUID: string): Promise<PrivatePoolConnection> {
     logger.info( `${UUID} PROFILE: start: blockSpanPool.getConnection`);
     const connection = await private_DB.blockSpanPool.getConnection();
-    private_DB.connections_count++;
+    private_DB.blockspan_connections_count++;
     logger.info( `${UUID} PROFILE: end: blockSpanPool.getConnection, current connections count ${private_DB.connections_count}`);
     return ({ value: connection} as PrivatePoolConnection);
   }
   
-  public static async $blockSpanPool_query<T extends RowDataPacket[][] | RowDataPacket[] | OkPacket | OkPacket[] | ResultSetHeader>( UUID: string, connection: PrivatePoolConnection, query: string, args: any | any[] | { [param: string]: any }): Promise<[T, FieldPacket[]]> {
-    logger.info( `${UUID} PROFILE: start: blockSpanPool.query`);
-    var result = await connection.value.query<T>( query, args);
-    logger.info( `${UUID} PROFILE: end: blockSpanPool.query`);
+  public static async $profile_query<T extends RowDataPacket[][] | RowDataPacket[] | OkPacket | OkPacket[] | ResultSetHeader>( UUID: string, connection: PrivatePoolConnection, query: string, args: any | any[] | { [param: string]: any }, label = "accountPool.query"): Promise<[T, FieldPacket[]]> {
+    logger.info( `${UUID} PROFILE query ${label}: start`);
+    const result = await connection.value.query<T>( query, args);
+    logger.info( `${UUID} PROFILE query ${label}: end`);
     return result;
   }
   
   private static blockSpanPool_release(UUID: string, connection: PrivatePoolConnection) {
     logger.info( `${UUID} PROFILE: start: blockSpanPool.release`);
     connection.value.release();
-    private_DB.connections_count--;
+    private_DB.blockspan_connections_count--;
     logger.info( `${UUID} PROFILE: end: blockSpanPool.release, current connections count ${private_DB.connections_count}`);
   }
 
   public static async $with_blockSpanPool<T>(UUID: string, fn: ((conn: PrivatePoolConnection) => Promise<T>)): Promise<T> {
     const connection = await DB.$blockSpanPool_getConnection( UUID);
-    var released = false;
+    let released = false;
     try {
       const result = await fn( connection);
       DB.blockSpanPool_release( UUID, connection);
@@ -94,12 +87,13 @@ export class DB {
 
 class private_DB {
   static connections_count: number = 0; // for profiling purposes
+  static blockspan_connections_count: number = 0; // for blockspan connection count
   static accountPool = createPool({
     host: config.DATABASE.HOST,
     port: config.DATABASE.PORT,
     database: config.DATABASE.ACCOUNT_DATABASE,
     user: config.DATABASE.USERNAME,
-    password: config.DATABASE.PASSWORD,
+    password: config.DATABASE .PASSWORD,
     connectionLimit: 10,
     supportBigNumbers: true,
     waitForConnections: false,

@@ -101,9 +101,9 @@ export class OpEnergyApiService {
     const query1 = 'UPDATE users SET last_log_time=NOW() WHERE id = ?';
     try {
       return await DB.$with_accountPool<UserId>( UUID, async (connection) => {
-        const [[raw]] = await DB.$accountPool_query<any>( UUID, connection, query, [ accountToken.accountToken]);
+        const [[raw]] = await DB.$profile_query<any>( UUID, connection, query, [ accountToken.accountToken]);
         // update last_log_time field
-        const _ = await DB.$accountPool_query<any>( UUID, connection, query1, [ raw.id]);
+        const _ = await DB.$profile_query<any>( UUID, connection, query1, [ raw.id]);
         return {
           'userId': raw.id,
           'userName': raw.display_name,
@@ -124,7 +124,7 @@ export class OpEnergyApiService {
     const query = "INSERT INTO users (secret_hash, display_name, creation_time,last_log_time) VALUES (?,?,NOW(),NOW())";
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
-        const [raw] = await DB.$accountPool_query<any>( UUID
+        const [raw] = await DB.$profile_query<any>( UUID
                                                       , connection
                                                       , query
                                                       , [ accountToken.accountToken.slice(0,64) // secret_hash
@@ -152,7 +152,7 @@ export class OpEnergyApiService {
     const query = 'SELECT id,block_height,nlocktime,UNIX_TIMESTAMP(creation_time) as creation_time FROM timestrikes';
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
-        const [result] = await DB.$accountPool_query<any>( UUID, connection, query, [ ]);
+        const [result] = await DB.$profile_query<any>( UUID, connection, query, [ ]);
         return result.map( (record) => {
           return ({
             'id': { 'value': record.id},
@@ -174,7 +174,7 @@ export class OpEnergyApiService {
     const query = 'INSERT INTO timestrikes (user_id,block_height,nlocktime,creation_time) VALUES (?,?,?,FROM_UNIXTIME(?))';
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
-        const [result] = await DB.$accountPool_query<any>( UUID, connection, query, [ userId.userId, blockHeight.value, nlocktime.value, now]);
+        const [result] = await DB.$profile_query<any>( UUID, connection, query, [ userId.userId, blockHeight.value, nlocktime.value, now]);
         const timeStrike = ({
             'blockHeight': blockHeight.value,
             'nLockTime': nlocktime.value,
@@ -200,7 +200,7 @@ export class OpEnergyApiService {
                    WHERE timestrikes.block_height = ? AND timestrikes.nlocktime = ?';
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
-        const [result] = await DB.$accountPool_query<any>( UUID, connection, query, [ blockHeight.value, nlockTime.value ]);
+        const [result] = await DB.$profile_query<any>( UUID, connection, query, [ blockHeight.value, nlockTime.value ]);
         return result.map( (record) => {
           return ({
             'guess': record.guess == 0? "slow" : "fast",
@@ -224,7 +224,7 @@ export class OpEnergyApiService {
     const query = 'INSERT INTO slowfastguesses (user_id, timestrike_id, guess, creation_time) VALUES(?,?,?,FROM_UNIXTIME(?))';
     try {
       const timeSlowFastGuess = await DB.$with_accountPool( UUID, async (connection) => {
-        const [result] = await DB.$accountPool_query<any>( UUID, connection, query, [ userId.userId, timestrike_id.value, guess.value, now]);
+        const [result] = await DB.$profile_query<any>( UUID, connection, query, [ userId.userId, timestrike_id.value, guess.value, now]);
         return ({
           'guess': guess.value == 0 ? "slow" : "fast",
           'blockHeight': blockHeight.value,
@@ -246,7 +246,7 @@ export class OpEnergyApiService {
     const query = 'SELECT id FROM timestrikes WHERE block_height = ? AND nlocktime = ?';
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
-        const [[result]] = await DB.$accountPool_query<any>( UUID, connection, query, [ blockHeight.value, nLockTime.value ]);
+        const [[result]] = await DB.$profile_query<any>( UUID, connection, query, [ blockHeight.value, nLockTime.value ]);
         return {
           'value': result.id,
         };
@@ -269,7 +269,7 @@ export class OpEnergyApiService {
 
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
-        const [result] = await DB.$accountPool_query<any>( UUID, connection, query, [ displayName.value.slice(0,30), userId.userId]);
+        const [result] = await DB.$profile_query<any>( UUID, connection, query, [ displayName.value.slice(0,30), userId.userId]);
         return displayName.value;
       });
     } catch(e) {
@@ -281,7 +281,7 @@ export class OpEnergyApiService {
 
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
-      const [result] = await DB.$accountPool_query<any>( UUID, connection, query, [ blockHeight.value ]);
+      const [result] = await DB.$profile_query<any>( UUID, connection, query, [ blockHeight.value ]);
         return result.map( (record) => {
           return ({
             'id': { 'value': record.id},
@@ -326,7 +326,7 @@ export class OpEnergyApiService {
                    FROM timestrikeshistory INNER JOIN users ON timestrikeshistory.user_id = users.id';
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
-        const [result] = await DB.$accountPool_query<any>( UUID, connection, query, [ ]);
+        const [result] = await DB.$profile_query<any>( UUID, connection, query, [ ]);
         return result.map( (record) => {
           return ({
             'owner': record.display_name,
@@ -354,7 +354,7 @@ export class OpEnergyApiService {
                    WHERE slowfastresults.user_id = ? AND timestrikeshistory.block_height = ? AND timestrikeshistory.nlocktime = ?';
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
-        const [results] = await DB.$accountPool_query<any>( UUID, connection, query, [ userId.userId, blockHeight.value, nlockTime.value ]);
+        const [results] = await DB.$profile_query<any>( UUID, connection, query, [ userId.userId, blockHeight.value, nlockTime.value ]);
         if (results.length < 1) {
           return null;
         } else {
@@ -380,17 +380,17 @@ export class OpEnergyApiService {
 
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
-        const [timestrikesguesses] = await DB.$accountPool_query<any>( UUID, connection, 'SELECT id,user_id,block_height,nlocktime,UNIX_TIMESTAMP(creation_time) as creation_time FROM timestrikes WHERE block_height <= ?', [ confirmedHeight ]);
+        const [timestrikesguesses] = await DB.$profile_query<any>( UUID, connection, 'SELECT id,user_id,block_height,nlocktime,UNIX_TIMESTAMP(creation_time) as creation_time FROM timestrikes WHERE block_height <= ?', [ confirmedHeight ]);
         for( var i = 0; i < timestrikesguesses.length; i++) {
           const blockHash = await bitcoinApi.$getBlockHash(timestrikesguesses[i].block_height);
           const block = await bitcoinApi.$getBlock(blockHash);
-          const [[timestrikehistory_id]] = await DB.$accountPool_query<any>( UUID, connection
+          const [[timestrikehistory_id]] = await DB.$profile_query<any>( UUID, connection
             , 'INSERT INTO timestrikeshistory (user_id, block_height, nlocktime, mediantime, creation_time, archivetime, wrong_results, right_results) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), NOW(),0,0) returning id'
             , [ timestrikesguesses[i].user_id, timestrikesguesses[i].block_height, timestrikesguesses[i].nlocktime, block.mediantime, timestrikesguesses[i].creation_time ]
           ); // store result into separate table
           let wrong_results = 0;
           let right_results = 0;
-          const [guesses] = await DB.$accountPool_query<any>( UUID, connection
+          const [guesses] = await DB.$profile_query<any>( UUID, connection
             , 'SELECT id,user_id,timestrike_id,guess,UNIX_TIMESTAMP(creation_time) as creation_time FROM slowfastguesses WHERE timestrike_id = ?'
             , [ timestrikesguesses[i].id ]
           );
@@ -406,7 +406,7 @@ export class OpEnergyApiService {
             } else {
               wrong_results ++;
             }
-            await DB.$accountPool_query<any>( UUID, connection
+            await DB.$profile_query<any>( UUID, connection
               , 'INSERT INTO slowfastresults (user_id,timestrikehistory_id,guess,result,creation_time) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?))'
               , [ guesses[j].user_id
                 , timestrikehistory_id.id
@@ -415,17 +415,17 @@ export class OpEnergyApiService {
                 , guesses[j].creation_time
                 ]
             );
-            await DB.$accountPool_query<any>( UUID, connection
+            await DB.$profile_query<any>( UUID, connection
               , 'DELETE FROM slowfastguesses WHERE id=?'
               , [ guesses[j].id
                 ]
             );
           }
-          await DB.$accountPool_query<any>( UUID, connection
+          await DB.$profile_query<any>( UUID, connection
             , 'UPDATE timestrikeshistory SET wrong_results = ?, right_results = ? WHERE id = ?'
             , [ wrong_results, right_results, timestrikehistory_id.id ]
           ); // persist some statistics
-          await DB.$accountPool_query<any>( UUID, connection, 'DELETE FROM timestrikes WHERE id = ?;' , [ timestrikesguesses[i].id ]); // remove time strike guess as it now in the timestrikehistory table
+          await DB.$profile_query<any>( UUID, connection, 'DELETE FROM timestrikes WHERE id = ?;' , [ timestrikesguesses[i].id ]); // remove time strike guess as it now in the timestrikehistory table
         }
       });
     } catch(e) {

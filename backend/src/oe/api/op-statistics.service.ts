@@ -15,10 +15,10 @@ export class OpStatisticService {
           const startBlockHeight = blockHeight.value - i * blockSpan;
           const endBlockHeight = startBlockHeight - blockSpan + 1;
           try {
-            const startBlock = (await opBlockHeaderService.$getBlockHeader(
+            const startBlock = (await opBlockHeaderService.$getBlockHeader('nbdr',
               startBlockHeight - blockSpan - i
             )) as BlockHeader;
-            const endBlock = (await opBlockHeaderService.$getBlockHeader(
+            const endBlock = (await opBlockHeaderService.$getBlockHeader('nbdr',
               endBlockHeight - 1 - blockSpan - i
             )) as BlockHeader;
             const nbdr =
