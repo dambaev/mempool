@@ -28,7 +28,7 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
   network = '';
   allBlocks: PastBlock[] = [];
   pastBlocks: PastBlock[] = [];
-  indexArray = [1, 3, 5, 7, 9, 11];
+  indexArray = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21];
   lastPastBlock: PastBlock;
   emptyBlocks: Block[] = this.mountEmptyBlocks();
   markHeight: number;
@@ -153,7 +153,9 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
           switchMap(hash => this.opEnergyApiService.$getBlock(hash))
         )
       )
-    ).subscribe((blocks: any[]) => {
+    )
+    .pipe(take(1))
+    .subscribe((blocks: any[]) => {
       this.pastBlocks = blocks;
       this.cd.markForCheck();
       console.log('pastBlocks...', this.pastBlocks)
