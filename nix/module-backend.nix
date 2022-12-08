@@ -153,6 +153,9 @@ in
           ];
         serviceConfig = {
           Type = "simple";
+          Restart = "always"; # we want to keep service always running, especially, now development instance is relying on ssh tunnel which can restart as well leading to op-energy restart as well
+          StartLimitIntervalSec = 0;
+          StartLimitBurst = 0;
         };
         path = with pkgs; [
           nodejs
