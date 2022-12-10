@@ -80,7 +80,7 @@ git commit overlays/op-energy -m "overlays/op-energy: switch to op-energy-new-fe
 nixos-rebuild switch
 ```
 
-6 test your changes by navigating with your browser to http://dropletIP/signet
+6 test your changes by navigating with your browser to http://dropletIP/signet for signet or with http://dropletIP/ for mainnet.
 
 7 when you will be ready, create pull request to merge your changes into op-energy-master branch. After the merge, production instances will switch to the new version.
 
@@ -151,6 +151,7 @@ cd ..
 ```
 nix-shell overlays/op-energy-development/overlays/op-energy/nix/shell.nix
 ./overlays/op-energy-development/overlays/op-energy/nix/gen-psk.sh /etc/nixos/private/ signet
+./overlays/op-energy-development/overlays/op-energy/nix/gen-psk.sh /etc/nixos/private/ mainnet
 exit
 ```
 
@@ -270,10 +271,18 @@ npm run build
 npm run start
 ```
 
-4 (NOTE: this option is not needed in case if you are using local backend instance running from the part below) start ssh session into some existing instance of op-energy. In this example, I will use development instance running signet backend:
+4 (NOTE: this option is not needed in case if you are using local backend instance running from the part below) start ssh session into some existing instance of op-energy.
+
+for development with signet backend:
 
 ```
 ssh root@<dropletIP> -L8999:127.0.0.1:8995 "while true; do sleep 10s; echo ping; done"
+```
+
+for development with mainnet backend:
+
+```
+ssh root@<dropletIP> -L8999:127.0.0.1:8999 "while true; do sleep 10s; echo ping; done"
 ```
 
 5 open browser and navigate to "http://localhost:4200"
@@ -293,20 +302,29 @@ Although, the recommended development path is to update from git and use `nixos-
 4 setup SSH session with port forwarding:
 
 ```
-ssh root@<dropletIP> -L38332:127.0.0.1:38332 -L60601:127.0.0.1:60601 -L3306:127.0.0.1:3306  "while true; do echo ping; sleep 10s; done"
+ssh root@<dropletIP> -L8332:127.0.0.1:8332 -L38332:127.0.0.1:38332 -L60601:127.0.0.1:60601 -L3306:127.0.0.1:3306  "while true; do echo ping; sleep 10s; done"
 ```
 
 5 copy backend config from the development instance from the cloud to get proper secrets:
+
+5.1 either for signet:
 
 ```
 cd backend
 scp root@<dropletIP>:$(ssh root@<dropletIP> "cat \$(cat /etc/systemd/system/op-energy-backend-signet.service | grep ExecStart | awk 'BEGIN{FS=\"=\"}{print \$2}') | grep CONFIG | awk 'BEGIN{FS=\"\\\"\"}{print \$2}'") ./mempool-config.json
 ```
 
-6 replace listen port with 8999:
+5.1.1 replace listen port with 8999:
 
 ```
 sed -i -E 's/8995/8999/' mempool-config.json
+```
+
+5.2 or for mainnet:
+
+```
+cd backend
+scp root@<dropletIP>:$(ssh root@<dropletIP> "cat \$(cat /etc/systemd/system/op-energy-backend-mainnet.service | grep ExecStart | awk 'BEGIN{FS=\"=\"}{print \$2}') | grep CONFIG | awk 'BEGIN{FS=\"\\\"\"}{print \$2}'") ./mempool-config.json
 ```
 
 6 build and run development version of the backend:
@@ -316,8 +334,9 @@ npm install
 npm run build
 npm run start
 ```
-now backend will be running on port 8999
-you can walk `Frontend development. The fast flow` to setup frontend instance which will use such backend instance so you can use fast development flow both for frontend and backend. In this case, step 4 from frontend's development how to should be skipped.
+
+7. now backend will be running on port 8999
+you can walk through `Frontend development. The fast flow` to setup frontend instance which will use such backend instance so you can use fast development flow both for frontend and backend. In this case, step 4 from frontend's development how to should be skipped.
 
 # Managing Op-Energy instances
 
