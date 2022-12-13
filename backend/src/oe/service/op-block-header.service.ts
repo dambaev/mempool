@@ -113,6 +113,16 @@ export class OpBlockHeaderService {
     }
   }
 
+  public async $getBlockHeadersByHeights(UUID: string, bockHeights: number[]): Promise<BlockHeader[]> {
+    try {
+      const blockHeader = await opBlockHeaderRepository.$getBlockHeadersByHeights(UUID, bockHeights);
+      return blockHeader;
+    } catch (error) {
+      logger.err(`Something went wrong while fetching block header range.` + error);
+      throw error;
+    }
+  }
+
   public verifyConfirmedBlockHeight(blockHeight: number, currentTip: BlockHeight): ConfirmedBlockHeight {
     if (blockHeight <= config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT) {
       throw new Error('block height haven\'t been confirmed');

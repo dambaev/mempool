@@ -27,7 +27,7 @@ let
       block_spans_db_name = lib.mkOption {
         default = null;
         type = lib.types.str;
-        example = "sblockspans";
+        example = "op_energy_mainnet_blockchain";
         description = "Block span database name of the instance";
       };
       db_user = lib.mkOption {

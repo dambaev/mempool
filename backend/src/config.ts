@@ -73,7 +73,7 @@ interface IConfig {
     PORT: number;
     DATABASE: string;
     ACCOUNT_DATABASE: string;
-    BLOCK_SPANS_DATABASE: string;
+    OP_ENERGY_BLOCKCHAIN_DATABASE: string;
     SECRET_SALT: string;
     USERNAME: string;
     PASSWORD: string;
@@ -179,7 +179,7 @@ const defaults: IConfig = {
     'PORT': 3306,
     'DATABASE': 'mempool',
     'ACCOUNT_DATABASE': 'mempoolacc',
-    'BLOCK_SPANS_DATABASE': 'sblockspans',
+    'OP_ENERGY_BLOCKCHAIN_DATABASE': 'op_energy_mainnet_blockchain',
     'SECRET_SALT': 'changeme',
     'USERNAME': 'mempool',
     'PASSWORD': 'mempool'

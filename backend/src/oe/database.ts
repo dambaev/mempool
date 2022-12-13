@@ -50,7 +50,7 @@ export class DB {
     logger.info( `${UUID} PROFILE: start: blockSpanPool.getConnection`);
     const connection = await private_DB.blockSpanPool.getConnection();
     private_DB.blockspan_connections_count++;
-    logger.info( `${UUID} PROFILE: end: blockSpanPool.getConnection, current connections count ${private_DB.connections_count}`);
+    logger.info( `${UUID} PROFILE: end: blockSpanPool.getConnection, current connections count ${private_DB.blockspan_connections_count}`);
     return ({ value: connection} as PrivatePoolConnection);
   }
   
@@ -65,7 +65,7 @@ export class DB {
     logger.info( `${UUID} PROFILE: start: blockSpanPool.release`);
     connection.value.release();
     private_DB.blockspan_connections_count--;
-    logger.info( `${UUID} PROFILE: end: blockSpanPool.release, current connections count ${private_DB.connections_count}`);
+    logger.info( `${UUID} PROFILE: end: blockSpanPool.release, current connections count ${private_DB.blockspan_connections_count}`);
   }
 
   public static async $with_blockSpanPool<T>(UUID: string, fn: ((conn: PrivatePoolConnection) => Promise<T>)): Promise<T> {
@@ -101,7 +101,7 @@ class private_DB {
   static blockSpanPool = createPool({
     host: config.DATABASE.HOST,
     port: config.DATABASE.PORT,
-    database: config.DATABASE.BLOCK_SPANS_DATABASE,
+    database: config.DATABASE.OP_ENERGY_BLOCKCHAIN_DATABASE,
     user: config.DATABASE.USERNAME,
     password: config.DATABASE.PASSWORD,
     connectionLimit: 10,

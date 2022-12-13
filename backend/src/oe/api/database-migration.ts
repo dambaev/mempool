@@ -195,18 +195,17 @@ class OpEnergyDatabaseMigration {
   }
 
   private async $createTableBlockHeaders(UUID: string): Promise<void>{
-    const query = `CREATE TABLE \`blockheaders\` (
+    const query = `CREATE TABLE \`blocks\` (
       \`height\` int unsigned NOT NULL,
       \`version\` int unsigned NOT NULL,
       \`current_block_hash\` varchar(65) NOT NULL,
       \`previous_block_hash\` varchar(65) DEFAULT NULL,
       \`merkle_root\` varchar(65) NOT NULL,
-      \`timestamp\` timestamp NOT NULL DEFAULT current_timestamp(),
+      \`timestamp\` int unsigned NOT NULL,
       \`difficulty\` double unsigned NOT NULL,
-      \`nonce\` bigint(20) unsigned NOT NULL,
-      \`reward\` bigint(20) unsigned NOT NULL,
-      \`mediantime\` bigint(20) unsigned NOT NULL,
-      \`chainwork\` varchar(65),
+      \`nonce\` bigint unsigned NOT NULL,
+      \`reward\` bigint unsigned NOT NULL,
+      \`mediantime\` int unsigned NOT NULL,
       PRIMARY KEY (\`height\`)
     );`;
     try {

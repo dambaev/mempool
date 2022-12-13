@@ -4,37 +4,37 @@ import opBlockHeaderService from '../service/op-block-header.service';
 import { BlockHeader, BlockHeight } from './interfaces/op-energy.interface';
 
 export class OpStatisticService {
-  constructor() {}
+  constructor() { }
 
   async calculateStatistics(blockHeight: BlockHeight, blockSpan: number) {
-    const nbdrStatisticsList: number[] = [];
-    try {
-      await Promise.map(
-        Array.from(Array(100).keys()),
-        async (i) => {
-          const startBlockHeight = blockHeight.value - i * blockSpan;
-          const endBlockHeight = startBlockHeight - blockSpan + 1;
-          try {
-            const startBlock = (await opBlockHeaderService.$getBlockHeader('nbdr',
-              startBlockHeight - blockSpan - i
-            )) as BlockHeader;
-            const endBlock = (await opBlockHeaderService.$getBlockHeader('nbdr',
-              endBlockHeight - 1 - blockSpan - i
-            )) as BlockHeader;
-            const nbdr =
-              (blockSpan * 600 * 100) /
-              (startBlock.timestamp - endBlock.timestamp);
 
-            nbdrStatisticsList.push(nbdr);
-          } catch (error) {
-            logger.err(`Error while calculating nbdr ${error}`);
-            throw new Error('Error while calculating nbdr');
-          }
-        },
-        {
-          concurrency: 5,
+    try {
+
+      const nbdrStatisticsList: number[] = [];
+      let lastblock = blockHeight.value;
+      const blockNumbers = [] as number[];
+      // creating array of last 100 blocks spans
+      for (let i = 0; i < 100; i += 2) {
+        blockNumbers.push(lastblock, lastblock - blockSpan);
+        lastblock = lastblock - (blockSpan + 1);
+      }
+      try {
+        const blockHeadersList = await opBlockHeaderService.$getBlockHeadersByHeights('nbdr', blockNumbers);
+
+        for (let i = 0; i < 100; i += 2) {
+          const startBlock = blockHeadersList[i + 1];
+          const endBlock = blockHeadersList[i];
+
+          const nbdr =
+            (blockSpan * 600 * 100) /
+            (startBlock.timestamp - endBlock.timestamp);
+
+          nbdrStatisticsList.push(nbdr);
         }
-      );
+      } catch (error) {
+        logger.err(`Error while calculating nbdr ${error}`);
+        throw new Error('Error while calculating nbdr');
+      }
       const length = nbdrStatisticsList.length;
       const mean = nbdrStatisticsList.reduce((a, b) => a + b) / length;
       return {
@@ -44,7 +44,7 @@ export class OpStatisticService {
             nbdrStatisticsList
               .map((x) => Math.pow(x - mean, 2))
               .reduce((a, b) => a + b) /
-              (length - 1)
+            (length - 1)
           ),
         },
       };

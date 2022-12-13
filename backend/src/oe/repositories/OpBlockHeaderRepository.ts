@@ -26,12 +26,12 @@ class OpBlockHeaderRepository {
     } = blockHeader;
 
     try {
-      const query = `INSERT INTO blockheaders(
+      const query = `INSERT INTO blocks(
         height, version, current_block_hash, previous_block_hash, merkle_root,
-        timestamp,  difficulty, nonce, reward, mediantime, chainwork
+        timestamp,  difficulty, nonce, reward, mediantime
       ) VALUE (
         ?, ?, ?, ?, ?,
-        FROM_UNIXTIME(?), ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?
       )`;
 
       const params: (string | number)[] = [
@@ -50,7 +50,7 @@ class OpBlockHeaderRepository {
 
   public async $getLatestBlockHeight(UUID: string): Promise<ConfirmedBlockHeight> {
     try {
-      const query = `select height from blockheaders order by height desc limit 1`;
+      const query = `select height from blocks order by height desc limit 1`;
       return await DB.$with_blockSpanPool(UUID, async (connection) => {
         const [result] = await DB.$profile_query(UUID, connection, query, [], 'blockSpanPool.query');
         return { value: result[0] ? result[0]['height'] : 0};
@@ -63,7 +63,7 @@ class OpBlockHeaderRepository {
 
   public async $getBlock(UUID: string, height: number): Promise<BlockHeader> {
     try {
-      const query = `select * from blockheaders where height = ?`;
+      const query = `select * from blocks where height = ?`;
       const params: (number)[] = [
         height
       ];
@@ -73,6 +73,22 @@ class OpBlockHeaderRepository {
       });
     } catch (error) {
       logger.err(`Something went wrong while finding latest block height.` + error);
+      throw error;
+    }
+  }
+
+  public async $getBlockHeadersByHeights(UUID: string, blockHeights: number[]): Promise<BlockHeader[]> {
+    try {
+      const query = `select * from blocks where height in (?)`;
+      const params: (number[])[] = [
+        blockHeights
+      ];
+      return await DB.$with_blockSpanPool(UUID, async (connection) => {
+        const [result] = await DB.$profile_query(UUID, connection, query, params, 'blockSpanPool.query');
+        return result as BlockHeader[];
+      });
+    } catch (error) {
+      logger.err(`Something went wrong while finding block height range.` + error);
       throw error;
     }
   }
