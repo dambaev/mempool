@@ -124,6 +124,14 @@ let
       cp -r ${nodeDependencies}/lib/node_modules ./node_modules
       # allow user to write
       chmod -R u+w ./node_modules
+      find ./node_modules -name '*.js' -exec chmod a+x {} \;
+      patchShebangs ./node_modules/@angular/cli/bin/ng.js
+      for FILE in $(find ./node_modules/.bin/); do
+        chmod a+x $FILE
+        chmod a+x $(readlink -f $FILE)
+        patchShebangs $FILE
+        patchShebangs $(readlink -f $FILE)
+      done
       # we already have populated node_modules dir, so we don't need to run `npm install`
       npm run build
     '';
