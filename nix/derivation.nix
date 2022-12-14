@@ -19,6 +19,7 @@ let
     buildInputs = with pkgs;
     [ nodejs
       python
+      git
     ];
     preConfigure = "cd backend";
     buildPhase = ''
