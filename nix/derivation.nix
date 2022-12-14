@@ -132,6 +132,7 @@ let
         patchShebangs $FILE
         patchShebangs $(readlink -f $FILE)
       done
+      export DOCKER_COMMIT_HASH=$(git rev-parse --short HEAD)
       # we already have populated node_modules dir, so we don't need to run `npm install`
       npm run build
     '';
