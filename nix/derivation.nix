@@ -93,6 +93,7 @@ let
       assetsJsonUrl
       assetsTestnet
       rsync
+      git
     ];
     preConfigure = ''
       cd frontend
