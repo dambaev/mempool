@@ -6,10 +6,9 @@ import logger from '../../logger';
 import opBlockHeaderRepository from '../repositories/OpBlockHeaderRepository';
 
 export class OpBlockHeaderService {
-  async $getBlockHeaderData(blockHeight: ConfirmedBlockHeight) {
+  async $getBlockHeaderData(blockHeight: ConfirmedBlockHeight): Promise<BlockHeader> {
     try {
 
-      // Only storing 6th block from current tip
       const blockHash = await bitcoinApi.$getBlockHash(
         blockHeight.value
       );
@@ -105,7 +104,7 @@ export class OpBlockHeaderService {
 
   public async $getBlockHeader(UUID: string, height: number): Promise<BlockHeader | null> {
     try {
-      const blockHeader = await opBlockHeaderRepository.$getBlock(UUID, height);
+      const blockHeader = await opBlockHeaderRepository.$getBlock(UUID, { value: height });
       return blockHeader;
     } catch (error) {
       logger.err(`Something went wrong while fetching block header.` + error);

@@ -42,8 +42,7 @@ export class OpStatisticService {
           avg: mean,
           stddev: Math.sqrt(
             nbdrStatisticsList
-              .map((x) => Math.pow(x - mean, 2))
-              .reduce((a, b) => a + b) /
+            .reduce((a, x) => a + (Math.pow(x - mean, 2))) /
             (length - 1)
           ),
         },
