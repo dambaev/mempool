@@ -93,6 +93,7 @@ import { BlockspanComponent } from '../oe/components/blockspan/blockspan.compone
 import { EnergyComponent } from '../oe/components/energy/energy.component';
 import { StrikeComponent } from '../oe/components/strike/strike.component';
 import { EnergySummaryComponent } from '../oe/components/energy-summary/energy-summary.component';
+import { StrikeSummaryComponent } from '../oe/components/strike-summary/strike-summary.component';
 import { EnergyDetailComponent } from '../oe/components/energy-detail/energy-detail.component';
 import { StrikeDetailComponent } from '../oe/components/strike-detail/strike-detail.component';
 
@@ -180,6 +181,7 @@ import { StrikeDetailComponent } from '../oe/components/strike-detail/strike-det
     EnergyComponent,
     StrikeComponent,
     EnergySummaryComponent,
+    StrikeSummaryComponent,
     EnergyDetailComponent,
     StrikeDetailComponent,
   ],
@@ -301,6 +303,7 @@ import { StrikeDetailComponent } from '../oe/components/strike-detail/strike-det
     EnergyComponent,
     StrikeComponent,
     EnergySummaryComponent,
+    StrikeSummaryComponent,
     EnergyDetailComponent,
     StrikeDetailComponent,
   ]

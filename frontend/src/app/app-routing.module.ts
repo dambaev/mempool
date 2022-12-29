@@ -26,6 +26,7 @@ import { OeAccountComponent, } from './oe/components/oe-account/oe-account.compo
 import { PreviewComponent } from './oe/components/preview/preview.component';
 import { BlockspansHomeComponent } from './oe/components/blockspans-home/blockspans-home.component';
 import { EnergySummaryComponent } from './oe/components/energy-summary/energy-summary.component';
+import { StrikeSummaryComponent } from './oe/components/strike-summary/strike-summary.component';
 import { EnergyDetailComponent } from './oe/components/energy-detail/energy-detail.component';
 import { StrikeDetailComponent } from './oe/components/strike-detail/strike-detail.component';
 
@@ -70,6 +71,10 @@ let routes: Routes = [
           {
             path: 'strike_detail/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
             component: StrikeDetailComponent
+          },
+          {
+            path: 'strike_summary/:from/:to',
+            component: StrikeSummaryComponent
           },
         ]
       },
@@ -231,6 +236,10 @@ let routes: Routes = [
             path: 'strike_detail/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
             component: StrikeDetailComponent
           },
+          {
+            path: 'strike_summary/:from/:to',
+            component: StrikeSummaryComponent
+          },
         ]
       },
       {
@@ -375,6 +384,10 @@ let routes: Routes = [
       {
         path: 'strike_detail/:from/:to/:strikeBlockHeight/:strikeMedianTime/:strikeCreationTime',
         component: StrikeDetailComponent
+      },
+      {
+        path: 'strike_summary/:from/:to',
+        component: StrikeSummaryComponent
       },
     ]
   },
