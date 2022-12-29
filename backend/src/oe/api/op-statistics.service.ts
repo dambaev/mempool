@@ -1,25 +1,49 @@
-import { Promise } from 'bluebird';
 import logger from '../../logger';
 import opBlockHeaderService from '../service/op-block-header.service';
-import { BlockHeader, BlockHeight } from './interfaces/op-energy.interface';
+import {
+  BlockHeight,
+  ConfirmedBlockHeight,
+} from './interfaces/op-energy.interface';
+import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
+import {
+  NbdrStatistics,
+  NbdrStatisticsError,
+} from './interfaces/op-statistics.interface';
 
 export class OpStatisticService {
-  constructor() { }
+  constructor() {}
 
-  async calculateStatistics(blockHeight: BlockHeight, blockSpan: number) {
-
+  async calculateStatistics(
+    blockHeight: BlockHeight,
+    blockSpan: number
+  ): Promise<NbdrStatistics | NbdrStatisticsError> {
     try {
-
       const nbdrStatisticsList: number[] = [];
       let lastblock = blockHeight.value;
       const blockNumbers = [] as number[];
+
       // creating array of last 100 blocks spans
       for (let i = 0; i < 100; i += 2) {
         blockNumbers.push(lastblock, lastblock - blockSpan);
         lastblock = lastblock - (blockSpan + 1);
       }
+      
+      const confirmedBlocks = [] as ConfirmedBlockHeight[];
       try {
-        const blockHeadersList = await opBlockHeaderService.$getBlockHeadersByHeights('nbdr', blockNumbers);
+        const currentTip = await bitcoinApi.$getBlockHeightTip();
+        blockNumbers.forEach((blockNumber) =>
+          confirmedBlocks.push(
+            opBlockHeaderService.verifyConfirmedBlockHeight(blockNumber, {
+              value: currentTip,
+            })
+          )
+        );
+
+        const blockHeadersList =
+          await opBlockHeaderService.$getBlockHeadersByHeights(
+            'nbdr',
+            confirmedBlocks
+          );
 
         for (let i = 0; i < 100; i += 2) {
           const startBlock = blockHeadersList[i + 1];
@@ -41,9 +65,8 @@ export class OpStatisticService {
         nbdr: {
           avg: mean,
           stddev: Math.sqrt(
-            nbdrStatisticsList
-            .reduce((a, x) => a + (Math.pow(x - mean, 2))) /
-            (length - 1)
+            nbdrStatisticsList.reduce((a, x) => a + Math.pow(x - mean, 2)) /
+              (length - 1)
           ),
         },
       };

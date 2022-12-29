@@ -77,11 +77,11 @@ class OpBlockHeaderRepository {
     }
   }
 
-  public async $getBlockHeadersByHeights(UUID: string, blockHeights: number[]): Promise<BlockHeader[]> {
+  public async $getBlockHeadersByHeights(UUID: string, blockHeights: ConfirmedBlockHeight[]): Promise<BlockHeader[]> {
     try {
       const query = `select * from blocks where height in (?)`;
       const params: (number[])[] = [
-        blockHeights
+        blockHeights.map(blockHeight => blockHeight.value)
       ];
       return await DB.$with_blockSpanPool(UUID, async (connection) => {
         const [result] = await DB.$profile_query(UUID, connection, query, params, 'blockSpanPool.query');

@@ -102,9 +102,9 @@ export class OpBlockHeaderService {
     }
   }
 
-  public async $getBlockHeader(UUID: string, height: number): Promise<BlockHeader | null> {
+  public async $getBlockHeader(UUID: string, height: ConfirmedBlockHeight): Promise<BlockHeader | null> {
     try {
-      const blockHeader = await opBlockHeaderRepository.$getBlock(UUID, { value: height });
+      const blockHeader = await opBlockHeaderRepository.$getBlock(UUID, height);
       return blockHeader;
     } catch (error) {
       logger.err(`Something went wrong while fetching block header.` + error);
@@ -112,7 +112,7 @@ export class OpBlockHeaderService {
     }
   }
 
-  public async $getBlockHeadersByHeights(UUID: string, bockHeights: number[]): Promise<BlockHeader[]> {
+  public async $getBlockHeadersByHeights(UUID: string, bockHeights: ConfirmedBlockHeight[]): Promise<BlockHeader[]> {
     try {
       const blockHeader = await opBlockHeaderRepository.$getBlockHeadersByHeights(UUID, bockHeights);
       return blockHeader;
