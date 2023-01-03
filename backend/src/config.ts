@@ -73,6 +73,7 @@ interface IConfig {
     PORT: number;
     DATABASE: string;
     ACCOUNT_DATABASE: string;
+    OP_ENERGY_BLOCKCHAIN_DATABASE: string;
     SECRET_SALT: string;
     USERNAME: string;
     PASSWORD: string;
@@ -118,6 +119,9 @@ interface IConfig {
     GEOLITE2_ASN: string;
     GEOIP2_ISP: string;
   },
+  OP_ENERGY: {
+    CONFIRMED_BLOCKS_AMOUNT: number;
+  }
 }
 
 const defaults: IConfig = {
@@ -175,6 +179,7 @@ const defaults: IConfig = {
     'PORT': 3306,
     'DATABASE': 'mempool',
     'ACCOUNT_DATABASE': 'mempoolacc',
+    'OP_ENERGY_BLOCKCHAIN_DATABASE': 'op_energy_mainnet_blockchain',
     'SECRET_SALT': 'changeme',
     'USERNAME': 'mempool',
     'PASSWORD': 'mempool'
@@ -236,6 +241,9 @@ const defaults: IConfig = {
     "GEOLITE2_ASN": "/usr/local/share/GeoIP/GeoLite2-ASN.mmdb",
     "GEOIP2_ISP": "/usr/local/share/GeoIP/GeoIP2-ISP.mmdb"
   },
+  "OP_ENERGY": {
+    "CONFIRMED_BLOCKS_AMOUNT": 6
+  }
 };
 
 class Config implements IConfig {
@@ -255,6 +263,7 @@ class Config implements IConfig {
   PRICE_DATA_SERVER: IConfig['PRICE_DATA_SERVER'];
   EXTERNAL_DATA_SERVER: IConfig['EXTERNAL_DATA_SERVER'];
   MAXMIND: IConfig['MAXMIND'];
+  OP_ENERGY: IConfig['OP_ENERGY'];
 
   constructor() {
     const configs = this.merge(configFromFile, defaults);
@@ -274,6 +283,7 @@ class Config implements IConfig {
     this.PRICE_DATA_SERVER = configs.PRICE_DATA_SERVER;
     this.EXTERNAL_DATA_SERVER = configs.EXTERNAL_DATA_SERVER;
     this.MAXMIND = configs.MAXMIND;
+    this.OP_ENERGY = configs.OP_ENERGY;
   }
 
   merge = (...objects: object[]): IConfig => {

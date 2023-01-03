@@ -2,7 +2,7 @@ import { DB } from '../database';
 import logger from '../../logger';
 
 class OpEnergyDatabaseMigration {
-  private static currentVersion = 6;
+  private static currentVersion = 7;
 
   public async $initializeOrMigrateDatabase( UUID: string): Promise<void> {
     logger.info(`${UUID}: OE MIGRATION: running migrations`);
@@ -44,6 +44,10 @@ class OpEnergyDatabaseMigration {
       }
       case 5: {
         await this.$createTableSinglePlayerGuesses( UUID);
+        break;
+      }
+      case 6: {
+        await this.$createTableBlockHeaders(UUID);
         break;
       }
       default: {
@@ -123,13 +127,13 @@ class OpEnergyDatabaseMigration {
     ) ENGINE=InnoDB CHARSET=utf8`;
     try {
       await DB.$with_accountPool<void>( UUID, async (connection) => {
-        await DB.$accountPool_query<any>(UUID, connection, query, []);
+        await DB.$profile_query<any>(UUID, connection, query, []);
       });
     } catch(e) {
       let err_msg = `${UUID}: OE MIGRATION: createTableUsers error ${( e instanceof Error ? e.message : e)}`;
       throw new Error( err_msg);
     }
-    logger.info( '${UUID}: OE MOGRATION: OpEneryDatabaseMigration.$createTableUsers completed');
+    logger.info( '${UUID}: OE MIGRATION: OpEneryDatabaseMigration.$createTableUsers completed');
   }
   private async $createTableTimeStrikes( UUID: string){
     const query = `CREATE TABLE IF NOT EXISTS \`timestrikes\` (
@@ -145,25 +149,25 @@ class OpEnergyDatabaseMigration {
     ) ENGINE=InnoDB CHARSET=utf8`;
     try {
       await DB.$with_accountPool( UUID, async (connection) => {
-        await DB.$accountPool_query( UUID, connection, query, []);
+        await DB.$profile_query( UUID, connection, query, []);
       });
     } catch(e) {
       let err_msg = `OE MIGRATION: createTableTimeStrikes error ${( e instanceof Error ? e.message : e)}`;
       throw new Error( err_msg);
     }
-    logger.info( 'OE MOGRATION: OpEneryDatabaseMigration.$createTableTimeStrikes completed');
+    logger.info( 'OE MIGRATION: OpEneryDatabaseMigration.$createTableTimeStrikes completed');
   }
   private async $alterTableUsersCreateIndex(UUID: string){
     const query = `ALTER TABLE \`users\` ADD UNIQUE INDEX(secret_hash)`;
     try {
       await DB.$with_accountPool( UUID, async (connection) => {
-        await DB.$accountPool_query<any>(UUID, connection, query, []);
+        await DB.$profile_query<any>(UUID, connection, query, []);
       });
     } catch(e) {
       let err_msg = `OE MIGRATION: ERROR: OpEneryDatabaseMigration.$alterTableUsersCreateIndex ${( e instanceof Error ? e.message : e)}`;
       throw new Error( err_msg);
     }
-    logger.info( 'OE MOGRATION: OpEneryDatabaseMigration.$alterTableUsersCreateIndex completed');
+    logger.info( 'OE MIGRATION: OpEneryDatabaseMigration.$alterTableUsersCreateIndex completed');
   }
   private async $createTableSinglePlayerGuesses(UUID: string){
     const query = `CREATE TABLE IF NOT EXISTS \`slowfastguesses\` (
@@ -181,13 +185,38 @@ class OpEnergyDatabaseMigration {
     ) ENGINE=InnoDB CHARSET=utf8`;
     try {
       await DB.$with_accountPool( UUID, async (connection) => {
-        await DB.$accountPool_query<any>(UUID, connection, query, []);
+        await DB.$profile_query<any>(UUID, connection, query, []);
       });
     } catch(e) {
       let err_msg = `OE MIGRATION: createTableSinglePlayerGuesses error ${( e instanceof Error ? e.message : e)}`;
       throw new Error( err_msg);
     }
-    logger.info( 'OE MOGRATION: OpEneryDatabaseMigration.$createTableSinglePlayerGuesses completed');
+    logger.info( 'OE MIGRATION: OpEneryDatabaseMigration.$createTableSinglePlayerGuesses completed');
+  }
+
+  private async $createTableBlockHeaders(UUID: string): Promise<void>{
+    const query = `CREATE TABLE \`blocks\` (
+      \`height\` int unsigned NOT NULL,
+      \`version\` int unsigned NOT NULL,
+      \`current_block_hash\` varchar(65) NOT NULL,
+      \`previous_block_hash\` varchar(65) DEFAULT NULL,
+      \`merkle_root\` varchar(65) NOT NULL,
+      \`timestamp\` int unsigned NOT NULL,
+      \`difficulty\` double unsigned NOT NULL,
+      \`nonce\` bigint unsigned NOT NULL,
+      \`reward\` bigint unsigned NOT NULL,
+      \`mediantime\` int unsigned NOT NULL,
+      PRIMARY KEY (\`height\`)
+    );`;
+    try {
+      await DB.$with_blockSpanPool( UUID, async (connection) => {
+        await DB.$profile_query<any>(UUID, connection, query, [], 'blockSpanPool.query');
+      });
+    } catch(e) {
+      const err_msg = `OE MIGRATION: $createTableBlockHeaders error ${( e instanceof Error ? e.message : e)}`;
+      throw new Error( err_msg);
+    }
+    logger.info( 'OE MIGRATION: OpEneryDatabaseMigration.$createTableBlockHeaders completed');
   }
 
 }

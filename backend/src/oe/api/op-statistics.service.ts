@@ -1,60 +1,79 @@
-import {Promise} from "bluebird";
-import bitcoinApi from "../../api/bitcoin/bitcoin-api-factory";
-import logger from "../../logger";
-import {BlockHeight} from "./interfaces/op-energy.interface";
+import logger from '../../logger';
+import opBlockHeaderService from '../service/op-block-header.service';
+import {
+  BlockHeight,
+  ConfirmedBlockHeight,
+} from './interfaces/op-energy.interface';
+import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
+import {
+  NbdrStatistics,
+  NbdrStatisticsError,
+} from './interfaces/op-statistics.interface';
 
 export class OpStatisticService {
   constructor() {}
 
-  async calculateStatistics(blockHeight: BlockHeight, blockSpan: number) {
-    const nbdrStatisticsList: number[] = [];
+  async calculateStatistics(
+    blockHeight: BlockHeight,
+    blockSpan: number
+  ): Promise<NbdrStatistics | NbdrStatisticsError> {
     try {
-      await Promise.map(
-        Array.from(Array(100).keys()),
-        async (i) => {
-          const startBlockHeight = blockHeight.value - i * blockSpan;
-          const endBlockHeight = startBlockHeight - blockSpan + 1;
-          try {
-            const startblockHash = await bitcoinApi.$getBlockHash(
-              startBlockHeight - blockSpan - i
-            );
-            const startBlock = await bitcoinApi.$getBlock(startblockHash);
-            const endblockHash = await bitcoinApi.$getBlockHash(
-              endBlockHeight - 1 - blockSpan - i
-            );
-            const endBlock = await bitcoinApi.$getBlock(endblockHash);
-            const nbdr =
-              (blockSpan * 600 * 100) /
-              (startBlock.timestamp - endBlock.timestamp);
+      const nbdrStatisticsList: number[] = [];
+      let lastblock = blockHeight.value;
+      const blockNumbers = [] as number[];
 
-            nbdrStatisticsList.push(nbdr);
-          } catch (error) {
-            logger.err(`Error while calculating nbdr ${error}`);
-            throw new Error("Error while calculating nbdr");
-          }
-        },
-        {
-          concurrency: 20,
+      // creating array of last 100 blocks spans
+      for (let i = 0; i < 100; i += 2) {
+        blockNumbers.push(lastblock, lastblock - blockSpan);
+        lastblock = lastblock - (blockSpan + 1);
+      }
+      
+      const confirmedBlocks = [] as ConfirmedBlockHeight[];
+      try {
+        const currentTip = await bitcoinApi.$getBlockHeightTip();
+        blockNumbers.forEach((blockNumber) =>
+          confirmedBlocks.push(
+            opBlockHeaderService.verifyConfirmedBlockHeight(blockNumber, {
+              value: currentTip,
+            })
+          )
+        );
+
+        const blockHeadersList =
+          await opBlockHeaderService.$getBlockHeadersByHeights(
+            'nbdr',
+            confirmedBlocks
+          );
+
+        for (let i = 0; i < 100; i += 2) {
+          const startBlock = blockHeadersList[i + 1];
+          const endBlock = blockHeadersList[i];
+
+          const nbdr =
+            (blockSpan * 600 * 100) /
+            (startBlock.timestamp - endBlock.timestamp);
+
+          nbdrStatisticsList.push(nbdr);
         }
-      );
+      } catch (error) {
+        logger.err(`Error while calculating nbdr ${error}`);
+        throw new Error('Error while calculating nbdr');
+      }
       const length = nbdrStatisticsList.length;
       const mean = nbdrStatisticsList.reduce((a, b) => a + b) / length;
       return {
         nbdr: {
           avg: mean,
           stddev: Math.sqrt(
-            nbdrStatisticsList
-              .map((x) => Math.pow(x - mean, 2))
-              .reduce((a, b) => a + b) /
-              length -
-              1
+            nbdrStatisticsList.reduce((a, x) => a + Math.pow(x - mean, 2)) /
+              (length - 1)
           ),
         },
       };
     } catch (error) {
       logger.err(`Error while calculating nbdr ${error}`);
       return {
-        error: "Something went wrong",
+        error: 'Something went wrong',
         status: 500,
       };
     }
