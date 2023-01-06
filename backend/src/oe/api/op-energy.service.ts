@@ -350,7 +350,7 @@ export class OpEnergyApiService {
   }
 
   public async $getTimeStrikesHistory( UUID: string): Promise<TimeStrikesHistory[]> {
-    const query = 'SELECT timestrikeshistory.id,user_id,users.display_name,block_height,nlocktime,mediantime,UNIX_TIMESTAMP(timestrikeshistory.creation_time) as creation_time,UNIX_TIMESTAMP(archivetime) as archivetime\
+    const query = 'SELECT timestrikeshistory.id,user_id,users.display_name,block_height,nlocktime,mediantime,UNIX_TIMESTAMP(timestrikeshistory.creation_time) as creation_time,UNIX_TIMESTAMP(archive_time) as archive_time\
                    FROM timestrikeshistory INNER JOIN users ON timestrikeshistory.user_id = users.id';
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
@@ -362,7 +362,7 @@ export class OpEnergyApiService {
             'nLockTime': record.nlocktime,
             'mediantime': record.mediantime,
             'creationTime': record.creation_time,
-            'archiveTime': record.archivetime,
+            'archiveTime': record.archive_time,
             'wrongResults': record.wrongResults,
             'rightResults': record.rightResults,
           } as TimeStrikesHistory)
@@ -413,7 +413,7 @@ export class OpEnergyApiService {
           const blockHash = await bitcoinApi.$getBlockHash(timestrikesguesses[i].block_height);
           const block = await bitcoinApi.$getBlock(blockHash);
           const [[timestrikehistory_id]] = await DB.$profile_query<any>( UUID, connection
-            , 'INSERT INTO timestrikeshistory (user_id, block_height, nlocktime, mediantime, creation_time, archivetime, wrong_results, right_results) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), NOW(),0,0) returning id'
+            , 'INSERT INTO timestrikeshistory (user_id, block_height, nlocktime, mediantime, creation_time, archive_time, wrong_results, right_results) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), NOW(),0,0) returning id'
             , [ timestrikesguesses[i].user_id, timestrikesguesses[i].block_height, timestrikesguesses[i].nlocktime, block.mediantime, timestrikesguesses[i].creation_time ]
           ); // store result into separate table
           let wrong_results = 0;
