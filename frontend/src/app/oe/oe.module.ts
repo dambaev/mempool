@@ -11,18 +11,25 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { OpEnergyApiService } from './services/op-energy.service';
 import { OeMasterPageComponent } from './components/oe-master-page/oe-master-page.component';
+import { OeDocsComponent } from './components/oe-docs/oe-docs.component';
+import { PreviewComponent } from './components/preview/preview.component';
+import { OeRoutingModule } from './oe.routing.modules';
 import { SharedModule } from '../shared/shared.module';
 
 
 @NgModule({
   declarations: [
     OeMasterPageComponent,
+    OeDocsComponent,
+    PreviewComponent,
   ],
   imports: [
     CommonModule,
     SharedModule,
+    OeRoutingModule,
   ],
   providers: [
+    PreviewComponent,
     OpEnergyApiService,
   ],
   exports: [

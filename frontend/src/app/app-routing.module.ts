@@ -172,6 +172,11 @@ let routes: Routes = [
         component: StatusViewComponent
       },
       {
+        path: 'oe',
+        loadChildren: () => import('./oe/oe.module').then(m => m.OpEnergyModule),
+        data: { preload: true },
+      },
+      {
         path: 'preview-page',
         component: OeMasterPageComponent,
         children: [
@@ -327,6 +332,11 @@ let routes: Routes = [
       {
         path: 'status',
         component: StatusViewComponent
+      },
+      {
+        path: 'oe',
+        loadChildren: () => import('./oe/oe.module').then(m => m.OpEnergyModule),
+        data: { preload: true },
       },
       {
         path: 'preview-page',
@@ -500,6 +510,11 @@ let routes: Routes = [
     component: StatusViewComponent
   },
   {
+    path: 'oe',
+    loadChildren: () => import('./oe/oe.module').then(m => m.OpEnergyModule),
+    data: { preload: true },
+  },
+  {
     path: 'preview-page',
     component: OeMasterPageComponent,
     children: [
@@ -635,6 +650,11 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
         {
           path: 'status',
           component: StatusViewComponent
+        },
+        {
+          path: 'oe',
+          loadChildren: () => import('./oe/oe.module').then(m => m.OpEnergyModule),
+          data: { preload: true },
         },
         {
           path: 'preview-page',
@@ -776,6 +796,11 @@ if (browserWindowEnv && browserWindowEnv.BASE_MODULE === 'liquid') {
     {
       path: 'status',
       component: StatusViewComponent
+    },
+    {
+      path: 'oe',
+      loadChildren: () => import('./oe/oe.module').then(m => m.OpEnergyModule),
+      data: { preload: true },
     },
     {
       path: 'preview-page',

@@ -47,6 +47,10 @@ export interface AccountToken {
   accountToken: string;
 }
 
+export interface AccountSecret {
+  value: string;
+}
+
 export interface UserId {
   userId: number;
   userName: string;

@@ -14,10 +14,10 @@ import opEnergyApiService from './op-energy.service';
 
 class OpEnergyWebsocket {
 
-  private wss: WebSocket.Server | undefined;
+  private static wss: WebSocket.Server | undefined = undefined;
 
   public setUpWebsocketHandling(wss: WebSocket.Server) {
-    this.wss = wss;
+    OpEnergyWebsocket.wss = wss;
   }
 
   public websocketHandler(client: any, parsedMessage: WebsocketResponse) {
@@ -160,7 +160,7 @@ class OpEnergyWebsocket {
 
   // sends notifications to all the WebSockets' clients about new TimeStrike value
   handleNewTimeStrike(timeStrike: TimeStrike) {
-    if (!this.wss) {
+    if (OpEnergyWebsocket.wss === undefined) {
       throw new Error('WebSocket.Server is not set');
     }
     const value = {
@@ -168,7 +168,7 @@ class OpEnergyWebsocket {
       'nLockTime': timeStrike.nLockTime,
     };
 
-    this.wss.clients.forEach((client) => {
+    OpEnergyWebsocket.wss.clients.forEach((client) => {
       if (client.readyState !== WebSocket.OPEN) {
         return;
       }
@@ -182,7 +182,7 @@ class OpEnergyWebsocket {
   }
   // sends notifications to all the WebSockets' clients about new SlowFastGuess value
   handleNewTimeSlowFastGuess(timeSlowFastGuess: SlowFastGuess) {
-    if (!this.wss) {
+    if (!OpEnergyWebsocket.wss) {
       throw new Error('WebSocket.Server is not set');
     }
     const ts = {
@@ -190,7 +190,7 @@ class OpEnergyWebsocket {
       'nLockTime': timeSlowFastGuess.nLockTime,
     };
 
-    this.wss.clients.forEach((client) => {
+    OpEnergyWebsocket.wss.clients.forEach((client) => {
       if (client.readyState !== WebSocket.OPEN) {
         return;
       }

@@ -1,0 +1,701 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "OpEnergy",
+    "license": {
+      "name": "MIT",
+      "url": "http://mit.com"
+    },
+    "title": "OpEnergy API",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/v1/swagger.json": {
+      "get": {
+        "description": "Returns Swagger specification in JSON format",
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/register": {
+      "post": {
+        "description": "Registers new user and returns randomly generated account secret and account token.\n Account secret should be used for /login API encpoint.\n Account token should be used in the rest API calls as an authentication cookie",
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/RegisterResult"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/login": {
+      "post": {
+        "description": "Performs login with given account secret. Returns AccountToken value for being used with the rest API calls",
+        "consumes": [
+          "application/json;charset=utf-8"
+        ],
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/AccountSecret"
+              },
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/AccountToken"
+              },
+              "type": "array"
+            }
+          },
+          "400": {
+            "description": "Invalid `body`"
+          }
+        }
+      }
+    },
+    "/api/v1/strike/mediantime": {
+      "get": {
+        "description": "Returns list of strikes created by mediantime",
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/TimeStrike"
+              },
+              "type": "array"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Creates new strike defined by BlockHeight and NLockTime values",
+        "consumes": [
+          "application/json;charset=utf-8"
+        ],
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateTimeStrikeRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/TimeStrike"
+            }
+          },
+          "400": {
+            "description": "Invalid `body`"
+          }
+        }
+      }
+    },
+    "/api/v1/strike/block/mediantime": {
+      "get": {
+        "description": "Returns list of strikes by a given block height",
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "maximum": 9223372036854776000,
+            "minimum": 0,
+            "name": "block_height",
+            "required": false,
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/TimeStrike"
+              },
+              "type": "array"
+            }
+          },
+          "400": {
+            "description": "Invalid `block_height`"
+          }
+        }
+      }
+    },
+    "/api/v1/slowfastguess/mediantime": {
+      "get": {
+        "description": "",
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "maximum": 9223372036854776000,
+            "minimum": 0,
+            "name": "block_height",
+            "required": false,
+            "type": "number"
+          },
+          {
+            "in": "query",
+            "maximum": 9223372036854776000,
+            "minimum": 0,
+            "name": "nlocktime",
+            "required": false,
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/SlowFastGuess"
+              },
+              "type": "array"
+            }
+          },
+          "400": {
+            "description": "Invalid `nlocktime` or `block_height`"
+          }
+        }
+      },
+      "post": {
+        "description": "Creates a slow/fast guess for a given time strike",
+        "consumes": [
+          "application/json;charset=utf-8"
+        ],
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateSlowFastGuessRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/SlowFastGuess"
+            }
+          },
+          "400": {
+            "description": "Invalid `body`"
+          }
+        }
+      }
+    },
+    "/api/v1/strikeshistory/mediantime": {
+      "get": {
+        "description": "Returns list of archived time strikes  (ie, already fired and moved into an archive)",
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/TimeStrikeHistory"
+              },
+              "type": "array"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/slowfastresults/mediantime": {
+      "get": {
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "parameters": [
+          {
+            "format": "b8ab3013e4ddb35fae6cedc9d84c86fd280157b7a93b984c0b40baf7f21b8f72",
+            "in": "query",
+            "name": "account_token",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "maximum": 9223372036854776000,
+            "minimum": 0,
+            "name": "nlocktime",
+            "required": false,
+            "type": "number"
+          },
+          {
+            "in": "query",
+            "maximum": 9223372036854776000,
+            "minimum": 0,
+            "name": "block_height",
+            "required": false,
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/SlowFastResult"
+              },
+              "type": "array"
+            }
+          },
+          "400": {
+            "description": "Invalid `block_height` or `nlocktime` or `account_token`"
+          }
+        }
+      }
+    },
+    "/api/v1/user/displayname": {
+      "post": {
+        "description": "Updates displayname for a given user",
+        "consumes": [
+          "application/json;charset=utf-8"
+        ],
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PostUserDisplayNameRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "example": [],
+              "items": {},
+              "maxItems": 0,
+              "type": "array"
+            }
+          },
+          "400": {
+            "description": "Invalid `body`"
+          }
+        }
+      }
+    },
+    "/api/v1/statistics/{blockheight}/{span}": {
+      "get": {
+        "description": "Calculates NBDR statistics for a given block height and span",
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "blockheight",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "path",
+            "name": "span",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/Statistics"
+            }
+          },
+          "400": {
+            "description": "Invalid `span` or `blockheight`"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "RegisterResult": {
+      "description": "RegisterResult schema",
+      "example": [
+        "a86c139a32e7dac42afe4265a955a0fd9d8c2885e26c7e92d4270b3813faa356",
+        "a86c139a32e7dac42afe4265a955a0fd9d8c2885e26c7e92d4270b3813faa356"
+      ],
+      "items": [
+        {
+          "$ref": "#/definitions/AccountSecret"
+        },
+        {
+          "$ref": "#/definitions/AccountToken"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2,
+      "type": "array"
+    },
+    "AccountSecret": {
+      "description": "AccountSecret schema",
+      "example": "a86c139a32e7dac42afe4265a955a0fd9d8c2885e26c7e92d4270b3813faa356",
+      "type": "string"
+    },
+    "AccountToken": {
+      "description": "AccountToken schema",
+      "example": "a86c139a32e7dac42afe4265a955a0fd9d8c2885e26c7e92d4270b3813faa356",
+      "type": "string"
+    },
+    "TimeStrike": {
+      "description": "TimeStrike schema",
+      "required": [
+        "blockHeight",
+        "nLockTime",
+        "creationTime"
+      ],
+      "properties": {
+        "blockHeight": {
+          "$ref": "#/definitions/BlockHeight"
+        },
+        "nLockTime": {
+          "$ref": "#/definitions/NLockTime"
+        },
+        "creationTime": {
+          "$ref": "#/definitions/Positive"
+        }
+      },
+      "example": {
+        "blockHeight": 1,
+        "creationTime": 1000,
+        "nLockTime": 1
+      },
+      "type": "object"
+    },
+    "BlockHeight": {
+      "description": "BlockHeight schema",
+      "example": 1,
+      "maximum": 9223372036854776000,
+      "minimum": 0,
+      "type": "number"
+    },
+    "NLockTime": {
+      "description": "NLockTime schema",
+      "example": 1,
+      "maximum": 9223372036854776000,
+      "minimum": 0,
+      "type": "number"
+    },
+    "Positive": {
+      "maximum": 9223372036854776000,
+      "minimum": 1,
+      "type": "number"
+    },
+    "CreateTimeStrikeRequest": {
+      "description": "CreateTimeStrikeRequest schema",
+      "required": [
+        "account_token",
+        "nlocktime",
+        "block_height"
+      ],
+      "properties": {
+        "account_token": {
+          "$ref": "#/definitions/AccountToken"
+        },
+        "nlocktime": {
+          "$ref": "#/definitions/NLockTime"
+        },
+        "block_height": {
+          "$ref": "#/definitions/BlockHeight"
+        }
+      },
+      "example": {
+        "account_token": "a86c139a32e7dac42afe4265a955a0fd9d8c2885e26c7e92d4270b3813faa356",
+        "block_height": 1,
+        "nlocktime": 1
+      },
+      "type": "object"
+    },
+    "SlowFastGuess": {
+      "description": "SlowFastGuess schema",
+      "required": [
+        "guess",
+        "blockHeight",
+        "nLockTime",
+        "creationTime",
+        "userName",
+        "userId"
+      ],
+      "properties": {
+        "guess": {
+          "$ref": "#/definitions/Guess"
+        },
+        "blockHeight": {
+          "$ref": "#/definitions/BlockHeight"
+        },
+        "nLockTime": {
+          "$ref": "#/definitions/NLockTime"
+        },
+        "creationTime": {
+          "$ref": "#/definitions/Positive"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "userId": {
+          "$ref": "#/definitions/Natural"
+        }
+      },
+      "example": {
+        "blockHeight": 1,
+        "creationTime": 1,
+        "guess": "slow",
+        "nLockTime": 1,
+        "userId": 0,
+        "userName": "someUserName"
+      },
+      "type": "object"
+    },
+    "Guess": {
+      "enum": [
+        "slow",
+        "fast"
+      ],
+      "type": "string"
+    },
+    "Natural": {
+      "maximum": 9223372036854776000,
+      "minimum": 0,
+      "type": "number"
+    },
+    "CreateSlowFastGuessRequest": {
+      "description": "CreateSlowFastGuessRequest schema",
+      "required": [
+        "account_token",
+        "guess",
+        "nlocktime",
+        "block_height"
+      ],
+      "properties": {
+        "account_token": {
+          "$ref": "#/definitions/AccountToken"
+        },
+        "guess": {
+          "$ref": "#/definitions/Guess"
+        },
+        "nlocktime": {
+          "$ref": "#/definitions/NLockTime"
+        },
+        "block_height": {
+          "$ref": "#/definitions/BlockHeight"
+        }
+      },
+      "example": {
+        "account_token": "a86c139a32e7dac42afe4265a955a0fd9d8c2885e26c7e92d4270b3813faa356",
+        "block_height": 1,
+        "guess": "fast",
+        "nlocktime": 1
+      },
+      "type": "object"
+    },
+    "TimeStrikeHistory": {
+      "description": "TimeStrikeHistory schema",
+      "required": [
+        "owner",
+        "blockHeight",
+        "nLockTime",
+        "mediantime",
+        "creationTime",
+        "archiveTime",
+        "wrongResults",
+        "rightResults"
+      ],
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "blockHeight": {
+          "$ref": "#/definitions/BlockHeight"
+        },
+        "nLockTime": {
+          "$ref": "#/definitions/NLockTime"
+        },
+        "mediantime": {
+          "$ref": "#/definitions/Positive"
+        },
+        "creationTime": {
+          "$ref": "#/definitions/Positive"
+        },
+        "archiveTime": {
+          "$ref": "#/definitions/Positive"
+        },
+        "wrongResults": {
+          "$ref": "#/definitions/Natural"
+        },
+        "rightResults": {
+          "$ref": "#/definitions/Natural"
+        }
+      },
+      "example": {
+        "archiveTime": 1001,
+        "blockHeight": 1,
+        "creationTime": 1000,
+        "mediantime": 1000,
+        "nLockTime": 1,
+        "owner": "userName",
+        "rightResults": 0,
+        "wrongResults": 0
+      },
+      "type": "object"
+    },
+    "SlowFastResult": {
+      "description": "SlowFastResult schema",
+      "required": [
+        "guess",
+        "result",
+        "blockHeight",
+        "nLockTime",
+        "creationTime"
+      ],
+      "properties": {
+        "guess": {
+          "$ref": "#/definitions/Guess"
+        },
+        "result": {
+          "$ref": "#/definitions/Result"
+        },
+        "blockHeight": {
+          "$ref": "#/definitions/BlockHeight"
+        },
+        "nLockTime": {
+          "$ref": "#/definitions/NLockTime"
+        },
+        "creationTime": {
+          "$ref": "#/definitions/Positive"
+        }
+      },
+      "example": {
+        "blockHeight": 1,
+        "creationTime": 1,
+        "guess": "slow",
+        "nLockTime": 1,
+        "result": "right"
+      },
+      "type": "object"
+    },
+    "Result": {
+      "enum": [
+        "right",
+        "wrong"
+      ],
+      "type": "string"
+    },
+    "PostUserDisplayNameRequest": {
+      "description": "PostUserDisplayNameRequest schema",
+      "required": [
+        "account_token",
+        "display_name"
+      ],
+      "properties": {
+        "account_token": {
+          "$ref": "#/definitions/AccountToken"
+        },
+        "display_name": {
+          "type": "string"
+        }
+      },
+      "example": {
+        "account_token": "a86c139a32e7dac42afe4265a955a0fd9d8c2885e26c7e92d4270b3813faa356",
+        "display_name": "newUserName"
+      },
+      "type": "object"
+    },
+    "Statistics": {
+      "description": "Statistics schema",
+      "required": [
+        "nbdr"
+      ],
+      "properties": {
+        "nbdr": {
+          "$ref": "#/definitions/NbdrStatistics"
+        }
+      },
+      "example": {
+        "nbdr": {
+          "avg": 1,
+          "stddev": 1
+        }
+      },
+      "type": "object"
+    },
+    "NbdrStatistics": {
+      "description": "NbdrStatistics schema",
+      "required": [
+        "avg",
+        "stddev"
+      ],
+      "properties": {
+        "avg": {
+          "format": "double",
+          "type": "number"
+        },
+        "stddev": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "example": {
+        "avg": 1,
+        "stddev": 1
+      },
+      "type": "object"
+    }
+  }
+}

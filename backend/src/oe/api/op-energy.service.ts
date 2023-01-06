@@ -2,9 +2,10 @@ import {DB} from '../database';
 import crypto from "crypto-js";
 import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 import { IEsploraApi } from '../../api/bitcoin/esplora-api.interface';
+import config from '../../config';
 
 
-import { SlowFastGuessValue, BlockHeight, NLockTime, UserId, TimeStrikeDB, AlphaNumString, TimeStrikeId, AccountToken, TimeStrike, SlowFastGuess, TimeStrikesHistory, SlowFastResult, BlockHash, BlockSpan } from './interfaces/op-energy.interface';
+import { SlowFastGuessValue, BlockHeight, NLockTime, UserId, TimeStrikeDB, AlphaNumString, TimeStrikeId, AccountSecret, AccountToken, TimeStrike, SlowFastGuess, TimeStrikesHistory, SlowFastResult, BlockHash, BlockSpan } from './interfaces/op-energy.interface';
 
 export class OpEnergyApiService {
   // those arrays contains callbacks, which will be called when appropriate entity will be created
@@ -23,20 +24,21 @@ export class OpEnergyApiService {
   // Params:
   // - src - string(64)
   // - salt - string(64)
-  getHashSalt( src: string, salt: string):string {
-    if( src.length < 64) {
+  getHashSalt(src: string, salt: string): string {
+    if (src.length < 64) {
       throw new Error("getHashSalt: src.length < 64");
     }
-    if( salt.length < 64) {
+    if (salt.length < 64) {
       throw new Error("getHashSalt: salt.length < 64");
     }
-    var rawHash = crypto.SHA256( src + salt);
+    var rawHash = [...crypto.SHA256(src + salt).toString().slice(0, 64)];
     // set significant bytes to be able to make a dumb check later
     rawHash[10] = '0';
     rawHash[30] = '0'; // token has 0 at this position
     rawHash[60] = 'e';
-    return rawHash.toString().slice(0,64);
+    return rawHash.join('').slice(0, 64);
   }
+
   isAlphaNum(str: string){
     var code, i, len;
 
@@ -68,6 +70,25 @@ export class OpEnergyApiService {
       'value': num,
     };
   }
+
+  public verifyAccountSecret( rawString: string): AccountSecret {
+    if( rawString.length !== 64) {
+      throw new Error('verifyAccountSecret: length');
+    }
+    if( rawString[10] !== '0'
+      ||rawString[30] !== 'e' // token has 0 at this position
+      ||rawString[60] !== 'e'
+      ) {
+      throw new Error('verifyAccountSecret: header');
+    }
+    if( !this.isAlphaNum(rawString)) {
+      throw new Error('verifyAccountSecret: alphanum');
+    }
+    return {
+      'value': rawString,
+    };
+  }
+
   public verifyAccountToken( rawString: string): AccountToken {
     if( rawString.length !== 64) {
       throw new Error('verifyAccountToken: length');
@@ -97,11 +118,14 @@ export class OpEnergyApiService {
   }
 
   public async $getUserIdByAccountToken( UUID: string, accountToken: AccountToken): Promise<UserId> {
+    // we don't want to store accountToken in DB in raw format, so we store hash of accountToken
+    // this way when DB will leak into public, random people will not be able to use hashed tokens to perform any API calls
+    const accountTokenHashed = this.getHashSalt( accountToken.accountToken, config.DATABASE.SECRET_SALT);
     const query = "SELECT id,display_name FROM users WHERE secret_hash=?";
     const query1 = 'UPDATE users SET last_log_time=NOW() WHERE id = ?';
     try {
       return await DB.$with_accountPool<UserId>( UUID, async (connection) => {
-        const [[raw]] = await DB.$profile_query<any>( UUID, connection, query, [ accountToken.accountToken]);
+        const [[raw]] = await DB.$profile_query<any>( UUID, connection, query, [ accountTokenHashed]);
         // update last_log_time field
         const _ = await DB.$profile_query<any>( UUID, connection, query1, [ raw.id]);
         return {
@@ -121,13 +145,17 @@ export class OpEnergyApiService {
     }
   }
   public async $createNewUser( UUID: string, accountToken: AccountToken, displayName: AlphaNumString): Promise<UserId> {
+    // we don't want to store accountToken in DB in raw format, so we store hash of accountToken
+    // this way when DB will leak into public, random people will not be able to use hashed tokens to perform any API calls
+    const accountTokenHashed = this.getHashSalt( accountToken.accountToken, config.DATABASE.SECRET_SALT);
+
     const query = "INSERT INTO users (secret_hash, display_name, creation_time,last_log_time) VALUES (?,?,NOW(),NOW())";
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
         const [raw] = await DB.$profile_query<any>( UUID
                                                       , connection
                                                       , query
-                                                      , [ accountToken.accountToken.slice(0,64) // secret_hash
+                                                      , [ accountTokenHashed.slice(0,64) // secret_hash
                                                       , displayName.value.slice(0,30)
                                                       ]);
         return {
@@ -459,6 +487,37 @@ export class OpEnergyApiService {
     } catch (e) {
       throw new Error(`${UUID} OpEnergyApiService.$getBlockSpanList: error while generating block list: ${e instanceof Error ? e.message : e}`);
     }
+
+  public async $registerNewUser( UUID: string): Promise<[ AccountSecret, AccountToken]> {
+    const rnd = [...Array(10)].map( _ => String.fromCharCode(Math.floor(Math.random() * 255))).join('');
+    var newHashArr = [ ... crypto.HmacSHA256(rnd, config.DATABASE.SECRET_SALT).toString().slice(0, 64)];
+    // secret should have special bytes in certain places to pass input verification
+    newHashArr[10] = '0';
+    newHashArr[30] = 'e';
+    newHashArr[60] = 'e';
+    const secret = newHashArr.join(''); // this value will be used to login
+    const accountToken = this.getHashSalt( secret, config.DATABASE.SECRET_SALT);
+    return [ { value: secret}, this.verifyAccountToken( accountToken) ];
+  }
+
+  // performs user login by given secret
+  public async $loginUser( UUID: string, secret: AccountSecret): Promise< AccountToken> {
+    const accountToken = this.getHashSalt( secret.value, config.DATABASE.SECRET_SALT);
+    // if user's record had been persisted, then hashed token is being used as secret value
+    const accountTokenStored = this.getHashSalt( accountToken, config.DATABASE.SECRET_SALT);
+    const query = 'UPDATE users SET last_log_time = NOW() WHERE secret_hash = (?)';
+    try {
+      await DB.$with_accountPool( UUID, async (connection) => {
+        const [raw] = await DB.$profile_query<any>( UUID
+                                                      , connection
+                                                      , query
+                                                      , [ accountTokenStored.slice(0,64) ] // hash(hash(secret))
+                                                      );
+      });
+    } catch (e) {
+      throw new Error( `ERROR: OpEnergyApiService.$loginUser: ${ e instanceof Error? e.message: e}`);
+    }
+    return this.verifyAccountToken( accountToken);
   }
 
 }
