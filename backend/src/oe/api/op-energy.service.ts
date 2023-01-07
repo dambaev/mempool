@@ -2,7 +2,10 @@ import {DB} from '../database';
 import crypto from "crypto-js";
 import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 import { IEsploraApi } from '../../api/bitcoin/esplora-api.interface';
+import opBlockHeaderService from '../service/op-block-header.service';
+import opBlockHeaderRepository from '../repositories/OpBlockHeaderRepository';
 import config from '../../config';
+import logger from '../../logger';
 
 
 import { SlowFastGuessValue, BlockHeight, NLockTime, UserId, TimeStrikeDB, AlphaNumString, TimeStrikeId, AccountSecret, AccountToken, TimeStrike, SlowFastGuess, TimeStrikesHistory, SlowFastResult, BlockHash, BlockSpan } from './interfaces/op-energy.interface';
@@ -403,18 +406,17 @@ export class OpEnergyApiService {
 
   // searchs strikes and slow/fast guesses under blockHeightTip - 6
   async $slowFastGamePersistOutcome( UUID: string) {
-    const blockHeightTip = await bitcoinApi.$getBlockHeightTip();
-    const confirmedHeight = Math.max( blockHeightTip - 6, 0);
+    const latestConfirmedHeight = await opBlockHeaderRepository.$getLatestBlockHeight( UUID);
 
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
-        const [timestrikesguesses] = await DB.$profile_query<any>( UUID, connection, 'SELECT id,user_id,block_height,nlocktime,UNIX_TIMESTAMP(creation_time) as creation_time FROM timestrikes WHERE block_height <= ?', [ confirmedHeight ]);
+        const [timestrikesguesses] = await DB.$profile_query<any>( UUID, connection, 'SELECT id,user_id,block_height,nlocktime,UNIX_TIMESTAMP(creation_time) as creation_time FROM timestrikes WHERE block_height <= ?', [ latestConfirmedHeight.value ]);
         for( var i = 0; i < timestrikesguesses.length; i++) {
-          const blockHash = await bitcoinApi.$getBlockHash(timestrikesguesses[i].block_height);
-          const block = await bitcoinApi.$getBlock(blockHash);
+          const confirmedBlock = { value: i}; // sql query above proves that block height i is always confirmed, so it is okay to not to use verifyConfirmedBlockHeight here
+          const block = await opBlockHeaderService.$getBlockHeader( UUID, confirmedBlock);
           const [[timestrikehistory_id]] = await DB.$profile_query<any>( UUID, connection
             , 'INSERT INTO timestrikeshistory (user_id, block_height, nlocktime, mediantime, creation_time, archive_time, wrong_results, right_results) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), NOW(),0,0) returning id'
-            , [ timestrikesguesses[i].user_id, timestrikesguesses[i].block_height, timestrikesguesses[i].nlocktime, block.mediantime, timestrikesguesses[i].creation_time ]
+            , [ timestrikesguesses[i].user_id, timestrikesguesses[i].block_height, timestrikesguesses[i].nlocktime, block.medianTime, timestrikesguesses[i].creation_time ]
           ); // store result into separate table
           let wrong_results = 0;
           let right_results = 0;
@@ -424,11 +426,11 @@ export class OpEnergyApiService {
           );
           for( var j = 0; j < guesses.length; j++) {
             var result = 0; // wrong
-            if( block.mediantime <= guesses[j].nlocktime && guesses[j].guess == 1) { // guessed fast and it was actually faster
+            if( block.medianTime <= guesses[j].nlocktime && guesses[j].guess == 1) { // guessed fast and it was actually faster
               result = 1; // right
               right_results++;
             } else
-            if( block.mediantime > timestrikesguesses[i].nlocktime && guesses[j].guess == 0) { // guess slow and it was actually slower
+            if( block.medianTime > timestrikesguesses[i].nlocktime && guesses[j].guess == 0) { // guess slow and it was actually slower
               result = 1; // right
               right_results++;
             } else {
@@ -464,7 +466,11 @@ export class OpEnergyApiService {
   async $persistOutcome( UUID: string) {
     // currently, it is assumed, that timestrikes and timestrikeshistory tables are only being used by slow/fast game.
     // NOTE: in the future, it maybe that other games will be using those tables. In this case, we will need to move cleanup of the timestrike table here instead of doing it in the $slowFastGamePersistOutcome
-    await this.$slowFastGamePersistOutcome( UUID); // persist outcome for slow fast game
+    try {
+      await this.$slowFastGamePersistOutcome( UUID); // persist outcome for slow fast game
+    } catch(error) { // this.$slowFastGamePersistOutcome can fail in case if block headers table haven't been filled yet
+      logger.err( `${UUID}: $slowFastGamePersistOutcome ERROR: ` + error);
+    }
   }
 
   public async $getBlockByHash( hash: BlockHash): Promise<IEsploraApi.Block> {
