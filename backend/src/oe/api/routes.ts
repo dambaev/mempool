@@ -25,7 +25,7 @@ class OpEnergyRoutes {
       .post(config.MEMPOOL.API_URL_PREFIX + 'user/displayname', this.$postUserDisplayName)
       .get(config.MEMPOOL.API_URL_PREFIX + 'statistics/:blockheight/:span', this.$getBlockSpanStatistics)
       .get(config.MEMPOOL.API_URL_PREFIX + 'oe/block/:hash', this.$getBlockByHash)
-   ;
+      .get(config.MEMPOOL.API_URL_PREFIX + 'oe/blockspanlist/:startBlockHeight/:span/:numberOfSpan', this.$getBlockSpanList)
   }
   private async $getTimeStrikes(req: Request, res: Response) {
     const UUID = await opEnergyApiService.$generateRandomHash();
@@ -211,6 +211,20 @@ class OpEnergyRoutes {
       res.status(404).send(`${UUID}: ${e instanceof Error? e.message : e}`);
     }
     logger.info( `${UUID}: PROFILE: end: $getBlockByHash`);
+  }
+
+  private async $getBlockSpanList(req: Request, res: Response) {
+    const UUID = await opEnergyApiService.$generateRandomHash();
+    try {
+      logger.info( `${UUID}: PROFILE: start: $getBlockSpanList`);
+      const { startBlockHeight, span, numberOfSpan } = req.params;
+      const result = await opEnergyApiService.$getBlockSpanList(UUID, +startBlockHeight, +span, +numberOfSpan);
+      res.json(result);
+    } catch(e) {
+      logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getBlockSpanList: ${e instanceof Error ? e.message: e}`);
+      res.status(500).send(`${UUID}: ${e instanceof Error? e.message : e}`);
+    }
+    logger.info( `${UUID}: PROFILE: end: $getBlockSpanList`);
   }
 };
 

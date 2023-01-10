@@ -91,3 +91,8 @@ export interface BlockHeader {
 export interface ConfirmedBlockHeight {
   value: number
 }
+
+export interface BlockSpan {
+  startBlockHeight: number, 
+  endBlockHeight: number
+}
