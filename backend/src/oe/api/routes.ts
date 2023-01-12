@@ -8,6 +8,7 @@ import websocketHandler from '../../api/websocket-handler';
 import opEnergyApiService from './op-energy.service';
 import opEnergyWebsocket from './websocket';
 import opStatisticService from './op-statistics.service';
+import { isValidPositiveNumber } from '../util/helper';
 
 class OpEnergyRoutes {
   public setUpHttpApiRoutes(app) {
@@ -218,6 +219,15 @@ class OpEnergyRoutes {
     try {
       logger.info( `${UUID}: PROFILE: start: $getBlockSpanList`);
       const { startBlockHeight, span, numberOfSpan } = req.params;
+
+      if (
+        !isValidPositiveNumber(startBlockHeight) ||
+        !isValidPositiveNumber(span) ||
+        !isValidPositiveNumber(numberOfSpan)
+      ) {
+        throw Error('Not a valid input parameters.');
+      }
+
       const result = await opEnergyApiService.$getBlockSpanList(UUID, +startBlockHeight, +span, +numberOfSpan);
       res.json(result);
     } catch(e) {

@@ -444,7 +444,7 @@ export class OpEnergyApiService {
     return await bitcoinApi.$getBlock(hash.value);
   }
 
-  public async $getBlockSpanList(UUID: string, startBlockHeight: number, span: number, numberOfSpan: number): Promise<BlockSpan[]> {
+  public $getBlockSpanList(UUID: string, startBlockHeight: number, span: number, numberOfSpan: number): BlockSpan[] {
     try {
       const blockSpanList = [] as BlockSpan[];
       for (let i = 0; i < numberOfSpan; i++) {
