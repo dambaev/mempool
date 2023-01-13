@@ -368,21 +368,23 @@
   "definitions": {
     "RegisterResult": {
       "description": "RegisterResult schema",
-      "example": [
-        "a86c139a32e7dac42afe4265a955a0fd9d8c2885e26c7e92d4270b3813faa356",
-        "a86c139a32e7dac42afe4265a955a0fd9d8c2885e26c7e92d4270b3813faa356"
+      "required": [
+        "accountSecret",
+        "accountToken"
       ],
-      "items": [
-        {
+      "properties": {
+        "accountSecret": {
           "$ref": "#/definitions/AccountSecret"
         },
-        {
+        "accountToken": {
           "$ref": "#/definitions/AccountToken"
         }
-      ],
-      "maxItems": 2,
-      "minItems": 2,
-      "type": "array"
+      },
+      "example": {
+        "accountSecret": "a86c139a32e7dac42afe4265a955a0fd9d8c2885e26c7e92d4270b3813faa356",
+        "accountToken": "a86c139a32e7dac42afe4265a955a0fd9d8c2885e26c7e92d4270b3813faa356"
+      },
+      "type": "object"
     },
     "AccountSecret": {
       "description": "AccountSecret schema",
