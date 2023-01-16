@@ -15,14 +15,25 @@ export class OpEnergyApiService {
   private newTimeStrikeCallbacks: ((timeStrike: TimeStrike) => void)[] = [];
   private newTimeSlowFastGuessCallbacks: ((slowFastGues: SlowFastGuess) => void)[] = [];
 
+  // magic values, that should be contained by account token hash in order to pass a quick check
+  const AccountTokenMagic =
+    [ [ 10, '0']
+    , [ 30, '0']
+    , [ 60, 'e']
+    ] as [number, string][];
+
+  // magic values, that should be contained by account secret in order to pass a quick check
+  const AccountSecretMagic =
+    [ [ 10, '0']
+    , [ 30, 'e']
+    , [ 60, 'e']
+    ] as [number, string][];
+
   constructor(
   ) {
   }
   // returns a string(64) which is a sha256 hash of the src + salt string
-  // result contains at indexes:
-  // - 10: '0'
-  // - 30: '0'
-  // - 60: 'e'
+  // result contains AccountTokenMagic magic at appropriate positions
   // which is done just to be able to perform a quick check of the user's input
   // Params:
   // - src - string(64)
@@ -36,9 +47,9 @@ export class OpEnergyApiService {
     }
     var rawHash = [...crypto.SHA256(src + salt).toString().slice(0, 64)];
     // set significant bytes to be able to make a dumb check later
-    rawHash[10] = '0';
-    rawHash[30] = '0'; // token has 0 at this position
-    rawHash[60] = 'e';
+    AccountTokenMagic.forEach( ([index,magic]) => {
+      rawHash[ index ] = magic; // set specific magic for account token hash
+    });
     return rawHash.join('').slice(0, 64);
   }
 
@@ -78,10 +89,7 @@ export class OpEnergyApiService {
     if( rawString.length !== 64) {
       throw new Error('verifyAccountSecret: length');
     }
-    if( rawString[10] !== '0'
-      ||rawString[30] !== 'e' // token has 0 at this position
-      ||rawString[60] !== 'e'
-      ) {
+    if( !AccountSecretMagic.reduce ( ( acc, [index, magic]) => acc && rawString[ index] === magic, true)) { // quick check for magic
       throw new Error('verifyAccountSecret: header');
     }
     if( !this.isAlphaNum(rawString)) {
@@ -96,10 +104,7 @@ export class OpEnergyApiService {
     if( rawString.length !== 64) {
       throw new Error('verifyAccountToken: length');
     }
-    if( rawString[10] !== '0'
-      ||rawString[30] !== '0' // token has 0 at this position
-      ||rawString[60] !== 'e'
-      ) {
+    if( !AccountTokenMagic.reduce ( ( acc, [index, magic]) => acc && rawString[ index] === magic, true)) { // quick check for magic
       throw new Error('verifyAccountToken: header');
     }
     if( !this.isAlphaNum(rawString)) {
@@ -508,9 +513,9 @@ export class OpEnergyApiService {
     const rnd = [...Array(10)].map( _ => String.fromCharCode(Math.floor(Math.random() * 255))).join('');
     var newHashArr = [ ... crypto.HmacSHA256(rnd, config.DATABASE.SECRET_SALT).toString().slice(0, 64)];
     // secret should have special bytes in certain places to pass input verification
-    newHashArr[10] = '0';
-    newHashArr[30] = 'e';
-    newHashArr[60] = 'e';
+    AccountSecretMagic.forEach( ([index,magic]) => {
+      newHashArr[ index ] = magic; // set specific magic for account token hash
+    });
     const secret = newHashArr.join(''); // this value will be used to login
     const accountToken = this.getHashSalt( secret, config.DATABASE.SECRET_SALT);
     return [ { value: secret}, this.verifyAccountToken( accountToken) ];
