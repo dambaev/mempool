@@ -160,7 +160,7 @@ class OpEnergyWebsocket {
 
   // sends notifications to all the WebSockets' clients about new TimeStrike value
   handleNewTimeStrike(timeStrike: TimeStrike) {
-    if (OpEnergyWebsocket.wss === undefined) {
+    if (!OpEnergyWebsocket.wss) {
       throw new Error('WebSocket.Server is not set');
     }
     const value = {
