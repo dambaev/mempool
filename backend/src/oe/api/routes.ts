@@ -50,8 +50,8 @@ class OpEnergyRoutes {
     const UUID = await opEnergyApiService.$generateRandomHash();
     try {
       logger.info( `${UUID} PROFILE: start: $postRegister`);
-      const [secret, token] = await opEnergyApiService.$registerNewUser( UUID);
-      res.json( [ secret.value, token.accountToken ]);
+      const response = await opEnergyApiService.$registerNewUser( UUID);
+      res.json( response);
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$postRegister: ${e instanceof Error ? e.message: e}`);
       res.status(404).send(`${UUID}: ${e instanceof Error? e.message : e}`);

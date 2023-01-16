@@ -100,3 +100,9 @@ export interface BlockSpan {
   startBlockHeight: number, 
   endBlockHeight: number
 }
+
+// Response for register request
+export interface RegisterResponse {
+  accountToken: string;
+  accountSecret: string;
+}

@@ -8,26 +8,26 @@ import config from '../../config';
 import logger from '../../logger';
 
 
-import { SlowFastGuessValue, BlockHeight, NLockTime, UserId, TimeStrikeDB, AlphaNumString, TimeStrikeId, AccountSecret, AccountToken, TimeStrike, SlowFastGuess, TimeStrikesHistory, SlowFastResult, BlockHash, BlockSpan } from './interfaces/op-energy.interface';
+import { SlowFastGuessValue, BlockHeight, NLockTime, UserId, TimeStrikeDB, AlphaNumString, TimeStrikeId, AccountSecret, AccountToken, TimeStrike, SlowFastGuess, TimeStrikesHistory, SlowFastResult, BlockHash, BlockSpan, RegisterResponse } from './interfaces/op-energy.interface';
+
+// magic values, that should be contained by account token hash in order to pass a quick check
+const AccountTokenMagic =
+  [ [ 10, '0']
+  , [ 30, '0']
+  , [ 60, 'e']
+  ] as [number, string][];
+
+// magic values, that should be contained by account secret in order to pass a quick check
+const AccountSecretMagic =
+  [ [ 10, '0']
+  , [ 30, 'e']
+  , [ 60, 'e']
+  ] as [number, string][];
 
 export class OpEnergyApiService {
   // those arrays contains callbacks, which will be called when appropriate entity will be created
   private newTimeStrikeCallbacks: ((timeStrike: TimeStrike) => void)[] = [];
   private newTimeSlowFastGuessCallbacks: ((slowFastGues: SlowFastGuess) => void)[] = [];
-
-  // magic values, that should be contained by account token hash in order to pass a quick check
-  const AccountTokenMagic =
-    [ [ 10, '0']
-    , [ 30, '0']
-    , [ 60, 'e']
-    ] as [number, string][];
-
-  // magic values, that should be contained by account secret in order to pass a quick check
-  const AccountSecretMagic =
-    [ [ 10, '0']
-    , [ 30, 'e']
-    , [ 60, 'e']
-    ] as [number, string][];
 
   constructor(
   ) {
@@ -38,7 +38,7 @@ export class OpEnergyApiService {
   // Params:
   // - src - string(64)
   // - salt - string(64)
-  getHashSalt(src: string, salt: string): string {
+  getHashSalt(src: string, salt: string): AccountToken {
     if (src.length < 64) {
       throw new Error("getHashSalt: src.length < 64");
     }
@@ -50,7 +50,7 @@ export class OpEnergyApiService {
     AccountTokenMagic.forEach( ([index,magic]) => {
       rawHash[ index ] = magic; // set specific magic for account token hash
     });
-    return rawHash.join('').slice(0, 64);
+    return { accountToken: rawHash.join('').slice(0, 64)};
   }
 
   isAlphaNum(str: string){
@@ -133,7 +133,7 @@ export class OpEnergyApiService {
     const query1 = 'UPDATE users SET last_log_time=NOW() WHERE id = ?';
     try {
       return await DB.$with_accountPool<UserId>( UUID, async (connection) => {
-        const [[raw]] = await DB.$profile_query<any>( UUID, connection, query, [ accountTokenHashed]);
+        const [[raw]] = await DB.$profile_query<any>( UUID, connection, query, [ accountTokenHashed.accountToken]);
         // update last_log_time field
         const _ = await DB.$profile_query<any>( UUID, connection, query1, [ raw.id]);
         return {
@@ -163,7 +163,7 @@ export class OpEnergyApiService {
         const [raw] = await DB.$profile_query<any>( UUID
                                                       , connection
                                                       , query
-                                                      , [ accountTokenHashed.slice(0,64) // secret_hash
+                                                      , [ accountTokenHashed.accountToken.slice(0,64) // secret_hash
                                                       , displayName.value.slice(0,30)
                                                       ]);
         return {
@@ -508,8 +508,11 @@ export class OpEnergyApiService {
     } catch (e) {
       throw new Error(`${UUID} OpEnergyApiService.$getBlockSpanList: error while generating block list: ${e instanceof Error ? e.message : e}`);
     }
+  }
 
-  public async $registerNewUser( UUID: string): Promise<[ AccountSecret, AccountToken]> {
+  // this procedure generates new random account secret and it's token, which is really a hash
+  // both contains appropriate secret/token magics for quick checks.
+  public generateAccountSecretAndToken(): [AccountSecret, AccountToken] {
     const rnd = [...Array(10)].map( _ => String.fromCharCode(Math.floor(Math.random() * 255))).join('');
     var newHashArr = [ ... crypto.HmacSHA256(rnd, config.DATABASE.SECRET_SALT).toString().slice(0, 64)];
     // secret should have special bytes in certain places to pass input verification
@@ -518,27 +521,35 @@ export class OpEnergyApiService {
     });
     const secret = newHashArr.join(''); // this value will be used to login
     const accountToken = this.getHashSalt( secret, config.DATABASE.SECRET_SALT);
-    return [ { value: secret}, this.verifyAccountToken( accountToken) ];
+    return [ this.verifyAccountSecret( secret)
+           , accountToken
+           ];
+  }
+  public async $registerNewUser( UUID: string): Promise<RegisterResponse> {
+    const [secret, token] = this.generateAccountSecretAndToken();
+    return { 'accountSecret': secret.value
+           , 'accountToken': token.accountToken
+           };
   }
 
   // performs user login by given secret
   public async $loginUser( UUID: string, secret: AccountSecret): Promise< AccountToken> {
     const accountToken = this.getHashSalt( secret.value, config.DATABASE.SECRET_SALT);
     // if user's record had been persisted, then hashed token is being used as secret value
-    const accountTokenStored = this.getHashSalt( accountToken, config.DATABASE.SECRET_SALT);
+    const accountTokenStored = this.getHashSalt( accountToken.accountToken, config.DATABASE.SECRET_SALT);
     const query = 'UPDATE users SET last_log_time = NOW() WHERE secret_hash = (?)';
     try {
       await DB.$with_accountPool( UUID, async (connection) => {
         const [raw] = await DB.$profile_query<any>( UUID
                                                       , connection
                                                       , query
-                                                      , [ accountTokenStored.slice(0,64) ] // hash(hash(secret))
+                                                      , [ accountTokenStored.accountToken.slice(0,64) ] // hash(hash(secret))
                                                       );
       });
     } catch (e) {
       throw new Error( `ERROR: OpEnergyApiService.$loginUser: ${ e instanceof Error? e.message: e}`);
     }
-    return this.verifyAccountToken( accountToken);
+    return accountToken;
   }
 
 }
