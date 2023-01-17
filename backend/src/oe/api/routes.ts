@@ -8,6 +8,7 @@ import websocketHandler from '../../api/websocket-handler';
 import opEnergyApiService from './op-energy.service';
 import opEnergyWebsocket from './websocket';
 import opStatisticService from './op-statistics.service';
+import { isValidNaturalNumber, isValidPositiveNumber } from '../util/helper';
 
 class OpEnergyRoutes {
   public setUpHttpApiRoutes(app) {
@@ -25,7 +26,7 @@ class OpEnergyRoutes {
       .post(config.MEMPOOL.API_URL_PREFIX + 'user/displayname', this.$postUserDisplayName)
       .get(config.MEMPOOL.API_URL_PREFIX + 'statistics/:blockheight/:span', this.$getBlockSpanStatistics)
       .get(config.MEMPOOL.API_URL_PREFIX + 'oe/block/:hash', this.$getBlockByHash)
-   ;
+      .get(config.MEMPOOL.API_URL_PREFIX + 'oe/blockspanlist/:startBlockHeight/:span/:numberOfSpan', this.$getBlockSpanList)
   }
   private async $getTimeStrikes(req: Request, res: Response) {
     const UUID = await opEnergyApiService.$generateRandomHash();
@@ -211,6 +212,29 @@ class OpEnergyRoutes {
       res.status(404).send(`${UUID}: ${e instanceof Error? e.message : e}`);
     }
     logger.info( `${UUID}: PROFILE: end: $getBlockByHash`);
+  }
+
+  private async $getBlockSpanList(req: Request, res: Response) {
+    const UUID = await opEnergyApiService.$generateRandomHash();
+    try {
+      logger.info( `${UUID}: PROFILE: start: $getBlockSpanList`);
+      const { startBlockHeight, span, numberOfSpan } = req.params;
+
+      if (
+        !isValidPositiveNumber(startBlockHeight) ||
+        !isValidPositiveNumber(span) ||
+        !isValidNaturalNumber(numberOfSpan)
+      ) {
+        throw Error('Not a valid input parameters.');
+      }
+
+      const result = await opEnergyApiService.$getBlockSpanList(UUID, +startBlockHeight, +span, +numberOfSpan);
+      res.json(result);
+    } catch(e) {
+      logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getBlockSpanList: ${e instanceof Error ? e.message: e}`);
+      res.status(500).send(`${UUID}: ${e instanceof Error? e.message : e}`);
+    }
+    logger.info( `${UUID}: PROFILE: end: $getBlockSpanList`);
   }
 };
 

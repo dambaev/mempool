@@ -4,7 +4,7 @@ import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 import { IEsploraApi } from '../../api/bitcoin/esplora-api.interface';
 
 
-import { SlowFastGuessValue, BlockHeight, NLockTime, UserId, TimeStrikeDB, AlphaNumString, TimeStrikeId, AccountToken, TimeStrike, SlowFastGuess, TimeStrikesHistory, SlowFastResult, BlockHash } from './interfaces/op-energy.interface';
+import { SlowFastGuessValue, BlockHeight, NLockTime, UserId, TimeStrikeDB, AlphaNumString, TimeStrikeId, AccountToken, TimeStrike, SlowFastGuess, TimeStrikesHistory, SlowFastResult, BlockHash, BlockSpan } from './interfaces/op-energy.interface';
 
 export class OpEnergyApiService {
   // those arrays contains callbacks, which will be called when appropriate entity will be created
@@ -442,6 +442,23 @@ export class OpEnergyApiService {
   public async $getBlockByHash( hash: BlockHash): Promise<IEsploraApi.Block> {
     // using our own block cache goes here
     return await bitcoinApi.$getBlock(hash.value);
+  }
+
+  public $getBlockSpanList(UUID: string, startBlockHeight: number, span: number, numberOfSpan: number): BlockSpan[] {
+    try {
+      const blockSpanList = [] as BlockSpan[];
+      for (let i = 0; i < numberOfSpan; i++) {
+        const blockSpan = {
+          startBlockHeight: startBlockHeight + (i * span),
+          endBlockHeight: startBlockHeight + ((i * span) + span)
+        };
+        blockSpanList.push(blockSpan);
+      }
+
+      return blockSpanList;
+    } catch (e) {
+      throw new Error(`${UUID} OpEnergyApiService.$getBlockSpanList: error while generating block list: ${e instanceof Error ? e.message : e}`);
+    }
   }
 
 }
