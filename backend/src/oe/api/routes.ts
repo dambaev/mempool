@@ -8,7 +8,7 @@ import websocketHandler from '../../api/websocket-handler';
 import opEnergyApiService from './op-energy.service';
 import opEnergyWebsocket from './websocket';
 import opStatisticService from './op-statistics.service';
-import { isValidNeutralNumber, isValidPositiveNumber } from '../util/helper';
+import { isValidNaturalNumber, isValidPositiveNumber } from '../util/helper';
 
 class OpEnergyRoutes {
   public setUpHttpApiRoutes(app) {
@@ -223,7 +223,7 @@ class OpEnergyRoutes {
       if (
         !isValidPositiveNumber(startBlockHeight) ||
         !isValidPositiveNumber(span) ||
-        !isValidNeutralNumber(numberOfSpan)
+        !isValidNaturalNumber(numberOfSpan)
       ) {
         throw Error('Not a valid input parameters.');
       }
