@@ -1,13 +1,14 @@
+import { Block } from '../../interfaces/electrs.interface';
 
 export interface TimeStrike {
   blockHeight: number;
   nLockTime: number;
   creationTime: number;
   elapsedTime?: number;
-};
+}
 
 export interface SlowFastGuess {
-  guess : "slow" | "fast";
+  guess : 'slow' | 'fast';
   blockHeight: number;
   nLockTime: number;
   creationTime: number;
@@ -16,7 +17,7 @@ export interface SlowFastGuess {
 }
 
 export interface SlowFastGuessOutcome {
-  outcome: "slow" | "fast";
+  outcome: 'slow' | 'fast';
   blockHeight: number;
   nLockTime: number;
 }
@@ -34,9 +35,18 @@ export interface TimeStrikesHistory {
 };
 
 export interface SlowFastResult {
-  guess : "slow" | "fast";
-  result: "wrong" | "right";
+  guess : 'slow' | 'fast';
+  result: 'wrong' | 'right';
   blockHeight: number;
   nLockTime: number;
   creationTime: number;
+}
+
+export interface NavigationObject {
+  state: {
+    data: {
+      block: Block,
+      blockHeight: number,
+    },
+  },
 }

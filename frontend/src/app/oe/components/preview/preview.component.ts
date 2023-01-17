@@ -23,6 +23,14 @@ export class PreviewComponent implements OnInit {
     return this.relativeUrlPipe.transform('/hashstrikes/blockspans/1');
   }
 
+  pastStrikeSummaryLink() {
+    return this.relativeUrlPipe.transform('/hashstrikes/strike_summary/89778/89791');
+  }
+
+  futureStrikeSummaryLink() {
+    return this.relativeUrlPipe.transform('/hashstrikes/strike_summary/89778/120000');
+  }
+
   pastStrikeDetailLink() {
     return this.relativeUrlPipe.transform('/hashstrikes/strike_detail/89778/89791/89791/1652239330/1656641994');
   }
