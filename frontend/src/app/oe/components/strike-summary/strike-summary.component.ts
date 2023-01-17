@@ -1,17 +1,18 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { ElectrsApiService } from '../../../services/electrs-api.service';
-import { switchMap, tap, debounceTime, catchError, map, take } from 'rxjs/operators';
-import { Block, Transaction, Vout } from '../../../interfaces/electrs.interface';
+import { switchMap, catchError, map, take } from 'rxjs/operators';
+import { Block, Transaction } from '../../../interfaces/electrs.interface';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
 import { StateService } from '../../../services/state.service';
 import { SeoService } from 'src/app/services/seo.service';
 import { WebsocketService } from 'src/app/services/websocket.service';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
-import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
-import { TimeStrike } from 'src/app/oe/interfaces/op-energy.interface';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TimeStrike, NavigationObject } from 'src/app/oe/interfaces/op-energy.interface';
 import { OpEnergyApiService } from 'src/app/oe/services/op-energy.service';
+import { BlockTypes, ArrowDirections, BlockParts } from '../../types/constant';
 
 @Component({
   selector: 'app-strike-summary',
@@ -86,7 +87,7 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
     private relativeUrlPipe: RelativeUrlPipe,
   ) { }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.websocketService.want(['blocks', 'mempool-blocks']);
     this.paginationMaxSize = window.matchMedia('(max-width: 670px)').matches ? 3 : 5;
     this.network = this.stateService.network;
@@ -95,40 +96,28 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
     this.txsLoadingStatus$ = this.route.paramMap
       .pipe(
         switchMap(() => this.stateService.loadingIndicators$),
-        map((indicators) => indicators['blocktxs-' + this.fromBlockHash] !== undefined ? indicators['blocktxs-' + this.fromBlockHash] : 0)
+        map((indicators) => indicators[`${BlockParts.PRE_HASH}${this.fromBlockHash}`] ? indicators[`${BlockParts.PRE_HASH}${this.fromBlockHash}`] : 0)
       );
 
-    this.blocksSubscription = this.stateService.blocks$
-      .subscribe(([block]) => {
-        this.latestBlock = block;
-        this.latestBlocks.unshift(block);
-        this.latestBlocks = this.latestBlocks.slice(0, this.stateService.env.KEEP_BLOCKS_AMOUNT);
-        this.setNextAndPreviousBlockLink();
-
-        if (block.id === this.fromBlockHash) {
-          this.fromBlock = block;
-        }
-      });
+    this.blocksSubscription = this.subscribeToService();
 
     this.subscription = this.route.paramMap.pipe(
       switchMap((params: ParamMap) => {
         const fromBlockHash: string = params.get('from') || '';
         const toBlockHash: string = params.get('to') || '';
-        this.fromBlock = undefined;
-        this.toBlock = undefined;
+        this.fromBlock = null;
+        this.toBlock = null;
         this.page = 1;
-        this.coinbaseTx = undefined;
-        this.error = undefined;
+        this.coinbaseTx = null;
+        this.error = null;
         this.stateService.markBlock$.next({});
 
         if (history.state.data && history.state.data.blockHeight) {
           this.blockHeight = history.state.data.blockHeight;
         }
 
-        let isBlockHeight = false;
-        if (/^[0-9]+$/.test(fromBlockHash) && /^[0-9]+$/.test(toBlockHash)) {
-          isBlockHeight = true;
-        } else {
+        const isBlockHeight = this.getIsBlockHeight(fromBlockHash, toBlockHash);
+        if (!isBlockHeight) {
           this.fromBlockHash = fromBlockHash;
           this.toBlockHash = toBlockHash;
         }
@@ -137,67 +126,53 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
         if (history.state.data && history.state.data.block) {
           this.blockHeight = history.state.data.block.height;
           return of([history.state.data.block, history.state.data.block]);
-        } else {
-          this.isLoadingBlock = true;
+        }
 
-          let fromBlockInCache: Block;
-          let toBlockInCache: Block;
-          if (isBlockHeight) {
-            fromBlockInCache = this.latestBlocks.find((block) => block.height === parseInt(fromBlockHash, 10));
-            toBlockInCache = this.latestBlocks.find((block) => block.height === parseInt(toBlockHash, 10));
-            if (fromBlockInCache && toBlockInCache) {
-              return of([fromBlockInCache, toBlockInCache]);
-            }
-            return combineLatest([
-              this.electrsApiService.getBlockHashFromHeight$(parseInt(fromBlockHash, 10)).pipe(
-                catchError(() => of(fromBlockHash)),
-              ),
-              this.electrsApiService.getBlockHashFromHeight$(parseInt(toBlockHash, 10)).pipe(
-                catchError(() => of(toBlockHash)),
-              )
-            ])
-              .pipe(
-                switchMap(([fromHash, toHash]) => {
-                  this.fromBlockHash = fromHash;
-                  this.toBlockHash = toHash;
-                  this.location.replaceState(
-                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/hashstrikes/strike_summary/`, fromHash, toHash]).toString()
-                  );
-                  return combineLatest([
-                    this.opEnergyApiService.$getBlock(fromHash).pipe(
-                      catchError(() => of(fromHash)),
-                    ),
-                    this.opEnergyApiService.$getBlock(toHash).pipe(
-                      catchError(() => of(toHash)),
-                    )
-                  ]);
-                })
-              );
-          }
+        this.isLoadingBlock = true;
 
-          fromBlockInCache = this.latestBlocks.find((block) => block.id === this.fromBlockHash);
-          toBlockInCache = this.latestBlocks.find((block) => block.id === this.toBlockHash);
+        let fromBlockInCache: Block;
+        let toBlockInCache: Block;
+        if (isBlockHeight) {
+          fromBlockInCache = this.latestBlocks.find((block: Block) => block.height === parseInt(fromBlockHash, 10));
+          toBlockInCache = this.latestBlocks.find((block: Block) => block.height === parseInt(toBlockHash, 10));
           if (fromBlockInCache && toBlockInCache) {
             return of([fromBlockInCache, toBlockInCache]);
           }
-
           return combineLatest([
-            this.opEnergyApiService.$getBlock(fromBlockHash).pipe(
-              catchError(() => of(fromBlockHash)),
-            ),
-            this.opEnergyApiService.$getBlock(toBlockHash).pipe(
-              catchError(() => of(toBlockHash)),
-            )
-          ]);
+            this.getBlockHashFromHeight(fromBlockHash),
+            this.getBlockHashFromHeight(toBlockHash),
+          ])
+            .pipe(
+              switchMap(([fromHash, toHash]) => {
+                this.fromBlockHash = fromHash;
+                this.toBlockHash = toHash;
+                this.location.replaceState(
+                  this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/hashstrikes/strike_summary/`, fromHash, toHash]).toString()
+                );
+                return combineLatest([
+                  this.getBlock(fromHash),
+                  this.getBlock(toHash),
+                ]);
+              })
+            );
         }
+        fromBlockInCache = this.latestBlocks.find((block: Block) => block.id === this.fromBlockHash);
+        toBlockInCache = this.latestBlocks.find((block: Block) => block.id === this.toBlockHash);
+        if (fromBlockInCache && toBlockInCache) {
+          return of([fromBlockInCache, toBlockInCache]);
+        }
+        return combineLatest([
+          this.getBlock(fromBlockHash),
+          this.getBlock(toBlockHash),
+        ]);
       }),
     )
     .subscribe(([fromBlock, toBlock]: [Block, Block]) => {
       this.fromBlock = fromBlock;
-      if (typeof toBlock == 'string') {
+      if (typeof toBlock === BlockTypes.STRING) {
         this.toBlock = {
           ...this.fromBlock,
-          height: toBlock,
+          height: +toBlock,
         };
       } else {
         this.toBlock = toBlock;
@@ -215,11 +190,11 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
       this.isLoadingTransactions = true;
       this.transactions = null;
 
-      this.stateService.$accountToken.pipe(take(1)).subscribe(res => {
+      this.stateService.$accountToken.pipe(take(1)).subscribe(() => {
         this.getTimeStrikes();
-      })
+      });
     }),
-    (error) => {
+    (error: Error): void => {
       this.error = error;
       this.isLoadingBlock = false;
     };
@@ -228,20 +203,21 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
       .subscribe((network) => this.network = network);
 
     this.keyNavigationSubscription = this.stateService.keyNavigation$.subscribe((event) => {
-      if (this.showPreviousBlocklink && event.key === 'ArrowRight' && this.nextBlockHeight - 2 >= 0) {
+      if (this.showPreviousBlocklink && event.key === ArrowDirections.RIGHT && this.nextBlockHeight - 2 >= 0) {
         this.navigateToPreviousBlock();
       }
-      if (event.key === 'ArrowLeft') {
-        if (this.showNextBlocklink) {
-          this.navigateToNextBlock();
-        } else {
-          this.router.navigate([this.relativeUrlPipe.transform('/mempool-block'), '0']);
-        }
+
+      if (event.key === ArrowDirections.LEFT && this.showNextBlocklink) {
+        this.navigateToNextBlock();
+      }
+
+      if (event.key === ArrowDirections.LEFT) {
+        this.router.navigate([this.relativeUrlPipe.transform('/mempool-block'), '0']);
       }
     });
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     this.stateService.markBlock$.next({});
     this.subscription.unsubscribe();
     this.keyNavigationSubscription.unsubscribe();
@@ -249,7 +225,7 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
     this.networkChangedSubscription.unsubscribe();
   }
 
-  getTimeStrikes() {
+  getTimeStrikes(): void {
     this.opEnergyApiService.$listTimeStrikesByBlockHeight(this.toBlock.height)
       .subscribe((timeStrikes: TimeStrike[]) => {
         this.timeStrikes = timeStrikes.map(strike => ({
@@ -260,72 +236,66 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
         const highEnergyStrike = {
           ...this.timeStrikes[0],
           nLockTime: this.toBlock.mediantime - 30
-        }
+        };
         this.timeStrikes.unshift(highEnergyStrike);
       });
   }
 
-  onResize(event: any) {
+  onResize(event: any): void {
     this.paginationMaxSize = event.target.innerWidth < 670 ? 3 : 5;
   }
 
-  navigateToPreviousBlock() {
+  getNavigationObject(block: Block, nextBlockHeight: number): NavigationObject {
+    return { state: { data: { block, blockHeight: nextBlockHeight } } };
+  }
+
+  navigateToPreviousBlock(): void {
     if (!this.fromBlock) {
       return;
     }
-    const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight - 2);
+    const block = this.latestBlocks.find((b: Block) => b.height === this.nextBlockHeight - 2);
     this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/strike_summary/'),
-      block ? block.id : this.fromBlock.previousblockhash], { state: { data: { block, blockHeight: this.nextBlockHeight - 2 } } });
+      block ? block.id : this.fromBlock.previousblockhash], this.getNavigationObject(block, this.nextBlockHeight - 2));
   }
 
-  navigateToNextBlock() {
-    const block = this.latestBlocks.find((b) => b.height === this.nextBlockHeight);
+  navigateToNextBlock(): void {
+    const block = this.latestBlocks.find((b: Block) => b.height === this.nextBlockHeight);
     this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/strike_summary/'),
-      block ? block.id : this.nextBlockHeight], { state: { data: { block, blockHeight: this.nextBlockHeight } } });
+      block ? block.id : this.nextBlockHeight], this.getNavigationObject(block, this.nextBlockHeight));
   }
 
-  navigateToBlockByNumber() {
-    const block = this.latestBlocks.find((b) => b.height === this.blockHeight);
+  navigateToBlockByNumber(): void {
+    const block = this.latestBlocks.find((b: Block) => b.height === this.blockHeight);
     this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/strike_summary/'),
-      block ? block.id : this.blockHeight], { state: { data: { block, blockHeight: this.blockHeight } } });
+      block ? block.id : this.blockHeight], this.getNavigationObject(block, this.blockHeight));
   }
 
-  setNextAndPreviousBlockLink(){
+  setNextAndPreviousBlockLink(): void {
     if (this.latestBlock && this.blockHeight) {
-      if (this.blockHeight === 0){
-        this.showPreviousBlocklink = false;
-      } else {
-        this.showPreviousBlocklink = true;
-      }
-      if (this.latestBlock.height && this.latestBlock.height === this.blockHeight) {
-        this.showNextBlocklink = false;
-      } else {
-        this.showNextBlocklink = true;
-      }
+      this.showPreviousBlocklink = this.blockHeight !== 0;
+      this.showNextBlocklink = !(this.latestBlock.height && this.latestBlock.height === this.blockHeight);
     }
   }
 
-  open(content) {
-    this.modalService.open(content, {ariaLabelledBy: 'modal-basic-title'}).result.then((result) => {
-    }, (reason) => {
-    });
+  open(content): void {
+    this.modalService.open(content, {ariaLabelledBy: 'modal-basic-title'}).result;
   }
 
-  toHHMMSS(secs) {
-    let sec_num = parseInt(secs, 10); // don't forget the second param
-    let hours   = Math.floor(sec_num / 3600);
-    let minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-    let seconds = sec_num - (hours * 3600) - (minutes * 60);
-    let strHours = hours.toString();
-    let strMinutes = minutes.toString();
-    let strSeconds = seconds.toString();
-    if (hours   < 10) {strHours   = "0"+hours;}
-    if (minutes < 10) {strMinutes = "0"+minutes;}
-    if (seconds < 10) {strSeconds = "0"+seconds;}
-    return strHours+':'+strMinutes+':'+strSeconds;
+  toHHMMSS(secs: string): string {
+    const sec_num = parseInt(secs, 10);
+    
+    const hours   = Math.floor(sec_num / 3600);
+    const minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+    const seconds = sec_num - (hours * 3600) - (minutes * 60);
+    
+    const strHours = hours < 10 ? `0${hours}` : hours.toString();
+    const strMinutes = minutes < 10 ? `0${minutes}` : minutes.toString();
+    const strSeconds = seconds < 10 ? `0${seconds}` : seconds.toString();
+    
+    return `${strHours}:${strMinutes}:${strSeconds}`;
   }
 
-  getHexValue(str) {
+  getHexValue(str: string): string {
     const arr1 = str.split('');
     const idx = arr1.findIndex(a => a !== '0');
     let hexValue = '0x';
@@ -337,7 +307,37 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
     return hexValue;
   }
 
-  goDetail(fromBlock, strike) {
+  getIsBlockHeight(fromBlockHash: string, toBlockHash: string): boolean {
+    return /^[0-9]+$/.test(fromBlockHash) && /^[0-9]+$/.test(toBlockHash);
+  }
+
+  getBlockHashFromHeight(blockHash: string): Observable<string> {
+    return this.electrsApiService.getBlockHashFromHeight$(parseInt(blockHash, 10)).pipe(
+      catchError(() => of(blockHash)),
+    );
+  }
+
+  getBlock(blockHash: string): Observable<string | Block> {
+    return this.opEnergyApiService.$getBlock(blockHash).pipe(
+      catchError(() => of(blockHash)),
+    );
+  }
+
+  goDetail(fromBlock, strike): void {
     this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/strike_detail/'), fromBlock.height, strike.blockHeight, strike.blockHeight, strike.nLockTime, strike.creationTime]);
+  }
+
+  subscribeToService(): Subscription {
+    return this.stateService.blocks$
+      .subscribe(([block]) => {
+        this.latestBlock = block;
+        this.latestBlocks.unshift(block);
+        this.latestBlocks = this.latestBlocks.slice(0, this.stateService.env.KEEP_BLOCKS_AMOUNT);
+        this.setNextAndPreviousBlockLink();
+
+        if (block.id === this.fromBlockHash) {
+          this.fromBlock = block;
+        }
+      });
   }
 }
