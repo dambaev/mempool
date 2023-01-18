@@ -53,10 +53,14 @@ class OpBlockHeaderRepository {
       const query = `select height from blocks order by height desc limit 1`;
       return await DB.$with_blockSpanPool(UUID, async (connection) => {
         const [result] = await DB.$profile_query(UUID, connection, query, [], 'blockSpanPool.query');
-        return { value: result[0] ? result[0]['height'] : 0};
+        if( !result[0]) {
+          throw new Error( `There are no confirmed blocks yet`);
+        } else {
+          return { value: result[0]['height']};
+        }
       });
     } catch (error) {
-      logger.err(`Something went wrong while finding latest block height.` + error);
+      logger.err(`${UUID}: ERROR: Something went wrong while finding latest block height.` + error);
       throw error;
     }
   }

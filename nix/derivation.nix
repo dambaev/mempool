@@ -42,6 +42,7 @@ let
       cp -r ./node_modules $out/backend
       cp -r dist $out/backend
       cp package.json $out/backend/ # needed for `npm run start`
+      cp src/oe/api/swagger.json $out/backend/dist/oe/api/
       cp ${initial_script} $out/backend/initial_script.sql # script, which should setup DB user
     '';
     patches = [

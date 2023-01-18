@@ -47,6 +47,10 @@ export interface AccountToken {
   accountToken: string;
 }
 
+export interface AccountSecret {
+  value: string;
+}
+
 export interface UserId {
   userId: number;
   userName: string;
@@ -95,4 +99,10 @@ export interface ConfirmedBlockHeight {
 export interface BlockSpan {
   startBlockHeight: number, 
   endBlockHeight: number
+}
+
+// Response for register request
+export interface RegisterResponse {
+  accountToken: string;
+  accountSecret: string;
 }

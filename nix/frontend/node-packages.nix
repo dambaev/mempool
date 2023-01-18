@@ -1912,6 +1912,15 @@ let
         sha512 = "f0KEEe05NvUnat+boPTZ0dgaLZ4SfSouXUgv5noUiefG2ajgKjmETo9ZJyuqsl7dfl2aHlLJUiki6B4ZYldiiw==";
       };
     };
+    "@types/swagger-ui-dist-3.30.1" = {
+      name = "_at_types_slash_swagger-ui-dist";
+      packageName = "@types/swagger-ui-dist";
+      version = "3.30.1";
+      src = fetchurl {
+        url = "https://registry.npmjs.org/@types/swagger-ui-dist/-/swagger-ui-dist-3.30.1.tgz";
+        sha512 = "wWojDensMF33dSrhak4iWSPOsWBbvf+rSJ6VWQ7ohQbGdKAiT2IwUexrDZkMvf3+vVAPVnNFDRDtxADFszbh+Q==";
+      };
+    };
     "@types/ws-8.5.3" = {
       name = "_at_types_slash_ws";
       packageName = "@types/ws";
@@ -8716,6 +8725,15 @@ let
         sha512 = "CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==";
       };
     };
+    "path-0.12.7" = {
+      name = "path";
+      packageName = "path";
+      version = "0.12.7";
+      src = fetchurl {
+        url = "https://registry.npmjs.org/path/-/path-0.12.7.tgz";
+        sha512 = "aXXC6s+1w7otVF9UletFkFcDsJeO7lSZBPUQhtb5O0xJe8LtYhj/GxldoL09bBj9+ZmE2hNoHqQSFMN5fikh4Q==";
+      };
+    };
     "path-browserify-1.0.1" = {
       name = "path-browserify";
       packageName = "path-browserify";
@@ -10750,6 +10768,15 @@ let
         sha512 = "ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==";
       };
     };
+    "swagger-ui-dist-4.12.0" = {
+      name = "swagger-ui-dist";
+      packageName = "swagger-ui-dist";
+      version = "4.12.0";
+      src = fetchurl {
+        url = "https://registry.npmjs.org/swagger-ui-dist/-/swagger-ui-dist-4.12.0.tgz";
+        sha512 = "B0Iy2ueXtbByE6OOyHTi3lFQkpPi/L7kFOKFeKTr44za7dJIELa9kzaca6GkndCgpK1QTjArnoXG+aUy0XQp1w==";
+      };
+    };
     "symbol-observable-1.0.1" = {
       name = "symbol-observable";
       packageName = "symbol-observable";
@@ -11405,6 +11432,15 @@ let
       src = fetchurl {
         url = "https://registry.npmjs.org/util/-/util-0.10.3.tgz";
         sha512 = "5KiHfsmkqacuKjkRkdV7SsfDJ2EGiPsK92s2MhNSY0craxjTdKTtqKsJaCWp4LW33ZZ0OPUv1WO/TFvNQRiQxQ==";
+      };
+    };
+    "util-0.10.4" = {
+      name = "util";
+      packageName = "util";
+      version = "0.10.4";
+      src = fetchurl {
+        url = "https://registry.npmjs.org/util/-/util-0.10.4.tgz";
+        sha512 = "0Pm9hTQ3se5ll1XihRic3FDIku70C+iHUdT/W926rSgHV5QgXsYbKZN8MSC3tJtSkhuROzvsQjAaFENRXr+19A==";
       };
     };
     "util-0.12.3" = {
@@ -12485,6 +12521,7 @@ let
       sources."@types/sinonjs__fake-timers-8.1.1"
       sources."@types/sizzle-2.3.3"
       sources."@types/sockjs-0.3.33"
+      sources."@types/swagger-ui-dist-3.30.1"
       sources."@types/ws-8.5.3"
       sources."@types/yauzl-2.9.1"
       (sources."@typescript-eslint/eslint-plugin-5.30.5" // {
@@ -13638,6 +13675,7 @@ let
       sources."parse5-htmlparser2-tree-adapter-6.0.1"
       sources."parse5-sax-parser-6.0.1"
       sources."parseurl-1.3.3"
+      sources."path-0.12.7"
       sources."path-exists-4.0.0"
       sources."path-is-absolute-1.0.1"
       sources."path-key-3.1.1"
@@ -13909,6 +13947,7 @@ let
       sources."subarg-1.0.0"
       sources."supports-color-5.5.0"
       sources."supports-preserve-symlinks-flag-1.0.0"
+      sources."swagger-ui-dist-4.12.0"
       sources."symbol-observable-4.0.0"
       sources."symbol-tree-3.2.4"
       sources."syntax-error-1.4.0"
@@ -14013,6 +14052,11 @@ let
       (sources."url-0.11.0" // {
         dependencies = [
           sources."punycode-1.3.2"
+        ];
+      })
+      (sources."util-0.10.4" // {
+        dependencies = [
+          sources."inherits-2.0.3"
         ];
       })
       sources."util-deprecate-1.0.2"

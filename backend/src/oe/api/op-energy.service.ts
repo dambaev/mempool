@@ -2,9 +2,27 @@ import {DB} from '../database';
 import crypto from "crypto-js";
 import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 import { IEsploraApi } from '../../api/bitcoin/esplora-api.interface';
+import opBlockHeaderService from '../service/op-block-header.service';
+import opBlockHeaderRepository from '../repositories/OpBlockHeaderRepository';
+import config from '../../config';
+import logger from '../../logger';
 
 
-import { SlowFastGuessValue, BlockHeight, NLockTime, UserId, TimeStrikeDB, AlphaNumString, TimeStrikeId, AccountToken, TimeStrike, SlowFastGuess, TimeStrikesHistory, SlowFastResult, BlockHash, BlockSpan } from './interfaces/op-energy.interface';
+import { SlowFastGuessValue, BlockHeight, NLockTime, UserId, TimeStrikeDB, AlphaNumString, TimeStrikeId, AccountSecret, AccountToken, TimeStrike, SlowFastGuess, TimeStrikesHistory, SlowFastResult, BlockHash, BlockSpan, RegisterResponse } from './interfaces/op-energy.interface';
+
+// magic values, that should be contained by account token hash in order to pass a quick check
+const AccountTokenMagic =
+  [ [ 10, '0']
+  , [ 30, '0']
+  , [ 60, 'e']
+  ] as [number, string][];
+
+// magic values, that should be contained by account secret in order to pass a quick check
+const AccountSecretMagic =
+  [ [ 10, '0']
+  , [ 30, 'e']
+  , [ 60, 'e']
+  ] as [number, string][];
 
 export class OpEnergyApiService {
   // those arrays contains callbacks, which will be called when appropriate entity will be created
@@ -15,28 +33,26 @@ export class OpEnergyApiService {
   ) {
   }
   // returns a string(64) which is a sha256 hash of the src + salt string
-  // result contains at indexes:
-  // - 10: '0'
-  // - 30: '0'
-  // - 60: 'e'
+  // result contains AccountTokenMagic magic at appropriate positions
   // which is done just to be able to perform a quick check of the user's input
   // Params:
   // - src - string(64)
   // - salt - string(64)
-  getHashSalt( src: string, salt: string):string {
-    if( src.length < 64) {
+  getHashSalt(src: string, salt: string): AccountToken {
+    if (src.length < 64) {
       throw new Error("getHashSalt: src.length < 64");
     }
-    if( salt.length < 64) {
+    if (salt.length < 64) {
       throw new Error("getHashSalt: salt.length < 64");
     }
-    var rawHash = crypto.SHA256( src + salt);
+    var rawHash = [...crypto.SHA256(src + salt).toString().slice(0, 64)];
     // set significant bytes to be able to make a dumb check later
-    rawHash[10] = '0';
-    rawHash[30] = '0'; // token has 0 at this position
-    rawHash[60] = 'e';
-    return rawHash.toString().slice(0,64);
+    AccountTokenMagic.forEach( ([index,magic]) => {
+      rawHash[ index ] = magic; // set specific magic for account token hash
+    });
+    return { accountToken: rawHash.join('').slice(0, 64)};
   }
+
   isAlphaNum(str: string){
     var code, i, len;
 
@@ -68,14 +84,27 @@ export class OpEnergyApiService {
       'value': num,
     };
   }
+
+  public verifyAccountSecret( rawString: string): AccountSecret {
+    if( rawString.length !== 64) {
+      throw new Error('verifyAccountSecret: length');
+    }
+    if( !AccountSecretMagic.reduce ( ( acc, [index, magic]) => acc && rawString[ index] === magic, true)) { // quick check for magic
+      throw new Error('verifyAccountSecret: header');
+    }
+    if( !this.isAlphaNum(rawString)) {
+      throw new Error('verifyAccountSecret: alphanum');
+    }
+    return {
+      'value': rawString,
+    };
+  }
+
   public verifyAccountToken( rawString: string): AccountToken {
     if( rawString.length !== 64) {
       throw new Error('verifyAccountToken: length');
     }
-    if( rawString[10] !== '0'
-      ||rawString[30] !== '0' // token has 0 at this position
-      ||rawString[60] !== 'e'
-      ) {
+    if( !AccountTokenMagic.reduce ( ( acc, [index, magic]) => acc && rawString[ index] === magic, true)) { // quick check for magic
       throw new Error('verifyAccountToken: header');
     }
     if( !this.isAlphaNum(rawString)) {
@@ -97,11 +126,14 @@ export class OpEnergyApiService {
   }
 
   public async $getUserIdByAccountToken( UUID: string, accountToken: AccountToken): Promise<UserId> {
+    // we don't want to store accountToken in DB in raw format, so we store hash of accountToken
+    // this way when DB will leak into public, random people will not be able to use hashed tokens to perform any API calls
+    const accountTokenHashed = this.getHashSalt( accountToken.accountToken, config.DATABASE.SECRET_SALT);
     const query = "SELECT id,display_name FROM users WHERE secret_hash=?";
     const query1 = 'UPDATE users SET last_log_time=NOW() WHERE id = ?';
     try {
       return await DB.$with_accountPool<UserId>( UUID, async (connection) => {
-        const [[raw]] = await DB.$profile_query<any>( UUID, connection, query, [ accountToken.accountToken]);
+        const [[raw]] = await DB.$profile_query<any>( UUID, connection, query, [ accountTokenHashed.accountToken]);
         // update last_log_time field
         const _ = await DB.$profile_query<any>( UUID, connection, query1, [ raw.id]);
         return {
@@ -121,13 +153,17 @@ export class OpEnergyApiService {
     }
   }
   public async $createNewUser( UUID: string, accountToken: AccountToken, displayName: AlphaNumString): Promise<UserId> {
+    // we don't want to store accountToken in DB in raw format, so we store hash of accountToken
+    // this way when DB will leak into public, random people will not be able to use hashed tokens to perform any API calls
+    const accountTokenHashed = this.getHashSalt( accountToken.accountToken, config.DATABASE.SECRET_SALT);
+
     const query = "INSERT INTO users (secret_hash, display_name, creation_time,last_log_time) VALUES (?,?,NOW(),NOW())";
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
         const [raw] = await DB.$profile_query<any>( UUID
                                                       , connection
                                                       , query
-                                                      , [ accountToken.accountToken.slice(0,64) // secret_hash
+                                                      , [ accountTokenHashed.accountToken.slice(0,64) // secret_hash
                                                       , displayName.value.slice(0,30)
                                                       ]);
         return {
@@ -169,6 +205,11 @@ export class OpEnergyApiService {
     }
   }
   public async $addTimeStrike( UUID: string, accountToken: AccountToken, blockHeight: BlockHeight, nlocktime: NLockTime): Promise<TimeStrikeDB> {
+    // ensure blockheight is in the future, ie > currentTip yet, because we can't get guess for a block height that already discovered
+    const currentTip = await bitcoinApi.$getBlockHeightTip();
+    if( blockHeight.value <= currentTip) {
+      throw new Error( `${UUID}: ERROR: timestrike can only be created for future block height`);
+    }
     const userId = await this.$getUserIdByAccountTokenCreateIfMissing( UUID, accountToken);
     const now = Math.floor( Date.now() / 1000); // unix timestamp in UTC
     const query = 'INSERT INTO timestrikes (user_id,block_height,nlocktime,creation_time) VALUES (?,?,?,FROM_UNIXTIME(?))';
@@ -218,6 +259,11 @@ export class OpEnergyApiService {
     return [];
   }
   public async $addSlowFastGuess( UUID: string, accountToken: AccountToken, blockHeight: BlockHeight, nLockTime: NLockTime, guess: SlowFastGuessValue) {
+    // ensure blockheight is in the future, ie > currentTip yet, because we can't get guess for a block height that already discovered
+    const currentTip = await bitcoinApi.$getBlockHeightTip();
+    if( blockHeight.value <= currentTip) {
+      throw new Error( `${UUID}: ERROR: slow/fast guess can only be created for future block height`);
+    }
     const userId = await this.$getUserIdByAccountTokenCreateIfMissing( UUID, accountToken);
     const timestrike_id = await this.$getTimeStrikeId( UUID, blockHeight, nLockTime);
     const now = Math.floor( Date.now() / 1000); // unix timestamp in UTC
@@ -322,7 +368,7 @@ export class OpEnergyApiService {
   }
 
   public async $getTimeStrikesHistory( UUID: string): Promise<TimeStrikesHistory[]> {
-    const query = 'SELECT timestrikeshistory.id,user_id,users.display_name,block_height,nlocktime,mediantime,UNIX_TIMESTAMP(timestrikeshistory.creation_time) as creation_time,UNIX_TIMESTAMP(archivetime) as archivetime\
+    const query = 'SELECT timestrikeshistory.id,user_id,users.display_name,block_height,nlocktime,mediantime,UNIX_TIMESTAMP(timestrikeshistory.creation_time) as creation_time,UNIX_TIMESTAMP(archive_time) as archive_time\
                    FROM timestrikeshistory INNER JOIN users ON timestrikeshistory.user_id = users.id';
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
@@ -334,7 +380,7 @@ export class OpEnergyApiService {
             'nLockTime': record.nlocktime,
             'mediantime': record.mediantime,
             'creationTime': record.creation_time,
-            'archiveTime': record.archivetime,
+            'archiveTime': record.archive_time,
             'wrongResults': record.wrongResults,
             'rightResults': record.rightResults,
           } as TimeStrikesHistory)
@@ -375,18 +421,17 @@ export class OpEnergyApiService {
 
   // searchs strikes and slow/fast guesses under blockHeightTip - 6
   async $slowFastGamePersistOutcome( UUID: string) {
-    const blockHeightTip = await bitcoinApi.$getBlockHeightTip();
-    const confirmedHeight = Math.max( blockHeightTip - 6, 0);
+    const latestConfirmedHeight = await opBlockHeaderRepository.$getLatestBlockHeight( UUID);
 
     try {
       return await DB.$with_accountPool( UUID, async (connection) => {
-        const [timestrikesguesses] = await DB.$profile_query<any>( UUID, connection, 'SELECT id,user_id,block_height,nlocktime,UNIX_TIMESTAMP(creation_time) as creation_time FROM timestrikes WHERE block_height <= ?', [ confirmedHeight ]);
+        const [timestrikesguesses] = await DB.$profile_query<any>( UUID, connection, 'SELECT id,user_id,block_height,nlocktime,UNIX_TIMESTAMP(creation_time) as creation_time FROM timestrikes WHERE block_height <= ?', [ latestConfirmedHeight.value ]);
         for( var i = 0; i < timestrikesguesses.length; i++) {
-          const blockHash = await bitcoinApi.$getBlockHash(timestrikesguesses[i].block_height);
-          const block = await bitcoinApi.$getBlock(blockHash);
+          const confirmedBlock = { value: i}; // sql query above proves that block height i is always confirmed, so it is okay to not to use verifyConfirmedBlockHeight here
+          const block = await opBlockHeaderService.$getBlockHeader( UUID, confirmedBlock);
           const [[timestrikehistory_id]] = await DB.$profile_query<any>( UUID, connection
-            , 'INSERT INTO timestrikeshistory (user_id, block_height, nlocktime, mediantime, creation_time, archivetime, wrong_results, right_results) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), NOW(),0,0) returning id'
-            , [ timestrikesguesses[i].user_id, timestrikesguesses[i].block_height, timestrikesguesses[i].nlocktime, block.mediantime, timestrikesguesses[i].creation_time ]
+            , 'INSERT INTO timestrikeshistory (user_id, block_height, nlocktime, mediantime, creation_time, archive_time, wrong_results, right_results) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), NOW(),0,0) returning id'
+            , [ timestrikesguesses[i].user_id, timestrikesguesses[i].block_height, timestrikesguesses[i].nlocktime, block.medianTime, timestrikesguesses[i].creation_time ]
           ); // store result into separate table
           let wrong_results = 0;
           let right_results = 0;
@@ -396,11 +441,11 @@ export class OpEnergyApiService {
           );
           for( var j = 0; j < guesses.length; j++) {
             var result = 0; // wrong
-            if( block.mediantime <= guesses[j].nlocktime && guesses[j].guess == 1) { // guessed fast and it was actually faster
+            if( block.medianTime <= guesses[j].nlocktime && guesses[j].guess == 1) { // guessed fast and it was actually faster
               result = 1; // right
               right_results++;
             } else
-            if( block.mediantime > timestrikesguesses[i].nlocktime && guesses[j].guess == 0) { // guess slow and it was actually slower
+            if( block.medianTime > timestrikesguesses[i].nlocktime && guesses[j].guess == 0) { // guess slow and it was actually slower
               result = 1; // right
               right_results++;
             } else {
@@ -436,7 +481,11 @@ export class OpEnergyApiService {
   async $persistOutcome( UUID: string) {
     // currently, it is assumed, that timestrikes and timestrikeshistory tables are only being used by slow/fast game.
     // NOTE: in the future, it maybe that other games will be using those tables. In this case, we will need to move cleanup of the timestrike table here instead of doing it in the $slowFastGamePersistOutcome
-    await this.$slowFastGamePersistOutcome( UUID); // persist outcome for slow fast game
+    try {
+      await this.$slowFastGamePersistOutcome( UUID); // persist outcome for slow fast game
+    } catch(error) { // this.$slowFastGamePersistOutcome can fail in case if block headers table haven't been filled yet
+      logger.err( `${UUID}: $slowFastGamePersistOutcome ERROR: ` + error);
+    }
   }
 
   public async $getBlockByHash( hash: BlockHash): Promise<IEsploraApi.Block> {
@@ -459,6 +508,48 @@ export class OpEnergyApiService {
     } catch (e) {
       throw new Error(`${UUID} OpEnergyApiService.$getBlockSpanList: error while generating block list: ${e instanceof Error ? e.message : e}`);
     }
+  }
+
+  // this procedure generates new random account secret and it's token, which is really a hash
+  // both contains appropriate secret/token magics for quick checks.
+  public generateAccountSecretAndToken(): [AccountSecret, AccountToken] {
+    const rnd = [...Array(10)].map( _ => String.fromCharCode(Math.floor(Math.random() * 255))).join('');
+    var newHashArr = [ ... crypto.HmacSHA256(rnd, config.DATABASE.SECRET_SALT).toString().slice(0, 64)];
+    // secret should have special bytes in certain places to pass input verification
+    AccountSecretMagic.forEach( ([index,magic]) => {
+      newHashArr[ index ] = magic; // set specific magic for account token hash
+    });
+    const secret = newHashArr.join(''); // this value will be used to login
+    const accountToken = this.getHashSalt( secret, config.DATABASE.SECRET_SALT);
+    return [ this.verifyAccountSecret( secret)
+           , accountToken
+           ];
+  }
+  public async $registerNewUser( UUID: string): Promise<RegisterResponse> {
+    const [secret, token] = this.generateAccountSecretAndToken();
+    return { 'accountSecret': secret.value
+           , 'accountToken': token.accountToken
+           };
+  }
+
+  // performs user login by given secret
+  public async $loginUser( UUID: string, secret: AccountSecret): Promise< AccountToken> {
+    const accountToken = this.getHashSalt( secret.value, config.DATABASE.SECRET_SALT);
+    // if user's record had been persisted, then hashed token is being used as secret value
+    const accountTokenStored = this.getHashSalt( accountToken.accountToken, config.DATABASE.SECRET_SALT);
+    const query = 'UPDATE users SET last_log_time = NOW() WHERE secret_hash = (?)';
+    try {
+      await DB.$with_accountPool( UUID, async (connection) => {
+        const [raw] = await DB.$profile_query<any>( UUID
+                                                      , connection
+                                                      , query
+                                                      , [ accountTokenStored.accountToken.slice(0,64) ] // hash(hash(secret))
+                                                      );
+      });
+    } catch (e) {
+      throw new Error( `ERROR: OpEnergyApiService.$loginUser: ${ e instanceof Error? e.message: e}`);
+    }
+    return accountToken;
   }
 
 }

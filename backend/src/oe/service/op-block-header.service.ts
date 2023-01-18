@@ -51,7 +51,13 @@ export class OpBlockHeaderService {
     try {
       logger.debug('Syncing older block headers');
 
-      let { value: currentSyncedBlockHeight } = await opBlockHeaderRepository.$getLatestBlockHeight(UUID);
+      let currentSyncedBlockHeight = 0;
+      try {
+        let { value: latestStoredBlockHeight } = await opBlockHeaderRepository.$getLatestBlockHeight(UUID);
+        currentSyncedBlockHeight = latestStoredBlockHeight; // there is some blocks had ben stored previously
+      } catch(error) {
+        logger.debug('there are no older block stored previously, starting from 0');
+      }
 
 
       // Only using fetching current block tip if not present in argument
@@ -102,7 +108,7 @@ export class OpBlockHeaderService {
     }
   }
 
-  public async $getBlockHeader(UUID: string, height: ConfirmedBlockHeight): Promise<BlockHeader | null> {
+  public async $getBlockHeader(UUID: string, height: ConfirmedBlockHeight): Promise<BlockHeader> {
     try {
       const blockHeader = await opBlockHeaderRepository.$getBlock(UUID, height);
       return blockHeader;

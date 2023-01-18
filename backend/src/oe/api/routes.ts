@@ -16,6 +16,9 @@ class OpEnergyRoutes {
     opEnergyApiService.setNewTimeStrikeCallback(opEnergyWebsocket.handleNewTimeStrike);
     opEnergyApiService.setNewTimeSlowFastGuessCallback(opEnergyWebsocket.handleNewTimeSlowFastGuess);
     app
+      .get(config.MEMPOOL.API_URL_PREFIX + 'swagger.json', (req, res) => { res.sendFile( __dirname + '/swagger.json') })
+      .post(config.MEMPOOL.API_URL_PREFIX + 'register', this.$postRegister)
+      .post(config.MEMPOOL.API_URL_PREFIX + 'login', this.$postLogin)
       .get(config.MEMPOOL.API_URL_PREFIX + 'strike/block/mediantime', this.$getTimeStrikesByBlock)
       .get(config.MEMPOOL.API_URL_PREFIX + 'strike/mediantime', this.$getTimeStrikes)
       .post(config.MEMPOOL.API_URL_PREFIX + 'strike/mediantime', this.$postTimeStrike)
@@ -28,6 +31,34 @@ class OpEnergyRoutes {
       .get(config.MEMPOOL.API_URL_PREFIX + 'oe/block/:hash', this.$getBlockByHash)
       .get(config.MEMPOOL.API_URL_PREFIX + 'oe/blockspanlist/:startBlockHeight/:span/:numberOfSpan', this.$getBlockSpanList)
   }
+
+  private async $postLogin(req: Request, res: Response) {
+    const UUID = await opEnergyApiService.$generateRandomHash();
+    try {
+      logger.info( `${UUID} PROFILE: start: $postLogin`);
+      const secret = opEnergyApiService.verifyAccountSecret( req.body[0] ); // we have to use array with single element as a single string is not a value JSON entity
+      const token = await opEnergyApiService.$loginUser( UUID, secret);
+      res.json( [ token.accountToken ] );
+    } catch(e) {
+      logger.err( `ERROR: ${UUID}: OpEnergyApiService.$postLogin: ${e instanceof Error ? e.message: e}`);
+      res.status(404).send(`${UUID}: ${e instanceof Error? e.message : e}`);
+    }
+    logger.info( `${UUID}: PROFILE: end: $postLogin`);
+  }
+
+  private async $postRegister(req: Request, res: Response) {
+    const UUID = await opEnergyApiService.$generateRandomHash();
+    try {
+      logger.info( `${UUID} PROFILE: start: $postRegister`);
+      const response = await opEnergyApiService.$registerNewUser( UUID);
+      res.json( response);
+    } catch(e) {
+      logger.err( `ERROR: ${UUID}: OpEnergyApiService.$postRegister: ${e instanceof Error ? e.message: e}`);
+      res.status(404).send(`${UUID}: ${e instanceof Error? e.message : e}`);
+    }
+    logger.info( `${UUID}: PROFILE: end: $postRegister`);
+  }
+
   private async $getTimeStrikes(req: Request, res: Response) {
     const UUID = await opEnergyApiService.$generateRandomHash();
     try {

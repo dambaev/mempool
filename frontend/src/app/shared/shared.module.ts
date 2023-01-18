@@ -83,7 +83,6 @@ import { SearchResultsComponent } from '../components/search-form/search-results
 import { TimestampComponent } from './components/timestamp/timestamp.component';
 import { ToggleComponent } from './components/toggle/toggle.component';
 import { GeolocationComponent } from '../shared/components/geolocation/geolocation.component';
-import { PreviewComponent } from '../oe/components/preview/preview.component';
 import { BlockspanNavigatorComponent } from '../oe/components/blockspan-navigator/blockspan-navigator.component';
 import { BlockspansHomeComponent } from '../oe/components/blockspans-home/blockspans-home.component';
 import { BaseBoxComponent } from '../oe/components/base-box/base-box.component';
@@ -171,7 +170,6 @@ import { StrikeDetailComponent } from '../oe/components/strike-detail/strike-det
     TimestampComponent,
     ToggleComponent,
     GeolocationComponent,
-    PreviewComponent,
     BlockspanNavigatorComponent,
     BlockspansHomeComponent,
     BaseBoxComponent,
@@ -293,7 +291,6 @@ import { StrikeDetailComponent } from '../oe/components/strike-detail/strike-det
     ToggleComponent,
     GeolocationComponent,
     PreviewTitleComponent,
-    PreviewComponent,
     BlockspanNavigatorComponent,
     BlockspansHomeComponent,
     BaseBoxComponent,
