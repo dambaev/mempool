@@ -28,10 +28,10 @@ class OpBlockHeaderRepository {
     try {
       const query = `INSERT INTO blocks(
         height, version, current_block_hash, previous_block_hash, merkle_root,
-        timestamp,  difficulty, nonce, reward, mediantime
+        timestamp,  difficulty, nonce, reward, mediantime, chainwork
       ) VALUE (
         ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?
       )`;
 
       const params: (string | number)[] = [
