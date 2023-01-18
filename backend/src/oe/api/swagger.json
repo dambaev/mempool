@@ -363,6 +363,81 @@
           }
         }
       }
+    },
+    "/api/v1/oe/block/{hash}": {
+      "get": {
+        "description": "Returns block's header by a given block hash, including chainwork, that is missing from mempool's blocks' headers cache",
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "hash",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/Block"
+            }
+          },
+          "400": {
+            "description": "Invalid `hash`"
+          }
+        }
+      }
+    },
+    "/api/v1/oe/blockspanlist/{startBlockHeight}/{span}/{numberOfSpan}": {
+      "get": {
+        "description": "Returns list of spans started from startBlockHeight of size span and numberOfSpan length ",
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "maximum": 9223372036854776000,
+            "minimum": 0,
+            "name": "startBlockHeight",
+            "required": true,
+            "type": "number"
+          },
+          {
+            "in": "path",
+            "maximum": 9223372036854776000,
+            "minimum": 1,
+            "name": "span",
+            "required": true,
+            "type": "number"
+          },
+          {
+            "in": "path",
+            "maximum": 9223372036854776000,
+            "minimum": 1,
+            "name": "numberOfSpan",
+            "required": true,
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/BlockSpan"
+              },
+              "type": "array"
+            }
+          },
+          "400": {
+            "description": "Invalid `numberOfSpan` or `span` or `startBlockHeight`"
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -696,6 +771,130 @@
       "example": {
         "avg": 1,
         "stddev": 1
+      },
+      "type": "object"
+    },
+    "Block": {
+      "description": "Block schema",
+      "required": [
+        "id",
+        "height",
+        "version",
+        "timestamp",
+        "bits",
+        "nonce",
+        "difficulty",
+        "merkle_root",
+        "tx_count",
+        "size",
+        "weight",
+        "previousblockhash",
+        "chainwork",
+        "mediantime"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "height": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "version": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "timestamp": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "bits": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "nonce": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "difficulty": {
+          "format": "double",
+          "type": "number"
+        },
+        "merkle_root": {
+          "type": "string"
+        },
+        "tx_count": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "size": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "weight": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "previousblockhash": {
+          "$ref": "#/definitions/BlockHash"
+        },
+        "chainwork": {
+          "type": "string"
+        },
+        "mediantime": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        }
+      },
+      "example": {
+        "bits": 386366690,
+        "chainwork": "00000000000000000000000000000000000000003dfd08c2b6932fc194a1fee4",
+        "difficulty": 37590453655497.09,
+        "height": 772473,
+        "id": "0000000000000000000135d442ddb5ad7a8cdf92eb8496265d724804587bdf41",
+        "mediantime": 1674012509,
+        "merkle_root": "847457eb7723bbe1e60a73ad6ff3016b630bf3595409eaa6a3f45e3cc1b54cf0",
+        "nonce": 2589914493,
+        "previousblockhash": "00000000000000000004fd7d4e275888070a2c57fbbaa145d576f935f67645f8",
+        "size": 1528844,
+        "timestamp": 1674018057,
+        "tx_count": 2303,
+        "version": 538304512,
+        "weight": 3992705
+      },
+      "type": "object"
+    },
+    "BlockHash": {
+      "description": "BlockHash schema",
+      "example": "000000000000000000070654ba6de216fc6b5d5c7279e5695b4225d7a6ed993a",
+      "type": "string"
+    },
+    "BlockSpan": {
+      "description": "BlockSpan schema",
+      "required": [
+        "startBlockHeight",
+        "endBlockHeight"
+      ],
+      "properties": {
+        "startBlockHeight": {
+          "$ref": "#/definitions/BlockHeight"
+        },
+        "endBlockHeight": {
+          "$ref": "#/definitions/BlockHeight"
+        }
+      },
+      "example": {
+        "endBlockHeight": 772473,
+        "startBlockHeight": 772472
       },
       "type": "object"
     }
