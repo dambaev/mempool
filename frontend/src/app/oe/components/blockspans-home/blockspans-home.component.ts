@@ -7,11 +7,11 @@ import { StateService } from 'src/app/services/state.service';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { specialBlocks } from 'src/app/app.constants';
 import { ElectrsApiService } from 'src/app/services/electrs-api.service';
-import { switchMap, skip, map, take } from 'rxjs/operators';
+import { switchMap, take } from 'rxjs/operators';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
 import { OpEnergyApiService } from 'src/app/oe/services/op-energy.service';
 import { OeStateService } from 'src/app/oe/services/state.service';
-import { TimeStrike } from 'src/app/oe/interfaces/op-energy.interface';
+import { TimeStrike, BlockHeights } from 'src/app/oe/interfaces/op-energy.interface';
 
 interface PastBlock extends Block {
   mediantimeDiff: number;
@@ -140,12 +140,22 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
 
   blockspanChange({tipBlock, span}) {
     this.span = span;
-    let blockNumbers = [];
-    let lastblock = tipBlock;
-    for (let i = 0; i < this.stateService.env.KEEP_BLOCKS_AMOUNT; i += 2) {
-      blockNumbers.push(lastblock, lastblock - span);
-      lastblock = lastblock - (span + 1);
-    }
+    const blockNumbers = [];
+    this.opEnergyApiService.$getBlockHeights(tipBlock, span + 1, this.stateService.env.KEEP_BLOCKS_AMOUNT / 2)
+    .subscribe({
+      next(blockHeights: BlockHeights[]) {
+        blockHeights.forEach((height: BlockHeights) => {
+          blockNumbers.push(height.startBlockHeight, height.endBlockHeight);
+        });
+      },
+      error(err) {
+        this.toastr.error('Cannot fetch block height data!', 'Failed!');
+      },
+      complete() {
+        console.log(blockNumbers);
+      }
+    });
+    console.log(blockNumbers);
     this.pastBlocks = [];
     forkJoin(
       blockNumbers.map(
