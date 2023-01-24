@@ -25,10 +25,10 @@ export class OpEnergyApiService {
     private opEnergyStateService: OeStateService,
     private websocketService: WebsocketService,
   ) {
-    this.apiBaseUrl = 'http://exchange.op-energy.info'; // use relative URL by default
-    // if (!stateService.isBrowser) { // except when inside AU SSR process
-    //   this.apiBaseUrl = this.stateService.env.NGINX_PROTOCOL + '://' + this.stateService.env.NGINX_HOSTNAME + ':' + this.stateService.env.NGINX_PORT;
-    // }
+    this.apiBaseUrl = ''; // use relative URL by default
+    if (!stateService.isBrowser) { // except when inside AU SSR process
+      this.apiBaseUrl = this.stateService.env.NGINX_PROTOCOL + '://' + this.stateService.env.NGINX_HOSTNAME + ':' + this.stateService.env.NGINX_PORT;
+    }
     this.apiBasePath = ''; // assume mainnet by default
     this.stateService.networkChanged$.subscribe((network) => {
       if (network === 'bisq') {
