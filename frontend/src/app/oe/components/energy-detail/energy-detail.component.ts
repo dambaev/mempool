@@ -224,8 +224,6 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
         },
       });
 
-
-
       this.seoService.setTitle($localize`:@@block.component.browser-title:Block ${fromBlock.height}:BLOCK_HEIGHT:: ${fromBlock.id}:BLOCK_ID:`);
       this.isLoadingBlock = false;
       if (fromBlock.coinbaseTx) {
