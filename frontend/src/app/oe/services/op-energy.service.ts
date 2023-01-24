@@ -154,7 +154,7 @@ export class OpEnergyApiService {
     return this.httpClient.get<Block>(this.apiBaseUrl + this.apiBasePath + '/api/oe/block/' + hash);
   }
 
-  $getBlockHeights(startBlockHeight: number, span: number, numberOfSpan: number): Observable<BlockHeights[]> {
+  $getBlockSpanList(startBlockHeight: number, span: number, numberOfSpan: number): Observable<BlockHeights[]> {
     return this.httpClient.get<BlockHeights[]>(`${this.apiBaseUrl}${this.apiBasePath}/api/v1/oe/blockspanlist/${startBlockHeight}/${span}/${numberOfSpan}`);
   }
 }
