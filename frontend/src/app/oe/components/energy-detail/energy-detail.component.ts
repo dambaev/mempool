@@ -6,11 +6,12 @@ import { switchMap, tap, debounceTime, catchError, map, take } from 'rxjs/operat
 import { Block, Transaction, Vout } from '../../../interfaces/electrs.interface';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
 import { StateService } from '../../../services/state.service';
+import { OeStateService } from '../../services/state.service';
 import { SeoService } from 'src/app/services/seo.service';
 import { WebsocketService } from 'src/app/services/websocket.service';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
 import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
-import { TimeStrike } from 'src/app/oe/interfaces/op-energy.interface';
+import { EnergyState, TimeStrike } from 'src/app/oe/interfaces/op-energy.interface';
 import { OpEnergyApiService } from 'src/app/oe/services/op-energy.service';
 
 @Component({
@@ -48,6 +49,9 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
   timeStrikes: TimeStrike[] = [];
   showStrikes: boolean;
 
+  average: number = null;
+  stddev: number = null;
+
   get span(): number {
     return (this.toBlock.height - this.fromBlock.height);
   }
@@ -82,6 +86,7 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
     private opEnergyApiService: OpEnergyApiService,
     private electrsApiService: ElectrsApiService,
     public stateService: StateService,
+    public oeStateService: OeStateService,
     private seoService: SeoService,
     private websocketService: WebsocketService,
     private relativeUrlPipe: RelativeUrlPipe,
@@ -92,6 +97,20 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
     this.paginationMaxSize = window.matchMedia('(max-width: 670px)').matches ? 3 : 5;
     this.network = this.stateService.network;
     this.itemsPerPage = this.stateService.env.ITEMS_PER_PAGE;
+
+    this.oeStateService.$getEnergyState(1, 1)
+    .subscribe({
+      next(data: EnergyState) {
+        console.log(data);
+      },
+      error(error) {
+        this.error = error;
+      },
+      complete: () => {
+        this.average = 10;
+        this.stddev = 100;
+      }
+    });
 
     this.txsLoadingStatus$ = this.route.paramMap
       .pipe(

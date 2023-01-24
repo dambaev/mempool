@@ -50,3 +50,11 @@ export interface NavigationObject {
     },
   },
 }
+
+// TODO: Rename it to EnergyNbdrStatistics
+export interface EnergyState {
+  nbdr: {
+    avg: number,
+    stddev: number,
+  }
+}

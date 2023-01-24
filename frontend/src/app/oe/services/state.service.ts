@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ReplaySubject, BehaviorSubject, Subject, fromEvent, Observable } from 'rxjs';
 import { HttpParams, HttpClient } from '@angular/common/http';
-import { TimeStrike, SlowFastGuess, SlowFastGuessOutcome, TimeStrikesHistory, SlowFastResult } from '../interfaces/op-energy.interface';
+import { TimeStrike, SlowFastGuess, SlowFastGuessOutcome, TimeStrikesHistory, SlowFastResult, EnergyState } from '../interfaces/op-energy.interface';
 import { StateService } from '../../services/state.service';
 import { WebsocketService } from 'src/app/services/websocket.service';
 
@@ -29,6 +29,7 @@ export class OeStateService {
   private apiBaseUrl: string; // base URL is protocol, hostname, and port
   private apiBasePath: string; // network path is /testnet, etc. or '' for mainnet
   constructor(
+    private httpClient: HttpClient,
     private stateService: StateService,
   ) {
     this.apiBaseUrl = ''; // use relative URL by default
@@ -85,4 +86,7 @@ export class OeStateService {
     }
   }
 
+  $getEnergyState(blockHeight: number, span: number): Observable<EnergyState> {
+    return this.httpClient.get<EnergyState>(`${this.apiBaseUrl}${this.apiBasePath}/api/v1/statistics/${blockHeight}/${span}`);
+  }
 }
