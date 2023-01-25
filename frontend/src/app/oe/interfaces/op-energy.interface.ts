@@ -51,7 +51,7 @@ export interface NavigationObject {
   },
 }
 
-export interface BlockHeights {
+export interface BlockSpan {
   startBlockHeight: number,
   endBlockHeight: number,
 }

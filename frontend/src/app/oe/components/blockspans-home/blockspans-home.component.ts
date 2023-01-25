@@ -11,7 +11,7 @@ import { switchMap, take } from 'rxjs/operators';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
 import { OpEnergyApiService } from 'src/app/oe/services/op-energy.service';
 import { OeStateService } from 'src/app/oe/services/state.service';
-import { TimeStrike, BlockHeights } from 'src/app/oe/interfaces/op-energy.interface';
+import { TimeStrike, BlockSpan } from 'src/app/oe/interfaces/op-energy.interface';
 
 interface PastBlock extends Block {
   mediantimeDiff: number;
@@ -148,7 +148,7 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
     } catch (error) {
       this.toastr.error('Cannot fetch block height data!', 'Failed!');
     }
-    blockSpanList.reverse().forEach((blockSpan: BlockHeights) => {
+    blockSpanList.reverse().forEach((blockSpan: BlockSpan) => {
       blockNumbers.push(blockSpan.endBlockHeight, blockSpan.startBlockHeight);
     });
     this.pastBlocks = [];
