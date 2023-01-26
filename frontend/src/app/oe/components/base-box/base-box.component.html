@@ -1,4 +1,4 @@
-<a class="tank-box {{type}}" [routerLink]="link">
+<div class="tank-box {{type}}" [ngClass]="{'is-link': link}" (click)="navigateTo()">
   <div class="tank-box--top" [ngStyle]="{'background-color': this.color}">
     <span *ngIf="isUnknown">?????</span>
     <ng-container *ngIf="!isUnknown">
@@ -24,4 +24,4 @@
     <div class="tank-box--footer" [ngStyle]="{'background-color': this.color}">utc time</div>
   </ng-container>
   <div class="tank-box--footer" [ngStyle]="{'background-color': this.color}">{{ footerText }}</div>
-</a>
+</div>

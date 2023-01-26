@@ -1,3 +1,5 @@
+import { TextSelectionTypes } from 'src/app/shared/types/constant';
+
 export function isMobile(): boolean {
   return (window.innerWidth <= 767.98);
 }
@@ -117,4 +119,8 @@ export function convertRegion(input, to: 'name' | 'abbreviated'): string {
       }
     }
   }
+}
+
+export function isTextSelection(): boolean {
+  return window.getSelection().type === TextSelectionTypes.RANGE;
 }

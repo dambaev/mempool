@@ -41,7 +41,7 @@
       color: black;
       font-weight: 700;
     }
-  
+
     .span-block {
       display: flex;
       align-items: center;
@@ -120,5 +120,15 @@
     .tank-box--bottom {
       background-color: #eeeeee !important;
     }
+  }
+}
+
+.is-link {
+  color: #1bd8f4;
+  cursor: pointer;
+
+  &:hover {
+    color: #09a3ba;
+    text-decoration: underline;
   }
 }
