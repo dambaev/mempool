@@ -252,9 +252,9 @@ class OpEnergyRoutes {
       const { startBlockHeight, span, numberOfSpan } = req.params;
 
       if (
-        !isValidPositiveNumber(startBlockHeight) ||
+        !isValidNaturalNumber(startBlockHeight) ||
         !isValidPositiveNumber(span) ||
-        !isValidNaturalNumber(numberOfSpan)
+        !isValidPositiveNumber(numberOfSpan)
       ) {
         throw Error('Not a valid input parameters.');
       }
