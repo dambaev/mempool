@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ReplaySubject, BehaviorSubject, Subject, fromEvent, Observable } from 'rxjs';
+import { HttpParams, HttpClient } from '@angular/common/http';
 import { TimeStrike, SlowFastGuess, SlowFastGuessOutcome, TimeStrikesHistory, SlowFastResult } from '../interfaces/op-energy.interface';
 import { StateService } from '../../services/state.service';
 import { WebsocketService } from 'src/app/services/websocket.service';
@@ -83,4 +84,5 @@ export class OeStateService {
       this.timeSlowFastGuessesOutcome$.next( slowFastGuessOutcome);
     }
   }
+
 }
