@@ -50,4 +50,8 @@ export class PreviewComponent implements OnInit {
   pastEnergyDetailLink() {
     return this.relativeUrlPipe.transform('/hashstrikes/energy_detail/89778/89791');
   }
+
+  futureEnergyDetailLink() {
+    return this.relativeUrlPipe.transform('/hashstrikes/energy_detail/89778/120000');
+  }
 }
