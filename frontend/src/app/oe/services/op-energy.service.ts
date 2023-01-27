@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ReplaySubject, BehaviorSubject, Subject, fromEvent, Observable } from 'rxjs';
 import { HttpParams, HttpClient } from '@angular/common/http';
-import { TimeStrike, SlowFastGuess, SlowFastGuessOutcome, TimeStrikesHistory, SlowFastResult } from '../interfaces/op-energy.interface';
+import { TimeStrike, SlowFastGuess, SlowFastGuessOutcome, TimeStrikesHistory, SlowFastResult, EnergyNbdrStatistics } from '../interfaces/op-energy.interface';
 import { StateService } from '../../services/state.service';
 import { WebsocketService } from 'src/app/services/websocket.service';
 import { Block } from 'src/app/interfaces/electrs.interface';
@@ -154,4 +154,7 @@ export class OpEnergyApiService {
     return this.httpClient.get<Block>(this.apiBaseUrl + this.apiBasePath + '/api/oe/block/' + hash);
   }
 
+  $getNbdrStatistics(blockHeight: number, span: number): Observable<EnergyNbdrStatistics> {
+    return this.httpClient.get<EnergyNbdrStatistics>(`${this.apiBaseUrl}${this.apiBasePath}/api/v1/statistics/${blockHeight}/${span}`);
+  }
 }

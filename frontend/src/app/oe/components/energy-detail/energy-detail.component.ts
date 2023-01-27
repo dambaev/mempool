@@ -6,7 +6,6 @@ import { switchMap, tap, debounceTime, catchError, map, take } from 'rxjs/operat
 import { Block, Transaction, Vout } from '../../../interfaces/electrs.interface';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
 import { StateService } from '../../../services/state.service';
-import { OeStateService } from '../../services/state.service';
 import { SeoService } from 'src/app/services/seo.service';
 import { WebsocketService } from 'src/app/services/websocket.service';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
@@ -88,7 +87,6 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
     private electrsApiService: ElectrsApiService,
     public stateService: StateService,
     private toastr: ToastrService,
-    public oeStateService: OeStateService,
     private seoService: SeoService,
     private websocketService: WebsocketService,
     private relativeUrlPipe: RelativeUrlPipe,
@@ -214,7 +212,7 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
       this.nextBlockHeight = fromBlock.height + 1;
       this.setNextAndPreviousBlockLink();
 
-      this.oeStateService.$getNbdrStatistics(fromBlock.height - (this.span * 100) , this.span).subscribe({
+      this.opEnergyApiService.$getNbdrStatistics(fromBlock.height - (this.span * 100) , this.span).subscribe({
         next: (data: EnergyNbdrStatistics) => {
           this.average = data.nbdr.avg.toFixed(2);
           this.stddev = data.nbdr.stddev.toFixed(2);
