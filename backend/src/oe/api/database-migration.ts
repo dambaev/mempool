@@ -47,15 +47,15 @@ class OpEnergyDatabaseMigration {
         break;
       }
       case 6: {
-        await this.$createTableBlockHeaders(UUID);
-        break;
-      }
-      case 7: {
         await this.$createTableTimeStrikesHistory( UUID);
         break;
       }
-      case 8: {
+      case 7: {
         await this.$createTableSinglePlayerResults( UUID);
+        break;
+      }
+      case 8: {
+        await this.$createTableBlockHeaders(UUID);
         break;
       }
       default: {
@@ -214,6 +214,7 @@ class OpEnergyDatabaseMigration {
       \`nonce\` bigint unsigned NOT NULL,
       \`reward\` bigint unsigned NOT NULL,
       \`mediantime\` int unsigned NOT NULL,
+      \`chainwork\` varchar(65) NOT NULL,
       PRIMARY KEY (\`height\`)
     );`;
     try {

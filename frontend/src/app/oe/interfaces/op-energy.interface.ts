@@ -8,7 +8,7 @@ export interface TimeStrike {
 }
 
 export interface SlowFastGuess {
-  guess : 'slow' | 'fast';
+  guess: 'slow' | 'fast';
   blockHeight: number;
   nLockTime: number;
   creationTime: number;
@@ -32,10 +32,10 @@ export interface TimeStrikesHistory {
   archiveTime: number;
   wrongResults: number;
   rightResults: number;
-};
+}
 
 export interface SlowFastResult {
-  guess : 'slow' | 'fast';
+  guess: 'slow' | 'fast';
   result: 'wrong' | 'right';
   blockHeight: number;
   nLockTime: number;
@@ -56,4 +56,9 @@ export interface EnergyNbdrStatistics {
     avg: number,
     stddev: number,
   }
+}
+
+export interface BlockSpan {
+  startBlockHeight: number,
+  endBlockHeight: number,
 }

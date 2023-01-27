@@ -15,7 +15,7 @@ export class BlockspanNavigatorComponent implements OnInit, OnDestroy {
   @Output() emitGo = new EventEmitter();
 
   get toBlock() {
-    return +this.fromBlock + +this.span - 1;
+    return +this.fromBlock + +this.span;
   }
 
   constructor(
@@ -32,7 +32,7 @@ export class BlockspanNavigatorComponent implements OnInit, OnDestroy {
   onGo() {
     this.emitGo.emit({
       tipBlock: this.toBlock,
-      span: +this.span - 1
+      span: +this.span
     });
   }
 }

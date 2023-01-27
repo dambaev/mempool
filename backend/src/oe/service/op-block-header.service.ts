@@ -29,15 +29,15 @@ export class OpBlockHeaderService {
       return {
         height,
         version,
-        chainWork: chainwork,
-        medianTime: mediantime,
-        previousBlockHash: previousblockhash,
-        merkleRoot: merkle_root,
+        chainwork: chainwork,
+        mediantime: mediantime,
+        previous_block_hash: previousblockhash,
+        merkle_root: merkle_root,
         timestamp,
         difficulty,
         nonce,
         reward: totalfee + subsidy,
-        currentBlockHash: blockHash
+        current_block_hash: blockHash
       };
     } catch (error) {
       logger.err(

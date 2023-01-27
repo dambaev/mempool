@@ -431,7 +431,7 @@ export class OpEnergyApiService {
           const block = await opBlockHeaderService.$getBlockHeader( UUID, confirmedBlock);
           const [[timestrikehistory_id]] = await DB.$profile_query<any>( UUID, connection
             , 'INSERT INTO timestrikeshistory (user_id, block_height, nlocktime, mediantime, creation_time, archive_time, wrong_results, right_results) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), NOW(),0,0) returning id'
-            , [ timestrikesguesses[i].user_id, timestrikesguesses[i].block_height, timestrikesguesses[i].nlocktime, block.medianTime, timestrikesguesses[i].creation_time ]
+            , [ timestrikesguesses[i].user_id, timestrikesguesses[i].block_height, timestrikesguesses[i].nlocktime, block.mediantime, timestrikesguesses[i].creation_time ]
           ); // store result into separate table
           let wrong_results = 0;
           let right_results = 0;
@@ -441,11 +441,11 @@ export class OpEnergyApiService {
           );
           for( var j = 0; j < guesses.length; j++) {
             var result = 0; // wrong
-            if( block.medianTime <= guesses[j].nlocktime && guesses[j].guess == 1) { // guessed fast and it was actually faster
+            if( block.mediantime <= guesses[j].nlocktime && guesses[j].guess == 1) { // guessed fast and it was actually faster
               result = 1; // right
               right_results++;
             } else
-            if( block.medianTime > timestrikesguesses[i].nlocktime && guesses[j].guess == 0) { // guess slow and it was actually slower
+            if( block.mediantime > timestrikesguesses[i].nlocktime && guesses[j].guess == 0) { // guess slow and it was actually slower
               result = 1; // right
               right_results++;
             } else {
