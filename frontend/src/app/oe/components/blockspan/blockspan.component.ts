@@ -3,7 +3,7 @@ import { StateService } from 'src/app/services/state.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Block } from '../../../interfaces/electrs.interface';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
-import { isTextSelection } from 'src/app/shared/common.utils';
+import { navigator } from 'src/app/shared/common.utils';
 
 export const MAX_COUNT = 14;
 @Component({
@@ -42,6 +42,6 @@ export class BlockspanComponent implements OnInit, OnDestroy {
   }
 
   navigateTo(link: string): void {
-    !isTextSelection() && this.router.navigate([link]);
+    navigator(this.router, link);
   }
 }

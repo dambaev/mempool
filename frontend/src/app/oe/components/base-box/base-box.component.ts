@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, Input } from '@a
 import { StateService } from 'src/app/services/state.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
-import { isTextSelection } from 'src/app/shared/common.utils';
+import { navigator } from 'src/app/shared/common.utils';
 
 export const MAX_COUNT = 14;
 @Component({
@@ -55,7 +55,7 @@ export class BaseBoxComponent implements OnInit, OnDestroy {
   }
 
   navigateTo(): void {
-    !isTextSelection() && this.router.navigate([this.link]);
+    navigator(this.router, this.link);
   }
 
   toHHMMSS(secs) {
