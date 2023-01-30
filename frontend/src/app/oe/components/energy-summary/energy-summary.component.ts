@@ -46,7 +46,6 @@ export class EnergySummaryComponent implements OnInit, OnDestroy {
   networkChangedSubscription: Subscription;
 
   timeStrikes: TimeStrike[] = [];
-  showStrikes: boolean;
 
   get span(): number {
     return (this.toBlock.height - this.fromBlock.height);
@@ -340,9 +339,5 @@ export class EnergySummaryComponent implements OnInit, OnDestroy {
 
   goDetail(fromBlock, strike) {
     this.router.navigate([this.relativeUrlPipe.transform('/hashstrikes/strike_detail/'), fromBlock.height, strike.blockHeight, strike.blockHeight, strike.nLockTime, strike.creationTime]);
-  }
-
-  toggleStrikes() {
-    this.showStrikes = !this.showStrikes;
   }
 }
