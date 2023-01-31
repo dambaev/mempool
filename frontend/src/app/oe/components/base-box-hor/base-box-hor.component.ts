@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, Input } from '@a
 import { StateService } from 'src/app/services/state.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
-import { navigator } from 'src/app/shared/common.utils';
+import { navigator, toHHMMSS } from 'src/app/shared/common.utils';
 
 export const MAX_COUNT = 14;
 @Component({
@@ -21,7 +21,7 @@ export class BaseBoxHorComponent implements OnInit, OnDestroy {
   maxCount = MAX_COUNT;
 
   get timeSpan() {
-    return this.toHHMMSS(this.toTime - this.fromTime);
+    return toHHMMSS(this.toTime - this.fromTime);
   }
 
   get nbdr() {
@@ -43,22 +43,5 @@ export class BaseBoxHorComponent implements OnInit, OnDestroy {
 
   navigateTo(): void {
     navigator(this.router, this.link);
-  }
-
-  toHHMMSS(secs) {
-    if (!(secs > 0)) {
-      return '??:??:??';
-    }
-    let sec_num = parseInt(secs, 10); // don't forget the second param
-    let hours = Math.floor(sec_num / 3600);
-    let minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-    let seconds = sec_num - (hours * 3600) - (minutes * 60);
-    let strHours = hours.toString();
-    let strMinutes = minutes.toString();
-    let strSeconds = seconds.toString();
-    if (hours < 10) { strHours = "0" + hours; }
-    if (minutes < 10) { strMinutes = "0" + minutes; }
-    if (seconds < 10) { strSeconds = "0" + seconds; }
-    return strHours + ':' + strMinutes + ':' + strSeconds;
   }
 }
