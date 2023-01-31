@@ -28,7 +28,7 @@ export class PreviewComponent implements OnInit {
   }
 
   futureStrikeSummaryLink() {
-    return this.relativeUrlPipe.transform('/hashstrikes/strike_summary/89778/120000');
+    return this.relativeUrlPipe.transform('/hashstrikes/strike_summary/89778/1200000');
   }
 
   pastStrikeDetailLink() {
@@ -36,7 +36,7 @@ export class PreviewComponent implements OnInit {
   }
 
   futureStrikeDetailLink() {
-    return this.relativeUrlPipe.transform('/hashstrikes/strike_detail/89778/120000/120000/1652239330/1656641994');
+    return this.relativeUrlPipe.transform('/hashstrikes/strike_detail/89778/1200000/1200000/1652239330/1656641994');
   }
 
   pastEnergySummaryLink() {
@@ -44,7 +44,7 @@ export class PreviewComponent implements OnInit {
   }
 
   futureEnergySummaryLink() {
-    return this.relativeUrlPipe.transform('/hashstrikes/energy_summary/89778/120000');
+    return this.relativeUrlPipe.transform('/hashstrikes/energy_summary/89778/1200000');
   }
 
   pastEnergyDetailLink() {
@@ -52,6 +52,6 @@ export class PreviewComponent implements OnInit {
   }
 
   futureEnergyDetailLink() {
-    return this.relativeUrlPipe.transform('/hashstrikes/energy_detail/89778/120000');
+    return this.relativeUrlPipe.transform('/hashstrikes/energy_detail/89778/1200000');
   }
 }
