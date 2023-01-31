@@ -10,7 +10,8 @@ import { SeoService } from 'src/app/services/seo.service';
 import { WebsocketService } from 'src/app/services/websocket.service';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
 import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
-import { TimeStrike } from 'src/app/oe/interfaces/op-energy.interface';
+import { EnergyNbdrStatistics, TimeStrike } from 'src/app/oe/interfaces/op-energy.interface';
+import { ToastrService } from 'ngx-toastr';
 import { OpEnergyApiService } from 'src/app/oe/services/op-energy.service';
 
 @Component({
@@ -48,6 +49,9 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
   timeStrikes: TimeStrike[] = [];
   showStrikes: boolean;
 
+  average: string = null;
+  stddev: string = null;
+
   get span(): number {
     return (this.toBlock.height - this.fromBlock.height);
   }
@@ -82,6 +86,7 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
     private opEnergyApiService: OpEnergyApiService,
     private electrsApiService: ElectrsApiService,
     public stateService: StateService,
+    private toastr: ToastrService,
     private seoService: SeoService,
     private websocketService: WebsocketService,
     private relativeUrlPipe: RelativeUrlPipe,
@@ -206,6 +211,16 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
       this.blockHeight = fromBlock.height;
       this.nextBlockHeight = fromBlock.height + 1;
       this.setNextAndPreviousBlockLink();
+
+      this.opEnergyApiService.$getNbdrStatistics(fromBlock.height - (this.span * 100) , this.span).subscribe({
+        next: (data: EnergyNbdrStatistics) => {
+          this.average = data.nbdr.avg.toFixed(2);
+          this.stddev = data.nbdr.stddev.toFixed(2);
+        },
+        error: (error) => {
+          this.toastr.error('Unable to fetch Nbdr Statistics!', 'Failed!');
+        },
+      });
 
       this.seoService.setTitle($localize`:@@block.component.browser-title:Block ${fromBlock.height}:BLOCK_HEIGHT:: ${fromBlock.id}:BLOCK_ID:`);
       this.isLoadingBlock = false;

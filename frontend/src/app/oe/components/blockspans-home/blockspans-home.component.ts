@@ -1,17 +1,17 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, NgModule, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { Location } from '@angular/common';
-import { forkJoin, Observable, Subscription, of } from 'rxjs';
+import { forkJoin, Observable, Subscription, of, lastValueFrom } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { Block } from 'src/app/interfaces/electrs.interface';
 import { StateService } from 'src/app/services/state.service';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { specialBlocks } from 'src/app/app.constants';
 import { ElectrsApiService } from 'src/app/services/electrs-api.service';
-import { switchMap, skip, map, take } from 'rxjs/operators';
+import { switchMap, take } from 'rxjs/operators';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
 import { OpEnergyApiService } from 'src/app/oe/services/op-energy.service';
 import { OeStateService } from 'src/app/oe/services/state.service';
-import { TimeStrike } from 'src/app/oe/interfaces/op-energy.interface';
+import { TimeStrike, BlockSpan } from 'src/app/oe/interfaces/op-energy.interface';
 
 interface PastBlock extends Block {
   mediantimeDiff: number;
@@ -138,14 +138,19 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
     this.markBlockSubscription.unsubscribe();
   }
 
-  blockspanChange({tipBlock, span}) {
+  async blockspanChange({tipBlock, span}): Promise<void> {
     this.span = span;
-    let blockNumbers = [];
-    let lastblock = tipBlock;
-    for (let i = 0; i < this.stateService.env.KEEP_BLOCKS_AMOUNT; i += 2) {
-      blockNumbers.push(lastblock, lastblock - span);
-      lastblock = lastblock - (span + 1);
+    const numberOfSpan = this.stateService.env.KEEP_BLOCKS_AMOUNT / 2;
+    const blockNumbers = [];
+    let blockSpanList = [];
+    try {
+      blockSpanList = await lastValueFrom(this.opEnergyApiService.$getBlockSpanList(tipBlock - (span* numberOfSpan) , span, numberOfSpan), {defaultValue: []});
+    } catch (error) {
+      this.toastr.error('Cannot fetch block height data!', 'Failed!');
     }
+    blockSpanList.reverse().forEach((blockSpan: BlockSpan) => {
+      blockNumbers.push(blockSpan.endBlockHeight, blockSpan.startBlockHeight);
+    });
     this.pastBlocks = [];
     forkJoin(
       blockNumbers.map(
@@ -158,16 +163,14 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
     .subscribe((blocks: any[]) => {
       this.pastBlocks = blocks;
       this.cd.markForCheck();
-      console.log('pastBlocks...', this.pastBlocks)
       this.lastPastBlock = this.pastBlocks[0];
       this.lastPastBlock = {
         ...this.lastPastBlock,
-        height: this.lastPastBlock.height + 1
+        height: this.lastPastBlock.height + this.span
       };
       this.location.replaceState(
         this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/hashstrikes/blockspans/`, this.span, tipBlock]).toString()
       );
-
       this.getTimeStrikes();
     }, error => {
       this.toastr.error('Blockspans are not found!', 'Failed!');

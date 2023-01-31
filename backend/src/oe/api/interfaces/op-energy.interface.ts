@@ -81,15 +81,15 @@ export interface BlockHash {
 export interface BlockHeader {
   height: number;
   version: number;
-  currentBlockHash: string;
-  previousBlockHash: string;
-  merkleRoot: string;
+  current_block_hash: string;
+  previous_block_hash: string;
+  merkle_root: string;
   timestamp: number;
   difficulty: number;
   nonce: number;
   reward: number;
-  chainWork: string;
-  medianTime: number;
+  chainwork: string;
+  mediantime: number;
 }
 
 export interface ConfirmedBlockHeight {

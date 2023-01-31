@@ -14,29 +14,29 @@ class OpBlockHeaderRepository {
     const {
       height,
       version,
-      previousBlockHash,
-      merkleRoot,
+      previous_block_hash,
+      merkle_root,
       timestamp,
       difficulty,
       nonce,
       reward,
-      medianTime,
-      chainWork,
-      currentBlockHash
+      mediantime,
+      chainwork,
+      current_block_hash
     } = blockHeader;
 
     try {
       const query = `INSERT INTO blocks(
         height, version, current_block_hash, previous_block_hash, merkle_root,
-        timestamp,  difficulty, nonce, reward, mediantime
+        timestamp,  difficulty, nonce, reward, mediantime, chainwork
       ) VALUE (
         ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?
       )`;
 
       const params: (string | number)[] = [
-        height, version, currentBlockHash, previousBlockHash, merkleRoot, timestamp, difficulty,
-        nonce, reward, medianTime, chainWork
+        height, version, current_block_hash, previous_block_hash, merkle_root, timestamp, difficulty,
+        nonce, reward, mediantime, chainwork
       ];
 
       await DB.$with_blockSpanPool(UUID, async (connection) => {
