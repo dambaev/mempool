@@ -74,6 +74,10 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
     return this.chainworkDiff / BigInt(this.timeDiff);
   }
 
+  get strikeDetailLink(): string {
+    return this.relativeUrlPipe.transform(`/hashstrikes/strike_detail/${this.fromBlock.height}/${this.toBlock.height}/${this.toBlock.height}/${this.fromBlock.mediantime}/${this.toBlock.mediantime}`);
+  }
+
   constructor(
     private route: ActivatedRoute,
     private location: Location,
