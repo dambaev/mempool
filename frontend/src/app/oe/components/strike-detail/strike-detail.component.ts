@@ -13,6 +13,7 @@ import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import { SlowFastGuess, TimeStrike } from 'src/app/oe/interfaces/op-energy.interface';
 import { OpEnergyApiService } from 'src/app/oe/services/op-energy.service';
+import { BlockTypes } from '../../types/constant';
 
 @Component({
   selector: 'app-strike-detail',
@@ -229,7 +230,13 @@ export class StrikeDetailComponent implements OnInit, OnDestroy {
     )
     .subscribe(([fromBlock, toBlock]: [Block, Block]) => {
       this.fromBlock = fromBlock;
-      this.toBlock = toBlock;
+      if (typeof toBlock === BlockTypes.STRING) {
+        this.toBlock = {
+          height: +toBlock,
+        };
+      } else {
+        this.toBlock = toBlock;
+      }
       this.blockHeight = fromBlock.height;
       this.nextBlockHeight = fromBlock.height + 1;
       this.setNextAndPreviousBlockLink();

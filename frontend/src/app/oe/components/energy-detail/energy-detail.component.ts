@@ -13,6 +13,7 @@ import {NgbModal, ModalDismissReasons} from '@ng-bootstrap/ng-bootstrap';
 import { EnergyNbdrStatistics, TimeStrike } from 'src/app/oe/interfaces/op-energy.interface';
 import { ToastrService } from 'ngx-toastr';
 import { OpEnergyApiService } from 'src/app/oe/services/op-energy.service';
+import { BlockTypes } from '../../types/constant';
 
 @Component({
   selector: 'app-energy-detail',
@@ -22,7 +23,8 @@ import { OpEnergyApiService } from 'src/app/oe/services/op-energy.service';
 export class EnergyDetailComponent implements OnInit, OnDestroy {
   network = '';
   fromBlock: Block;
-  toBlock: Block;
+  // Used any to populate just the block height property
+  toBlock: Block | any;
   blockHeight: number;
   nextBlockHeight: number;
   fromBlockHash: string;
@@ -200,10 +202,9 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
     )
     .subscribe(([fromBlock, toBlock]: [Block, Block]) => {
       this.fromBlock = fromBlock;
-      if (typeof toBlock == 'string') {
+      if (typeof toBlock === BlockTypes.STRING) {
         this.toBlock = {
-          ...this.fromBlock,
-          height: toBlock,
+          height: +toBlock,
         };
       } else {
         this.toBlock = toBlock;
