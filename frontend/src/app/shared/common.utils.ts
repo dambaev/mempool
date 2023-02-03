@@ -1,3 +1,6 @@
+import { TextSelectionTypes } from 'src/app/shared/types/constant';
+import { Router } from '@angular/router';
+
 export function isMobile(): boolean {
   return (window.innerWidth <= 767.98);
 }
@@ -117,4 +120,28 @@ export function convertRegion(input, to: 'name' | 'abbreviated'): string {
       }
     }
   }
+}
+
+export function isTextSelection(): boolean {
+  return window.getSelection().type === TextSelectionTypes.RANGE;
+}
+
+export function navigator(router: Router, link: string): void {
+  !isTextSelection() && router.navigate([link]);
+}
+
+export function toHHMMSS(secs: number): string {
+  if (!(secs > 0)) {
+    return '??:??:??';
+  }
+
+  const hours   = Math.floor(secs / 3600);
+  const minutes = Math.floor((secs - (hours * 3600)) / 60);
+  const seconds = secs - (hours * 3600) - (minutes * 60);
+  
+  const strHours = hours < 10 ? `0${hours}` : hours.toString();
+  const strMinutes = minutes < 10 ? `0${minutes}` : minutes.toString();
+  const strSeconds = seconds < 10 ? `0${seconds}` : seconds.toString();
+  
+  return `${strHours}:${strMinutes}:${strSeconds}`;
 }
