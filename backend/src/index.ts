@@ -133,7 +133,7 @@ class Server {
 
     fiatConversion.startService();
 
-    this.setUpHttpApiRoutes();
+    await this.setUpHttpApiRoutes();
     this.runMainUpdateLoop();
 
     if (config.BISQ.ENABLED) {
@@ -229,9 +229,9 @@ class Server {
     }
   }
 
-  setUpHttpApiRoutes() {
+  async setUpHttpApiRoutes() {
     bitcoinRoutes.initRoutes(this.app);
-    opEnergyIndex.setUpHttpApiRoutes(this.app);
+    await opEnergyIndex.setUpHttpApiRoutes(this.app);
     if (config.STATISTICS.ENABLED && config.DATABASE.ENABLED) {
       statisticsRoutes.initRoutes(this.app);
     }
