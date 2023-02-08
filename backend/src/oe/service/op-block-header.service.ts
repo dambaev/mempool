@@ -47,7 +47,11 @@ export class OpBlockHeaderService {
     }
   }
 
-  public async $syncOlderBlockHeader(UUID: string, currentTip?: number): Promise<void> {
+  /**
+   * returns BlockHeader of the last confirmed block
+   */
+  public async $syncOlderBlockHeader(UUID: string, currentTip?: number): Promise<BlockHeader> {
+    var latestConfirmedBlockHeight : ConfirmedBlockHeight | undefined = undefined;
     try {
       logger.debug('Syncing older block headers');
 
@@ -64,28 +68,28 @@ export class OpBlockHeaderService {
       if (!currentTip) {
         currentTip = await bitcoinApi.$getBlockHeightTip();
       }
-      const { value: latestConfirmedBlockHeight } = this.verifyConfirmedBlockHeight(currentTip - config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT, { value: currentTip });
+      latestConfirmedBlockHeight = this.verifyConfirmedBlockHeight(currentTip - config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT, { value: currentTip });
 
 
       logger.debug(
-        `currentSyncedBlockHeight: ${currentSyncedBlockHeight}, latestConfirmedBlockHeight: ${latestConfirmedBlockHeight}`
+        `currentSyncedBlockHeight: ${currentSyncedBlockHeight}, latestConfirmedBlockHeight: ${latestConfirmedBlockHeight.value}`
       );
 
-      if (currentSyncedBlockHeight >= latestConfirmedBlockHeight) {
+      if (currentSyncedBlockHeight >= latestConfirmedBlockHeight.value) {
         logger.debug('Already synced block headers.');
-        return;
+        return await this.$getBlockHeaderData( latestConfirmedBlockHeight);
       }
 
       currentSyncedBlockHeight += 1;
 
       logger.debug(
-        `Syncing block header from #${currentSyncedBlockHeight} to #${latestConfirmedBlockHeight}`
+        `Syncing block header from #${currentSyncedBlockHeight} to #${latestConfirmedBlockHeight.value}`
       );
 
-      while (latestConfirmedBlockHeight >= currentSyncedBlockHeight) {
+      while (latestConfirmedBlockHeight.value >= currentSyncedBlockHeight) {
         const noOfBlockHeaders = Math.max(
           1,
-          Math.min(10, latestConfirmedBlockHeight - currentSyncedBlockHeight)
+          Math.min(10, latestConfirmedBlockHeight.value - currentSyncedBlockHeight)
         );
 
         const blockHeaders = await Bluebird.map(
@@ -101,11 +105,15 @@ export class OpBlockHeaderService {
 
         currentSyncedBlockHeight += noOfBlockHeaders;
       }
-
       logger.debug('Synced all the missing block headers');
     } catch (error) {
       logger.err(`Something went wrong while syncing block header.` + error);
+      throw new Error(`Something went wrong while syncing block header.` + error);
     }
+    if( !latestConfirmedBlockHeight) {
+      throw new Error( 'unable to get latestConfirmedBlockHeight');
+    }
+    return await this.$getBlockHeaderData( latestConfirmedBlockHeight);
   }
 
   public async $getBlockHeader(UUID: string, height: ConfirmedBlockHeight): Promise<BlockHeader> {
