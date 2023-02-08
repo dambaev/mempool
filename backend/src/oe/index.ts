@@ -4,6 +4,7 @@ import chainStats from './chainstats';
 import opEnergyRoutes from './api/routes';
 import logger from '../logger';
 import { BlockExtended, TransactionExtended, WebsocketResponse } from '../mempool.interfaces';
+import { BlockHeader } from './api/interfaces/op-energy.interface';
 import blocks from '../api/blocks';
 
 import opEnergyApiService from './api/op-energy.service';
@@ -12,15 +13,27 @@ import opBlockHeaderService from './service/op-block-header.service';
 
 class OpEnergyIndex {
 
+  /**
+   * this procedure checks if given block header can be considered as the new latest confirmed block header and thus
+   * it CAN call handleNewConfirmedBlock() procedure
+   */
+  public static async checkForNewConfirmedBlock( block: BlockHeader) {
+    const previousLatestConfirmedBlock = opEnergyApiService.getLatestConfirmedBlockHeader();
+    if( !previousLatestConfirmedBlock || previousLatestConfirmedBlock.height < block.height) { // we don't want to resend data that had been already sent through network before
+      opEnergyApiService.setLatestConfirmedBlockHeader( block); // update
+      await OpEnergyIndex.handleNewConfirmedBlock( block);
+    }
+  }
+
   public async setUpHttpApiRoutes( app: Application) {
     opEnergyRoutes.setUpHttpApiRoutes( app);
-    await opEnergyApiService.$persistOutcome( "init" );
-    await opBlockHeaderService.$syncOlderBlockHeader('init');
+    const latestConfirmedBlockHeader = await opBlockHeaderService.$syncOlderBlockHeader('init');
+    await OpEnergyIndex.checkForNewConfirmedBlock( latestConfirmedBlockHeader);
   }
 
   public setUpWebsocketHandling( wss: WebSocket.Server) {
     opEnergyWebsocket.setUpWebsocketHandling( wss);
-    blocks.setNewBlockCallback( this.handleNewBlock);
+    blocks.setNewBlockCallback( this.handleNewUnconfirmedBlock);
   }
 
   public async runMainUpdateLoop() {
@@ -31,9 +44,20 @@ class OpEnergyIndex {
     }
   }
 
-  async handleNewBlock( block: BlockExtended, txIds: string[], transactions: TransactionExtended[]) {
-      await opEnergyApiService.$persistOutcome( "handleNewBlock callback");
-      await opBlockHeaderService.$syncOlderBlockHeader('handleNewBlock callback', block.height);
+  async handleNewUnconfirmedBlock( block: BlockExtended, txIds: string[], transactions: TransactionExtended[]) {
+    const latestConfirmedBlockHeader = await opBlockHeaderService.$syncOlderBlockHeader('handleNewUnconfirmedBlock callback', block.height);
+
+    await OpEnergyIndex.checkForNewConfirmedBlock( latestConfirmedBlockHeader);
+  }
+
+  /**
+   * this callback will called when each new confirmed block will be discovered
+   */
+  private static async handleNewConfirmedBlock( block: BlockHeader) {
+    await opEnergyApiService.$persistOutcome( "handleNewConfirmedBlock callback");
+    opEnergyWebsocket.sendToAllClients( { // send newest block header to the connected clients
+      'oe-newest-confirmed-block': block
+    });
   }
 
 }
