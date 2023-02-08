@@ -8,7 +8,6 @@ import { IEsploraApi } from './../../api/bitcoin/esplora-api.interface';
 import { BlockExtended, PoolTag, TransactionExtended, TransactionMinerInfo } from './../../mempool.interfaces';
 
 class OEBlocks {
-  private difficultyEpochEndBlocks: BlockExtended[] = [];
 
   public async getExtendedBlocktxIdsTransactionsByBlockHeight$( height: number): Promise<[BlockExtended, string[], TransactionExtended[] ] | undefined> {
     const blockHeightTip = await bitcoinApi.$getBlockHeightTip();
@@ -55,10 +54,6 @@ class OEBlocks {
     return [ blockExtended, txIds, transactions ];
   }
 
-  public getDifficultyEpochEndBlocks(): BlockExtended[] {
-    return this.difficultyEpochEndBlocks;
-  }
-
   private getBlockExtended(block: IEsploraApi.Block, transactions: TransactionExtended[]): BlockExtended {
     const blockExtended: BlockExtended = Object.assign({ extras: {} }, block);
     blockExtended.extras.reward = transactions[0].vout.reduce((acc, curr) => acc + curr.value, 0);
@@ -71,23 +66,6 @@ class OEBlocks {
     blockExtended.extras.feeRange = transactionsTmp.length > 0 ? Common.getFeesInRange(transactionsTmp, 8) : [0, 0];
 
     return blockExtended;
-  }
-
-  public async $updateBlocks(blockHeightTip) {
-    const lastDifficultyEpochEndBlockHeight = blockHeightTip - (blockHeightTip % 2016);
-    let firstDifficultyEpochEndBlockHeight = 0;
-    if( this.difficultyEpochEndBlocks.length > 0) {
-      firstDifficultyEpochEndBlockHeight = this.difficultyEpochEndBlocks[ this.difficultyEpochEndBlocks.length - 1].height + 2016;
-    }
-    if ( lastDifficultyEpochEndBlockHeight > firstDifficultyEpochEndBlockHeight) {
-      logger.debug('populating difficultyEpochEndBlocks, starting from block ' + firstDifficultyEpochEndBlockHeight);
-    }
-    for( let i = firstDifficultyEpochEndBlockHeight; i <= lastDifficultyEpochEndBlockHeight; i += 2016) {
-      const blockHash = await bitcoinApi.$getBlockHash(i);
-      const block = await bitcoinApi.$getBlock(blockHash);
-      const blockExtended: BlockExtended = Object.assign({ extras: {} }, block);
-      this.difficultyEpochEndBlocks.push(blockExtended);
-    }
   }
 
 }
