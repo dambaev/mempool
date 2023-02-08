@@ -137,6 +137,37 @@ class OpEnergyWebsocket {
     });
   }
 
+  /**
+   * O(n)
+   * this procedure sends given message to all the connected websocket clients
+   */
+  public sendToAllClients( msg: any) {
+    if( !OpEnergyWebsocket.wss) {
+      return;
+    }
+    OpEnergyWebsocket.wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        try { // don't throw an error in case if any client's stream will be terminated
+          client.send(JSON.stringify( msg));
+        } catch( error) {
+          // we don't need to handle it as it is expected that client will receive update within reconnection procedure
+        }
+      }
+    });
+  }
+
+  /**
+   * O(n) (where n - is initialSet's number of keys)
+   * returns initial set including op-energy related data
+   */
+  public getInitData( initialSet: any): any {
+    const newestConfirmedBlock = opEnergyApiService.getLatestConfirmedBlockHeader(); // get block header from cache
+    return {
+      'newest-confirmed-block': newestConfirmedBlock,
+      ...initialSet
+    };
+  }
+
 }
 
 export default new OpEnergyWebsocket();
