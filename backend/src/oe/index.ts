@@ -1,6 +1,5 @@
 import * as WebSocket from 'ws';
 import { Express, Request, Response, NextFunction, Application } from 'express';
-import chainStats from './chainstats';
 import opEnergyRoutes from './api/routes';
 import logger from '../logger';
 import { BlockExtended, TransactionExtended, WebsocketResponse } from '../mempool.interfaces';
@@ -24,11 +23,6 @@ class OpEnergyIndex {
   }
 
   public async runMainUpdateLoop() {
-    try {
-      await chainStats.$updateChainstats();
-    } catch (e) {
-      logger.debug( '$updateChainstats error: ${( e instanceof Error ? e.message : e)}');
-    }
   }
 
   async handleNewBlock( block: BlockExtended, txIds: string[], transactions: TransactionExtended[]) {
