@@ -163,7 +163,7 @@ class OpEnergyWebsocket {
   public getInitData( initialSet: any): any {
     const newestConfirmedBlock = opEnergyApiService.getLatestConfirmedBlockHeader(); // get block header from cache
     return {
-      'newest-confirmed-block': newestConfirmedBlock,
+      'oe-newest-confirmed-block': newestConfirmedBlock,
       ...initialSet
     };
   }
