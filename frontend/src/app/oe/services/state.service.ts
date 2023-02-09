@@ -47,13 +47,10 @@ export class OeStateService {
   // callback which will be called by websocket service
   handleWebsocketResponse( websocketService: WebsocketService, response: OpEnergyWebsocketResponse) {
 
-    if (response.blocks && response.blocks.length > 0) { // we need to know the last block received from the backend. Mempool's behavior is to walk through all the received blocks one by one, but this means, that stateService.lastestBlockHeight may not be current tip until stateService won't receive the last block from websocket service. The difference here is that we store the last block asap and this means, that this block is always the currenttip
-      const block = response.blocks[response.blocks.length - 1];
+    if( response['oe-newest-confirmed-block'] && response['oe-newest-confirmed-block'].height !== undefined) {
+      this.latestReceivedBlockHeight = response['oe-newest-confirmed-block'].height;
+      const block = response['oe-newest-confirmed-block'];
       this.latestReceivedBlock$.next( block);
-    }
-    if (response.block && response.block.height > this.latestReceivedBlockHeight) {
-      this.latestReceivedBlockHeight = response.block.height;
-      this.latestReceivedBlock$.next(response.block);
     }
 
 
