@@ -223,7 +223,6 @@ class WebsocketHandler {
       'transactions': memPool.getLatestTransactions(),
       'backendInfo': backendInfo.getBackendInfo(),
       'loadingIndicators': loadingIndicators.getLoadingIndicators(),
-      'lastDifficultyEpochEndBlocks': oeBlocks.getDifficultyEpochEndBlocks(),
       'da': difficultyAdjustment.getDifficultyAdjustment(),
       'fees': feeApi.getRecommendedFee(),
       ...this.extraInitProperties
