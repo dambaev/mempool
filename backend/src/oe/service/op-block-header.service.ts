@@ -51,7 +51,7 @@ export class OpBlockHeaderService {
    * returns BlockHeader of the last confirmed block
    */
   public async $syncOlderBlockHeader(UUID: string, currentTip?: number): Promise<BlockHeader> {
-    var latestConfirmedBlockHeight : ConfirmedBlockHeight | undefined = undefined;
+    let latestConfirmedBlockHeight : ConfirmedBlockHeight | undefined = undefined;
     try {
       logger.debug('Syncing older block headers');
 
