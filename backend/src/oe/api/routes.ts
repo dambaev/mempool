@@ -8,7 +8,7 @@ import websocketHandler from '../../api/websocket-handler';
 import opEnergyApiService from './op-energy.service';
 import opEnergyWebsocket from './websocket';
 import opStatisticService from './op-statistics.service';
-import { isValidNaturalNumber, isValidPositiveNumber } from '../util/helper';
+import { isBoolean, isValidNaturalNumber, isValidPositiveNumber, toBoolean } from '../util/helper';
 
 class OpEnergyRoutes {
   public setUpHttpApiRoutes(app) {
@@ -29,7 +29,7 @@ class OpEnergyRoutes {
       .post(config.MEMPOOL.API_URL_PREFIX + 'user/displayname', this.$postUserDisplayName)
       .get(config.MEMPOOL.API_URL_PREFIX + 'statistics/:blockheight/:span', this.$getBlockSpanStatistics)
       .get(config.MEMPOOL.API_URL_PREFIX + 'oe/block/:hash', this.$getBlockByHash)
-      .get(config.MEMPOOL.API_URL_PREFIX + 'oe/blockspanlist/:startBlockHeight/:span/:numberOfSpan', this.$getBlockSpanList)
+      .get(config.MEMPOOL.API_URL_PREFIX + 'oe/blockspanlist/:startBlockHeight/:span/:numberOfSpan/:withNbdrStatistics', this.$getBlockSpanDetailedList)
   }
 
   private async $postLogin(req: Request, res: Response) {
@@ -222,7 +222,7 @@ class OpEnergyRoutes {
     try {
       logger.info( `${UUID}: PROFILE: start: $getBlockSpanStatistics`);
       const { blockheight, span } = req.params;
-      const statistics = await opStatisticService.calculateStatistics(opEnergyApiService.verifyBlockHeight(parseInt(blockheight)), parseInt(span));
+      const statistics = await opStatisticService.$getNbdrStatistics(UUID, opEnergyApiService.verifyBlockHeight(parseInt(blockheight)), parseInt(span));
       res.json(statistics);
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getBlockSpanStatistics: ${e instanceof Error ? e.message: e}`);
@@ -245,27 +245,27 @@ class OpEnergyRoutes {
     logger.info( `${UUID}: PROFILE: end: $getBlockByHash`);
   }
 
-  private async $getBlockSpanList(req: Request, res: Response) {
+  private async $getBlockSpanDetailedList(req: Request, res: Response) {
     const UUID = await opEnergyApiService.$generateRandomHash();
     try {
-      logger.info( `${UUID}: PROFILE: start: $getBlockSpanList`);
-      const { startBlockHeight, span, numberOfSpan } = req.params;
+      logger.info( `${UUID}: PROFILE: start: $getBlockSpanDetailedList`);
+      const { startBlockHeight, span, numberOfSpan, withNbdrStatistics } = req.params;
 
       if (
         !isValidNaturalNumber(startBlockHeight) ||
         !isValidPositiveNumber(span) ||
-        !isValidPositiveNumber(numberOfSpan)
+        !Number.isInteger(+numberOfSpan) ||
+        !isBoolean(withNbdrStatistics)
       ) {
         throw Error('Not a valid input parameters.');
       }
-
-      const result = await opEnergyApiService.$getBlockSpanList(UUID, +startBlockHeight, +span, +numberOfSpan);
+      const result = await opEnergyApiService.$getBlockSpanDetailedList(UUID, +startBlockHeight, +span, +numberOfSpan, toBoolean(withNbdrStatistics));
       res.json(result);
     } catch(e) {
-      logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getBlockSpanList: ${e instanceof Error ? e.message: e}`);
+      logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getBlockSpanDetailedList: ${e instanceof Error ? e.message: e}`);
       res.status(500).send(`${UUID}: ${e instanceof Error? e.message : e}`);
     }
-    logger.info( `${UUID}: PROFILE: end: $getBlockSpanList`);
+    logger.info( `${UUID}: PROFILE: end: $getBlockSpanDetailedList`);
   }
 };
 

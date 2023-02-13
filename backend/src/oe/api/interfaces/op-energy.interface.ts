@@ -1,3 +1,4 @@
+import { NbdrStatistics } from "./op-statistics.interface";
 
 export interface TimeStrike {
   blockHeight: number;
@@ -106,3 +107,17 @@ export interface RegisterResponse {
   accountToken: string;
   accountSecret: string;
 }
+
+export interface BlockDetails {
+  height: number,
+  hash: string,
+  mediantime: number,
+  timestamp: number,
+}
+
+export interface BlockSpanDetails {
+  startBlock: BlockDetails,
+  endBlock: BlockDetails,
+}
+
+export interface BlockSpanDetailsWithNbdr extends BlockSpanDetails, NbdrStatistics {}

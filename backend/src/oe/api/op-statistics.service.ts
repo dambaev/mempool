@@ -1,10 +1,8 @@
 import logger from '../../logger';
-import opBlockHeaderService from '../service/op-block-header.service';
 import {
   BlockHeight,
-  ConfirmedBlockHeight,
+  BlockSpanDetails,
 } from './interfaces/op-energy.interface';
-import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 import {
   NbdrStatistics,
   NbdrStatisticsError,
@@ -15,60 +13,34 @@ const NUMBER_OF_BLOCK_SPANS = 100;
 export class OpStatisticService {
   constructor() {}
 
-  async calculateStatistics(
+  public async $getNbdrStatistics(
+    UUID: string,
     blockHeight: BlockHeight,
     blockSpan: number
   ): Promise<NbdrStatistics | NbdrStatisticsError> {
     try {
+      const blockSpanList = await opEnergyService.$generateBlockSpanDetailedList(
+        UUID, blockHeight.value - blockSpan, blockSpan, NUMBER_OF_BLOCK_SPANS
+      );
+      return this.calculateStatisticsWithBlockSpan(blockSpanList, blockSpan);
+    } catch (e) {
+      throw new Error(`${UUID} OpStatisticsService.$getNbdrStatistics: error while getting Nbdr Statistics data: ${e instanceof Error ? e.message : e}`);
+    }
+  }
+
+  public calculateStatisticsWithBlockSpan(
+    blockSpanList: BlockSpanDetails[],
+    span: number
+  ): NbdrStatistics | NbdrStatisticsError {
+    try {
       const nbdrStatisticsList: number[] = [];
-      const confirmedBlocks = [] as ConfirmedBlockHeight[];
-
-      try {
-        // fetching block span list
-        const blockSpanList = await opEnergyService.$getBlockSpanList(
-          'nbdr',
-          blockHeight.value,
-          blockSpan,
-          NUMBER_OF_BLOCK_SPANS
-        );
-        const currentTip = await bitcoinApi.$getBlockHeightTip();
-
-        blockSpanList.forEach((blockNumber) =>
-          confirmedBlocks.push(
-            opBlockHeaderService.verifyConfirmedBlockHeight(
-              blockNumber.startBlockHeight,
-              {
-                value: currentTip,
-              }
-            ),
-            opBlockHeaderService.verifyConfirmedBlockHeight(
-              blockNumber.endBlockHeight,
-              {
-                value: currentTip,
-              }
-            )
-          )
-        );
-
-        const blockHeadersList =
-          await opBlockHeaderService.$getBlockHeadersByHeights(
-            'nbdr',
-            Array.from(new Set(confirmedBlocks))
-          );
-
-        for (let i = 0; i < NUMBER_OF_BLOCK_SPANS; i += 1) {
-          const startBlock = blockHeadersList[i + 1];
-          const endBlock = blockHeadersList[i];
-          const nbdr =
-            (blockSpan * 600 * 100) /
-            (startBlock.timestamp - endBlock.timestamp);
-
-          nbdrStatisticsList.push(nbdr);
-        }
-      } catch (error) {
-        logger.err(`Error while calculating nbdr ${error}`);
-        throw new Error('Error while calculating nbdr');
-      }
+      blockSpanList.forEach((blockSpan) => {
+        const nbdr =
+          (span * 600 * 100) /
+          (blockSpan.endBlock.timestamp - blockSpan.startBlock.timestamp);
+  
+        nbdrStatisticsList.push(nbdr);
+      });
       const mean =
         nbdrStatisticsList.reduce((a, b) => a + b) / NUMBER_OF_BLOCK_SPANS;
 
