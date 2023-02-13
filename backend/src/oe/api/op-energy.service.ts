@@ -3,6 +3,7 @@ import crypto from "crypto-js";
 import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 import { IEsploraApi } from '../../api/bitcoin/esplora-api.interface';
 import opBlockHeaderService from '../service/op-block-header.service';
+import { BlockHeader } from './interfaces/op-energy.interface';
 import opBlockHeaderRepository from '../repositories/OpBlockHeaderRepository';
 import config from '../../config';
 import logger from '../../logger';
@@ -28,6 +29,13 @@ export class OpEnergyApiService {
   // those arrays contains callbacks, which will be called when appropriate entity will be created
   private newTimeStrikeCallbacks: ((timeStrike: TimeStrike) => void)[] = [];
   private newTimeSlowFastGuessCallbacks: ((slowFastGues: SlowFastGuess) => void)[] = [];
+
+  // this variable will keep blockheader as the latest confirmed block
+  // the purpose mainly is to be used as cache source of data for each new websocket client
+  // without this variable, we will have to query DB every time new client will be connected, which is quite wasteful
+  // this variable is static because OpEnergyIndex.checkForNewConfirmedBlock() will be called without a context and thus,
+  // it will call OpEnergyApiService and OpEnergyWebsocket services without context as well
+  private static latestConfirmedBlockHeader: BlockHeader | undefined = undefined;
 
   constructor(
   ) {
@@ -474,7 +482,7 @@ export class OpEnergyApiService {
         }
       });
     } catch(e) {
-      throw new Error(`${UUID} OpEnergyApiService.$singlePlayerPersistOutcome: failed to query DB: ${e instanceof Error? e.message : e}`);
+      throw new Error(`${UUID} OpEnergyApiService.$slowFastGamePersistOutcome: failed to query DB: ${e instanceof Error? e.message : e}`);
     }
   }
 
@@ -550,6 +558,22 @@ export class OpEnergyApiService {
       throw new Error( `ERROR: OpEnergyApiService.$loginUser: ${ e instanceof Error? e.message: e}`);
     }
     return accountToken;
+  }
+
+  /**
+   * this procedure stores given block header as latest confirmed block.
+   */
+  public setLatestConfirmedBlockHeader( header: BlockHeader) {
+    if( !OpEnergyApiService.latestConfirmedBlockHeader || OpEnergyApiService.latestConfirmedBlockHeader.height < header.height) {
+      OpEnergyApiService.latestConfirmedBlockHeader = header;
+    }
+  }
+
+  /**
+   * returns cache of the latest confirmed block header or undefined
+   */
+  public getLatestConfirmedBlockHeader() {
+    return OpEnergyApiService.latestConfirmedBlockHeader;
   }
 
 }

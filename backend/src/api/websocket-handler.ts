@@ -215,6 +215,7 @@ class WebsocketHandler {
     if (!_blocks) {
       _blocks = blocks.getBlocks().slice(-config.MEMPOOL.INITIAL_BLOCKS_AMOUNT);
     }
+    const newExtraInitProperties = opEnergyWebSocket.getInitData( this.extraInitProperties); // op-energy hook
     return {
       'mempoolInfo': memPool.getMempoolInfo(),
       'vBytesPerSecond': memPool.getVBytesPerSecond(),
@@ -224,10 +225,9 @@ class WebsocketHandler {
       'transactions': memPool.getLatestTransactions(),
       'backendInfo': backendInfo.getBackendInfo(),
       'loadingIndicators': loadingIndicators.getLoadingIndicators(),
-      'lastDifficultyEpochEndBlocks': oeBlocks.getDifficultyEpochEndBlocks(),
       'da': difficultyAdjustment.getDifficultyAdjustment(),
       'fees': feeApi.getRecommendedFee(),
-      ...this.extraInitProperties
+      ...newExtraInitProperties
     };
   }
 
