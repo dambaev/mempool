@@ -523,7 +523,7 @@ export class OpEnergyApiService {
     return await bitcoinApi.$getBlock(hash.value);
   }
 
-  public async $getBlockSpanList(UUID: string, endBlockHeight: number, span: number, blockSpanCount: number): Promise<BlockSpan[]> {
+  public $getBlockSpanList(UUID: string, endBlockHeight: number, span: number, blockSpanCount: number): BlockSpan[] {
     try {
       const blockSpanList = [] as BlockSpan[];
       const numberOfSpan = blockSpanCount === -1 ? Number.MAX_VALUE : blockSpanCount;
@@ -569,7 +569,7 @@ export class OpEnergyApiService {
 
   public async $generateBlockSpanDetailedList(UUID: string, endBlockHeight: number, span: number, blockSpanCount: number): Promise<BlockSpanDetails[]> {
     try {
-      const blockSpanList = await this.$getBlockSpanList(
+      const blockSpanList = this.$getBlockSpanList(
         UUID,
         endBlockHeight,
         span,
