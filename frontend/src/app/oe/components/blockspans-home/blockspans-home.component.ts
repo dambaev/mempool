@@ -144,19 +144,17 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
     const blockNumbers = [];
     let blockSpanList = [];
     try {
-      blockSpanList = await lastValueFrom(this.opEnergyApiService.$getBlockSpanList(tipBlock - (span* numberOfSpan) , span, numberOfSpan), {defaultValue: []});
+      blockSpanList = await lastValueFrom(this.opEnergyApiService.$getBlockSpanList(tipBlock, span, numberOfSpan, false), {defaultValue: []});
     } catch (error) {
       this.toastr.error('Cannot fetch block height data!', 'Failed!');
     }
     blockSpanList.reverse().forEach((blockSpan: BlockSpan) => {
-      blockNumbers.push(blockSpan.endBlockHeight, blockSpan.startBlockHeight);
+      blockNumbers.push(blockSpan.endBlock, blockSpan.startBlock);
     });
     this.pastBlocks = [];
     forkJoin(
       blockNumbers.map(
-        blockNo => this.electrsApiService.getBlockHashFromHeight$(blockNo).pipe(
-          switchMap(hash => this.opEnergyApiService.$getBlock(hash))
-        )
+        blockNo => this.opEnergyApiService.$getBlock(blockNo.hash)
       )
     )
     .pipe(take(1))

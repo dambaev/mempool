@@ -58,7 +58,14 @@ export interface EnergyNbdrStatistics {
   }
 }
 
+export interface BlockDetails {
+  height: number,
+  hash: string,
+  mediantime: number,
+  timestamp: number,
+}
+
 export interface BlockSpan {
-  startBlockHeight: number,
-  endBlockHeight: number,
+  startBlock: BlockDetails,
+  endBlock: BlockDetails,
 }
