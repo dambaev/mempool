@@ -32,7 +32,8 @@ export class BaseBoxV2Component implements OnInit, OnDestroy {
   }
 
   get nbdr(): string {
-    if (!this.span || !this.timeDiff) return '???';
+    if (!this.span) return '???';
+    if (!this.timeDiff) return 'Unknown';
     return (600 * 100 * this.span / (this.timeDiff)).toFixed(2);
   }
 
