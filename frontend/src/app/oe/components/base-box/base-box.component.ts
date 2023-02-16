@@ -33,12 +33,17 @@ export class BaseBoxComponent implements OnInit, OnDestroy {
     return this.type === 'Energy' ? 'fire' : this.type === 'Strike' ? 'tint' : 'cloud';
   }
 
-  get timeSpan() {
-    return toHHMMSS(this.toTime - this.fromTime);
+  get timeDiff(): number {
+    return this.toTime - this.fromTime;
   }
 
-  get nbdr() {
-    return this.span ? (600 * 100 * this.span / (this.toTime - this.fromTime)).toFixed(2) : '???'
+  get timeSpan() {
+    return toHHMMSS(this.timeDiff);
+  }
+
+  get nbdr(): string {
+    if (!this.span || !this.timeDiff) return '???';
+    return (600 * 100 * this.span / (this.timeDiff)).toFixed(2);
   }
 
   constructor(

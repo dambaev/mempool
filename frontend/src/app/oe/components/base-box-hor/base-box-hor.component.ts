@@ -20,13 +20,17 @@ export class BaseBoxHorComponent implements OnInit, OnDestroy {
   @Input() link: string;
   maxCount = MAX_COUNT;
 
+  get timeDiff(): number {
+    return this.toTime - this.fromTime;
+  }
+
   get timeSpan() {
-    return toHHMMSS(this.toTime - this.fromTime);
+    return toHHMMSS(this.timeDiff);
   }
 
   get nbdr(): string {
-    if (!this.span || !this.toTime || !this.fromTime) return '???';
-    return (600 * 100 * this.span / (this.toTime - this.fromTime)).toFixed(2);
+    if (!this.span || !this.timeDiff) return '???';
+    return (600 * 100 * this.span / (this.timeDiff)).toFixed(2);
   }
 
   constructor(
