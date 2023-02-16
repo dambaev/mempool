@@ -144,7 +144,7 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
     const blockNumbers = [];
     let blockSpanList = [];
     try {
-      blockSpanList = await lastValueFrom(this.opEnergyApiService.$getBlockSpanList(4550, span, numberOfSpan), {defaultValue: []});
+      blockSpanList = await lastValueFrom(this.opEnergyApiService.$getBlockSpanList(tipBlock, span, numberOfSpan), {defaultValue: []});
     } catch (error) {
       this.toastr.error('Cannot fetch block height data!', 'Failed!');
     }
