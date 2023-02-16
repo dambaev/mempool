@@ -7,7 +7,7 @@ import {
   NbdrStatistics,
   NbdrStatisticsError,
 } from './interfaces/op-statistics.interface';
-import opEnergyService from './op-energy.service';
+import opBlockspanService from './op-blockspan.service';
 
 const NUMBER_OF_BLOCK_SPANS = 100;
 export class OpStatisticService {
@@ -19,7 +19,7 @@ export class OpStatisticService {
     blockSpan: number
   ): Promise<NbdrStatistics | NbdrStatisticsError> {
     try {
-      const blockSpanList = await opEnergyService.$generateBlockSpanDetailedList(
+      const blockSpanList = await opBlockspanService.$generateBlockSpanDetailedList(
         UUID, blockHeight.value - blockSpan, blockSpan, NUMBER_OF_BLOCK_SPANS
       );
       return this.calculateStatisticsWithBlockSpan(blockSpanList, blockSpan);
