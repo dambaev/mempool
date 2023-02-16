@@ -496,9 +496,11 @@ export class OpEnergyApiService {
     }
   }
 
-  public async $getBlockByHash( hash: BlockHash): Promise<IEsploraApi.Block> {
-    // using our own block cache goes here
-    return await bitcoinApi.$getBlock(hash.value);
+  /**
+   * just a wrapper over OpBlockHeaderService.$getBlockHeaderByHash
+   */
+  public async $getBlockByHash( UUID: string, hash: BlockHash): Promise<BlockHeader> {
+    return await opBlockHeaderService.$getBlockHeaderByHash(UUID, hash);
   }
 
   public $getBlockSpanList(UUID: string, startBlockHeight: number, span: number, numberOfSpan: number): BlockSpan[] {
