@@ -144,7 +144,7 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
     const blockNumbers = [];
     let blockSpanList = [];
     try {
-      blockSpanList = await lastValueFrom(this.opEnergyApiService.$getBlockSpanList(tipBlock, span, numberOfSpan, false), {defaultValue: []});
+      blockSpanList = await lastValueFrom(this.opEnergyApiService.$getBlockSpanList(4550, span, numberOfSpan), {defaultValue: []});
     } catch (error) {
       this.toastr.error('Cannot fetch block height data!', 'Failed!');
     }
@@ -152,27 +152,17 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
       blockNumbers.push(blockSpan.endBlock, blockSpan.startBlock);
     });
     this.pastBlocks = [];
-    forkJoin(
-      blockNumbers.map(
-        blockNo => this.opEnergyApiService.$getBlock(blockNo.hash)
-      )
-    )
-    .pipe(take(1))
-    .subscribe((blocks: any[]) => {
-      this.pastBlocks = blocks;
-      this.cd.markForCheck();
-      this.lastPastBlock = this.pastBlocks[0];
-      this.lastPastBlock = {
-        ...this.lastPastBlock,
-        height: this.lastPastBlock.height + this.span
-      };
-      this.location.replaceState(
-        this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/hashstrikes/blockspans/`, this.span, tipBlock]).toString()
-      );
-      this.getTimeStrikes();
-    }, error => {
-      this.toastr.error('Blockspans are not found!', 'Failed!');
-    });
+    this.pastBlocks = blockNumbers;
+    this.cd.markForCheck();
+    this.lastPastBlock = this.pastBlocks[0];
+    this.lastPastBlock = {
+      ...this.lastPastBlock,
+      height: this.lastPastBlock.height + this.span
+    };
+    this.location.replaceState(
+      this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/hashstrikes/blockspans/`, this.span, tipBlock]).toString()
+    );
+    this.getTimeStrikes();
   }
 
   getTimeStrikes() {

@@ -145,3 +145,12 @@ export function toHHMMSS(secs: number): string {
   
   return `${strHours}:${strMinutes}:${strSeconds}`;
 }
+
+export function calculateNbdr(span: number, toTime: number, fromTime: number): string {
+  if (!span || (toTime !== 0 && !toTime) || (fromTime !== 0 && !fromTime)) return '???';
+  
+  const timeDiff = toTime - fromTime;
+  if (!timeDiff) return 'Unknown';
+  
+  return (600 * 100 * span / (timeDiff)).toFixed(2);
+}
