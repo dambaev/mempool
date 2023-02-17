@@ -435,7 +435,7 @@ export class OpEnergyApiService {
       return await DB.$with_accountPool( UUID, async (connection) => {
         const [timestrikesguesses] = await DB.$profile_query<any>( UUID, connection, 'SELECT id,user_id,block_height,nlocktime,UNIX_TIMESTAMP(creation_time) as creation_time FROM timestrikes WHERE block_height <= ?', [ latestConfirmedHeight.value ]);
         for( var i = 0; i < timestrikesguesses.length; i++) {
-          const confirmedBlock = { value: i}; // sql query above proves that block height i is always confirmed, so it is okay to not to use verifyConfirmedBlockHeight here
+          const confirmedBlock = { value: timestrikesguesses[i].block_height}; // sql query above proves that block height i is always confirmed, so it is okay to not to use verifyConfirmedBlockHeight here
           const block = await opBlockHeaderService.$getBlockHeader( UUID, confirmedBlock);
           const [[timestrikehistory_id]] = await DB.$profile_query<any>( UUID, connection
             , 'INSERT INTO timestrikeshistory (user_id, block_height, nlocktime, mediantime, creation_time, archive_time, wrong_results, right_results) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), NOW(),0,0) returning id'

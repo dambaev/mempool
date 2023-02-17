@@ -2,7 +2,7 @@ import { DB } from '../database';
 import logger from '../../logger';
 
 class OpEnergyDatabaseMigration {
-  private static currentVersion = 9;
+  private static currentVersion = 10;
 
   public async $initializeOrMigrateDatabase( UUID: string): Promise<void> {
     logger.info(`${UUID}: OE MIGRATION: running migrations`);
@@ -56,6 +56,10 @@ class OpEnergyDatabaseMigration {
       }
       case 8: {
         await this.$createTableBlockHeaders(UUID);
+        break;
+      }
+      case 9: {
+        await this.$dropTableChainstats();
         break;
       }
       default: {
@@ -279,6 +283,18 @@ class OpEnergyDatabaseMigration {
       throw new Error( err_msg);
     }
     logger.info( 'OE MIGRATION: OpEneryDatabaseMigration.$createTableSinglePlayerResults completed');
+  }
+  private async $dropTableChainstats() {
+    try {
+      const connection = await DB.pool.getConnection();
+      const query = `DROP TABLE \`chainstats\``;
+      await connection.query<any>(query, []);
+      connection.release();
+    } catch(e) {
+      let err_msg = `OE MIGRATION: dropTableVersion error ${( e instanceof Error ? e.message : e)}`;
+      throw new Error( err_msg);
+    }
+    logger.info( 'OE MOGRATION: OpEneryDatabaseMigration.$createTableChainstats completed');
   }
 
 }
