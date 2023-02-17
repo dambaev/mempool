@@ -11,7 +11,7 @@ export const MAX_COUNT = 8;
 })
 export class BlockspanNavigatorComponent implements OnInit, OnDestroy {
   @Input() fromBlock: number;
-  @Input() span: number = 2;
+  @Input() span: number = 6;
   @Output() emitGo = new EventEmitter();
 
   get toBlock() {
