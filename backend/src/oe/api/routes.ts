@@ -255,8 +255,9 @@ class OpEnergyRoutes {
 
       if (
         !isValidPositiveNumber(endBlockHeight) ||
-        !isValidNaturalNumber(span) ||
+        !isValidPositiveNumber(span) ||
         !Number.isInteger(+numberOfSpan) ||
+        +span < 6 ||
         (+numberOfSpan <= 0 && +numberOfSpan !== -1)
       ) {
         throw Error('Not a valid input parameters.');
