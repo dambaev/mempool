@@ -340,9 +340,11 @@
         "parameters": [
           {
             "in": "path",
+            "maximum": 9223372036854776000,
+            "minimum": 0,
             "name": "blockheight",
             "required": true,
-            "type": "string"
+            "type": "number"
           },
           {
             "in": "path",
@@ -387,6 +389,35 @@
           },
           "400": {
             "description": "Invalid `hash`"
+          }
+        }
+      }
+    },
+    "/api/v1/oe/blockbyheight/{height}": {
+      "get": {
+        "description": "Returns block's header by a given block hash, including chainwork, that is missing from mempool's blocks' headers cache",
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "maximum": 9223372036854776000,
+            "minimum": 0,
+            "name": "height",
+            "required": true,
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/Block"
+            }
+          },
+          "400": {
+            "description": "Invalid `height`"
           }
         }
       }

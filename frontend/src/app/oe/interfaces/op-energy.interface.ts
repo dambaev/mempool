@@ -62,3 +62,17 @@ export interface BlockSpan {
   startBlockHeight: number,
   endBlockHeight: number,
 }
+
+export interface BlockHeader {
+  height: number;
+  version: number;
+  current_block_hash: string;
+  previous_block_hash: string;
+  merkle_root: string;
+  timestamp: number;
+  difficulty: number;
+  nonce: number;
+  reward: number;
+  chainwork: string;
+  mediantime: number;
+}

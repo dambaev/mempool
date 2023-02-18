@@ -503,6 +503,15 @@ export class OpEnergyApiService {
     return await opBlockHeaderService.$getBlockHeaderByHash(UUID, hash);
   }
 
+  /**
+   * just a wrapper over OpBlockHeaderService.$getBlockHeader
+   */
+  public async $getBlockByHeight( UUID: string, height: BlockHeight): Promise<BlockHeader> {
+    const currentTip = await bitcoinApi.$getBlockHeightTip();
+    const confirmedHeight = opBlockHeaderService.verifyConfirmedBlockHeight( height.value, { value: currentTip} );
+    return await opBlockHeaderService.$getBlockHeader(UUID, confirmedHeight);
+  }
+
   public $getBlockSpanList(UUID: string, startBlockHeight: number, span: number, numberOfSpan: number): BlockSpan[] {
     try {
       const blockSpanList = [] as BlockSpan[];
