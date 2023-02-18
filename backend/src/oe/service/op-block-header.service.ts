@@ -1,4 +1,4 @@
-import { BlockHeader, BlockHeight, ConfirmedBlockHeight } from './../api/interfaces/op-energy.interface';
+import { BlockHeader, BlockHeight, ConfirmedBlockHeight, BlockHash } from './../api/interfaces/op-energy.interface';
 import Bluebird = require('bluebird');
 import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 import config from '../../config';
@@ -134,6 +134,13 @@ export class OpBlockHeaderService {
       logger.err(`Something went wrong while fetching block header range.` + error);
       throw error;
     }
+  }
+
+  /**
+   * see OpBlockHeaderRepository.$getBlockHeaderByHash for reference as this function is just a wrapper over it
+   */
+  public async $getBlockHeaderByHash( UUID: string, blockHash: BlockHash): Promise<BlockHeader> {
+    return await opBlockHeaderRepository.$getBlockHeaderByHash( UUID, blockHash);
   }
 
   public verifyConfirmedBlockHeight(blockHeight: number, currentTip: BlockHeight): ConfirmedBlockHeight {
