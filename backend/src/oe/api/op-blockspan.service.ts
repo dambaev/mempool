@@ -1,6 +1,7 @@
 import opBlockHeaderService from '../service/op-block-header.service';
 import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 import opStatisticsService from './op-statistics.service';
+import config from '../../config';
 
 import { BlockSpan, BlockSpanDetails, BlockSpanDetailsWithNbdr, ConfirmedBlockHeight } from './interfaces/op-energy.interface';
 import { NbdrStatisticsError } from './interfaces/op-statistics.interface';
@@ -12,7 +13,7 @@ export class OpBlockSpanApiService {
     try {
       const blockSpanList = [] as BlockSpan[];
       const numberOfSpan = blockSpanCount === -1 ? Number.MAX_VALUE : blockSpanCount;
-      for (let i = endBlockHeight; (i - span) > 6 && blockSpanList.length < numberOfSpan; i -= span) {
+      for (let i = endBlockHeight; (i - span) > config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT && blockSpanList.length < numberOfSpan; i -= span) {
         const blockSpan = {
           startBlockHeight: i - span,
           endBlockHeight: i
@@ -118,10 +119,7 @@ export class OpBlockSpanApiService {
         if ('error' in statistics) {
           return statistics;
         }
-        blockSpanDetailedList[index]['nbdr'] = {
-          avg: statistics.nbdr.avg,
-          stddev: statistics.nbdr.stddev
-        };
+        blockSpanDetailedList[index]['nbdr'] = { ...statistics.nbdr };
       }
 
       if (blockSpanCount === -1) {

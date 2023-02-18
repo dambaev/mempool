@@ -9,7 +9,7 @@ import opEnergyApiService from './op-energy.service';
 import opEnergyWebsocket from './websocket';
 import opStatisticService from './op-statistics.service';
 import opBlockspanService from './op-blockspan.service';
-import { isValidNaturalNumber, isValidPositiveNumber, toBoolean } from '../util/helper';
+import { isValidPositiveNumber, toBoolean } from '../util/helper';
 
 class OpEnergyRoutes {
   public setUpHttpApiRoutes(app) {
@@ -251,13 +251,13 @@ class OpEnergyRoutes {
     try {
       logger.info( `${UUID}: PROFILE: start: $getBlockSpanDetailedList`);
       const { endBlockHeight, span, numberOfSpan } = req.params;
-      const withNbdr = toBoolean(String(req.query.withNbdr));
+      const withNbdr = toBoolean(String(req.query.nbdr));
 
       if (
         !isValidPositiveNumber(endBlockHeight) ||
         !isValidPositiveNumber(span) ||
         !Number.isInteger(+numberOfSpan) ||
-        +span < 6 ||
+        +span < config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT ||
         (+numberOfSpan <= 0 && +numberOfSpan !== -1)
       ) {
         throw Error('Not a valid input parameters.');
