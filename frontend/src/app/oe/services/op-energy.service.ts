@@ -159,6 +159,6 @@ export class OpEnergyApiService {
   }
 
   $getBlockSpanList(startBlockHeight: number, span: number, numberOfSpan: number, withNbdrStatistics: boolean = false): Observable<BlockSpan[]> {
-    return this.httpClient.get<BlockSpan[]>(`${this.apiBaseUrl}${this.apiBasePath}/api/v1/oe/blockspanlist/${startBlockHeight}/${span}/${numberOfSpan}?withNbdr=${withNbdrStatistics}`);
+    return this.httpClient.get<BlockSpan[]>(`${this.apiBaseUrl}${this.apiBasePath}/api/v1/oe/blockspanlist/${startBlockHeight}/${span}/${numberOfSpan}?nbdr=${withNbdrStatistics}`);
   }
 }

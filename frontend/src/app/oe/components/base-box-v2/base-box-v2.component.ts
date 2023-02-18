@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, Input } from '@a
 import { StateService } from 'src/app/services/state.service';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
-import { calculateNbdr } from '../../../shared/common.utils';
+import { calculateNbdr, calculateTimeSpan } from '../../../shared/common.utils';
 
 export const MAX_COUNT = 14;
 @Component({
@@ -28,8 +28,8 @@ export class BaseBoxV2Component implements OnInit, OnDestroy {
     return this.toTime - this.fromTime;
   }
 
-  get timeSpan() {
-    return this.toHHMMSS(this.timeDiff);
+  get timeSpan(): string {
+    return calculateTimeSpan(this.toTime, this.fromTime);
   }
 
   get nbdr(): string {

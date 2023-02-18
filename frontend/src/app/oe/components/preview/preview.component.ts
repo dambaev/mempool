@@ -20,7 +20,7 @@ export class PreviewComponent implements OnInit {
   }
 
   blockspansLink() {
-    return this.relativeUrlPipe.transform('/hashstrikes/blockspans/1');
+    return this.relativeUrlPipe.transform('/hashstrikes/blockspans/6');
   }
 
   pastStrikeSummaryLink() {

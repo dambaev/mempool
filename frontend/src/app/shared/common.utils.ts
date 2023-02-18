@@ -154,3 +154,7 @@ export function calculateNbdr(span: number, toTime: number, fromTime: number): s
   
   return (600 * 100 * span / (timeDiff)).toFixed(2);
 }
+
+export function calculateTimeSpan(toTime: number, fromTime: number): string {
+  return toHHMMSS(toTime - fromTime);
+}

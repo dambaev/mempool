@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, Input } from '@a
 import { StateService } from 'src/app/services/state.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
-import { calculateNbdr, navigator, toHHMMSS } from 'src/app/shared/common.utils';
+import { calculateNbdr, calculateTimeSpan, navigator, toHHMMSS } from 'src/app/shared/common.utils';
 
 export const MAX_COUNT = 14;
 @Component({
@@ -20,12 +20,8 @@ export class BaseBoxHorComponent implements OnInit, OnDestroy {
   @Input() link: string;
   maxCount = MAX_COUNT;
 
-  get timeDiff(): number {
-    return this.toTime - this.fromTime;
-  }
-
-  get timeSpan() {
-    return toHHMMSS(this.timeDiff);
+  get timeSpan(): string {
+    return calculateTimeSpan(this.toTime, this.fromTime);
   }
 
   get nbdr(): string {
