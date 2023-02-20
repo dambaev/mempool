@@ -82,7 +82,7 @@ export class OpBlockSpanApiService {
             timestamp: blockHeadersList[index].timestamp,
           },
           endBlock: {
-            height: blockHeadersList[++index].height,
+            height: blockHeadersList[ ++index ].height,
             hash: blockHeadersList[index].current_block_hash,
             mediantime: blockHeadersList[index].mediantime,
             timestamp: blockHeadersList[index].timestamp,
