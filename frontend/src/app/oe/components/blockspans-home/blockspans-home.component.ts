@@ -46,7 +46,7 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
   blocksFilled = false;
   transition = '1s';
 
-  span = 5;
+  span = 11;
 
   gradientColors = {
     '': ['#9339f4', '#105fb0'],
