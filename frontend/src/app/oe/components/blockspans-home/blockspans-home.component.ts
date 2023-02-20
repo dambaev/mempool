@@ -151,7 +151,6 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
     blockSpanList.reverse().forEach((blockSpan: BlockSpan) => {
       blockNumbers.push(blockSpan.endBlock, blockSpan.startBlock);
     });
-    this.pastBlocks = [];
     this.pastBlocks = blockNumbers;
     this.cd.markForCheck();
     this.lastPastBlock = this.pastBlocks[0];
