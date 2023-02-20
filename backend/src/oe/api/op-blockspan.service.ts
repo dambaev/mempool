@@ -119,7 +119,14 @@ export class OpBlockSpanApiService {
         if ('error' in statistics) {
           return statistics;
         }
-        blockSpanDetailedList[index]['nbdr'] = { ...statistics.nbdr };
+        blockSpanDetailedList[index]['nbdr'] = {
+          ...statistics.nbdr,
+          value: opStatisticsService.calculateNbdr(
+            span,
+            blockSpanDetailedList[index].endBlock.timestamp,
+            blockSpanDetailedList[index].startBlock.timestamp
+          ),
+        };
       }
 
       if (blockSpanCount === -1) {

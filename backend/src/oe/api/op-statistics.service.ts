@@ -61,6 +61,10 @@ export class OpStatisticService {
       };
     }
   }
+
+  public calculateNbdr(span: number, toTime: number, fromTime: number): number {
+    return (span * 600 * 100) / (toTime - fromTime);
+  }
 }
 
 export default new OpStatisticService();
