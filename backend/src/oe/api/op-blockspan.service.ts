@@ -1,7 +1,6 @@
 import opBlockHeaderService from '../service/op-block-header.service';
 import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 import opStatisticsService from './op-statistics.service';
-import config from '../../config';
 
 import { BlockSpan, BlockSpanDetails, BlockSpanDetailsWithNbdr, ConfirmedBlockHeight } from './interfaces/op-energy.interface';
 import { NbdrStatisticsError } from './interfaces/op-statistics.interface';
@@ -12,8 +11,11 @@ export class OpBlockSpanApiService {
   public $getBlockSpanList(UUID: string, endBlockHeight: number, span: number, blockSpanCount: number): BlockSpan[] {
     try {
       const blockSpanList = [] as BlockSpan[];
-      const numberOfSpan = blockSpanCount === -1 ? Number.MAX_VALUE : blockSpanCount;
-      for (let i = endBlockHeight; (i - span) > config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT && blockSpanList.length < numberOfSpan; i -= span) {
+      const numberOfSpan = Math.min(
+        Math.floor(endBlockHeight / span),
+        blockSpanCount === -1 ? Number.MAX_VALUE : blockSpanCount
+      );
+      for (let i = endBlockHeight; blockSpanList.length < numberOfSpan; i -= span) {
         const blockSpan = {
           startBlockHeight: i - span,
           endBlockHeight: i
@@ -31,22 +33,18 @@ export class OpBlockSpanApiService {
       const confirmedBlocks = [] as ConfirmedBlockHeight[];
       const currentTip = await bitcoinApi.$getBlockHeightTip();
 
-      blockSpanList.forEach((blockNumber) =>
-        confirmedBlocks.push(
-          opBlockHeaderService.verifyConfirmedBlockHeight(
-            blockNumber.startBlockHeight,
-            {
-              value: currentTip,
-            }
-          ),
-          opBlockHeaderService.verifyConfirmedBlockHeight(
-            blockNumber.endBlockHeight,
-            {
-              value: currentTip,
-            }
-          )
-        )
-      );
+      blockSpanList
+        .filter((blockSpan: BlockSpan) => (
+          opBlockHeaderService.isBlockHeightVerified(blockSpan.startBlockHeight, currentTip)
+          && opBlockHeaderService.isBlockHeightVerified(blockSpan.endBlockHeight, currentTip)
+        ))
+        .forEach((blockSpan: BlockSpan) => {
+          confirmedBlocks.push(
+            { value: blockSpan.startBlockHeight },
+            { value: blockSpan.endBlockHeight },
+          );
+        });
+
       return confirmedBlocks;
     } catch (e) {
       throw new Error(`${UUID} OpBlockSpanApiService.$getConfirmedBlockSpanList: error while filtering confirmed block span list: ${e instanceof Error ? e.message : e}`);
@@ -131,10 +129,6 @@ export class OpBlockSpanApiService {
 
       if (blockSpanCount === -1) {
         return blockSpanDetailedList;
-      }
-
-      if (blockSpanDetailedList.length > 100) {
-        return blockSpanDetailedList.slice(100);
       }
 
       return blockSpanDetailedList.slice(blockSpanDetailedList.length - blockSpanCount);

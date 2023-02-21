@@ -42,14 +42,14 @@ export class OpStatisticService {
         nbdrStatisticsList.push(nbdr);
       });
       const mean =
-        nbdrStatisticsList.reduce((a, b) => a + b) / NUMBER_OF_BLOCK_SPANS;
+        nbdrStatisticsList.reduce((a, b) => a + b) / blockSpanList.length;
 
       return {
         nbdr: {
           avg: mean,
           stddev: Math.sqrt(
             nbdrStatisticsList.reduce((a, x) => a + Math.pow(x - mean, 2)) /
-              (NUMBER_OF_BLOCK_SPANS - 1)
+              (blockSpanList.length - 1)
           ),
         },
       };
