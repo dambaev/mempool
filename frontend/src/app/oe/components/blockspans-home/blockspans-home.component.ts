@@ -122,11 +122,12 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
             )
       )
     ).subscribe((params: any) => {
-      const span: string = params.params.span || '';
-      const tip: string = params.params.tip || params.tip || '';
+      const span: number = Number(params.params.span || '');
+      const tip: number = Number(params.params.tip || params.tip || '');
+
       this.blockspanChange({
-        tipBlock: +tip,
-        span: +span
+        tipBlock: tip - (tip % span),
+        span: span
       });
     });
   }
