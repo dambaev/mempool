@@ -234,9 +234,9 @@ class Server {
     if (config.STATISTICS.ENABLED && config.DATABASE.ENABLED) {
       statisticsRoutes.initRoutes(this.app);
     }
-    if (Common.indexingEnabled()) {
-      miningRoutes.initRoutes(this.app);
-    }
+    // if (Common.indexingEnabled()) {
+    miningRoutes.initRoutes(this.app);
+    // }
     if (config.BISQ.ENABLED) {
       bisqRoutes.initRoutes(this.app);
     }
