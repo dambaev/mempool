@@ -8,6 +8,7 @@ import opBlockHeaderRepository from '../repositories/OpBlockHeaderRepository';
 export class OpBlockHeaderService {
   async $getBlockHeaderData(blockHeight: ConfirmedBlockHeight): Promise<BlockHeader> {
     try {
+      const DEFAULT_SUBSIDY = 5000000000;
 
       const blockHash = await bitcoinApi.$getBlockHash(
         blockHeight.value
@@ -24,7 +25,16 @@ export class OpBlockHeaderService {
         mediantime,
       } = await bitcoinApi.$getBlock(blockHash);
 
-      const blockHeader = {
+      let fees: number = 0;
+      let subsidy: number = DEFAULT_SUBSIDY;
+
+      if (blockHeight.value > 0) {
+        const stats = await bitcoinApi.$getBlockStats(blockHash);
+        fees = stats.totalfee;
+        subsidy = stats.subsidy;
+      }
+
+      return {
         height,
         version,
         chainwork: chainwork,
@@ -34,16 +44,9 @@ export class OpBlockHeaderService {
         timestamp,
         difficulty,
         nonce,
-        reward: 0,
+        reward: fees + subsidy,
         current_block_hash: blockHash
       };
-
-      if (blockHeight.value > 0) {
-        const { totalfee, subsidy } = await bitcoinApi.$getBlockStats(blockHash);
-        blockHeader.reward = totalfee + subsidy;
-      }
-
-      return blockHeader;
     } catch (error) {
       logger.err(
         `Error while fetching block header ${blockHeight.value}: ${error}`
