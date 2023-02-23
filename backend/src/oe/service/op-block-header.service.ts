@@ -8,6 +8,7 @@ import opBlockHeaderRepository from '../repositories/OpBlockHeaderRepository';
 export class OpBlockHeaderService {
   async $getBlockHeaderData(blockHeight: ConfirmedBlockHeight): Promise<BlockHeader> {
     try {
+      const DEFAULT_SUBSIDY = 5000000000;
 
       const blockHash = await bitcoinApi.$getBlockHash(
         blockHeight.value
@@ -24,7 +25,14 @@ export class OpBlockHeaderService {
         mediantime,
       } = await bitcoinApi.$getBlock(blockHash);
 
-      const { totalfee, subsidy } = await bitcoinApi.$getBlockStats(blockHash);
+      let fees: number = 0;
+      let subsidy: number = DEFAULT_SUBSIDY;
+
+      if (blockHeight.value > 0) {
+        const stats = await bitcoinApi.$getBlockStats(blockHash);
+        fees = stats.totalfee;
+        subsidy = stats.subsidy;
+      }
 
       return {
         height,
@@ -36,7 +44,7 @@ export class OpBlockHeaderService {
         timestamp,
         difficulty,
         nonce,
-        reward: totalfee + subsidy,
+        reward: fees + subsidy,
         current_block_hash: blockHash
       };
     } catch (error) {
@@ -55,7 +63,7 @@ export class OpBlockHeaderService {
     try {
       logger.debug('Syncing older block headers');
 
-      let currentSyncedBlockHeight = 0;
+      let currentSyncedBlockHeight = -1;
       try {
         let { value: latestStoredBlockHeight } = await opBlockHeaderRepository.$getLatestBlockHeight(UUID);
         currentSyncedBlockHeight = latestStoredBlockHeight; // there is some blocks had ben stored previously
