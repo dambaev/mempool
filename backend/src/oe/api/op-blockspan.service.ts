@@ -66,7 +66,7 @@ export class OpBlockSpanApiService {
 
       const blockHeadersList = await opBlockHeaderService.$getBlockHeadersByHeights(
         UUID,
-        Array.from(new Set(confirmedBlockSpanList))
+        confirmedBlockSpanList
       );
 
       let index = 0;
@@ -93,6 +93,45 @@ export class OpBlockSpanApiService {
     }
   }
 
+  /**
+   * @Params
+   * UUID: For logging purpose
+   * endBlockHeight: Block height of the last block span's end block
+   * span: Difference between blocks in one block span
+   * blockSpanCount: Number of block to generate; where -1 denotes no limit
+   * withNbdrStatistics: Boolean value which denotes presence of nbdr in return value
+   * 
+   * @Returns
+   * Block span list with block header info OR
+   * Block span list with block header and Nbdr statistics data OR
+   * Nbdr statistics error
+   * 
+   * @Description
+   * Generates block span list with blocker header information.
+   * 
+   * blockSpanCount -1 denotes no limit to the block span in the list.
+   * Therefore it will generate all possible block span with the given values.
+   * 
+   * If withNbdrStatistics is given as true it also includes nbdr data with each block span in the list.
+   * To calculate Nbdr data we explicitly generate 100 extra block span
+   * which exists before the first desired block span.
+   * Once we have all the block span as a list we use sliding window algorithm
+   * to get previous 100 block span associated with the current one to calculate it's Nbdr data
+   * 
+   * @Return_Formate
+   * 1. If withNbdrStatistics is false
+   * {
+   *  startBlock: Block details object,
+   *  endBlock: Block details object
+   * }
+   * 
+   * 2. If withNbdrStatistics is true
+   * {
+   *  startBlock: Block details object,
+   *  endBlock: Block details object,
+   *  nbdr: Current block span's statistics data
+   * }
+   */
   public async $getBlockSpanDetailedList(
     UUID: string,
     endBlockHeight: number,
