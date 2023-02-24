@@ -29,7 +29,7 @@ export class OpBlockHeaderService {
       let subsidy: number = DEFAULT_SUBSIDY;
 
       /* 
-        Due to an issue in the blockchain's API, it does not return any stat value for the zeroth block,       instead throws an error. To avoid the error we are first checking the block height and use default value for it 
+        Due to an issue in the blockchain's API, it does not return any stat value for the zeroth block, instead throws an error. To avoid the error we are first checking the block height and use default value for it 
       */
       if (blockHeight.value > 0) {
         const stats = await bitcoinApi.$getBlockStats(blockHash);
