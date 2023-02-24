@@ -145,7 +145,6 @@ export class OpBlockHeaderService {
     }
     return { value: blockHeight };
   }
-
 }
 
 export default new OpBlockHeaderService();
