@@ -146,10 +146,6 @@ export class OpBlockHeaderService {
     return { value: blockHeight };
   }
 
-  public isBlockHeightVerified(blockHeight: number, currentTip: number): boolean {
-    return !(blockHeight <= config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT
-      || blockHeight > currentTip - config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT);
-  }
 }
 
 export default new OpBlockHeaderService();

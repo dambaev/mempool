@@ -98,8 +98,8 @@ export interface ConfirmedBlockHeight {
 }
 
 export interface BlockSpan {
-  startBlockHeight: number, 
-  endBlockHeight: number
+  startBlock: ConfirmedBlockHeight, 
+  endBlock: ConfirmedBlockHeight
 }
 
 // Response for register request
