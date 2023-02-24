@@ -10,7 +10,7 @@ import {
 } from './interfaces/op-energy.interface';
 import { NbdrStatisticsError } from './interfaces/op-statistics.interface';
 
-export class OpBlockSpanApiService {
+export class OeBlockSpanApiService {
   constructor() {}
 
   async $getBlockSpanList(
@@ -45,7 +45,7 @@ export class OpBlockSpanApiService {
       return blockSpanList;
     } catch (e) {
       throw new Error(
-        `${UUID} OpBlockSpanApiService.$getBlockSpanList: error while generating block span list: ${
+        `${UUID} OeBlockSpanApiService.$getBlockSpanList: error while generating block span list: ${
           e instanceof Error ? e.message : e
         }`
       );
@@ -97,7 +97,7 @@ export class OpBlockSpanApiService {
       return result;
     } catch (e) {
       throw new Error(
-        `${UUID} OpBlockSpanApiService.$generateBlockSpanDetailedList: error while generating detailed block span list: ${
+        `${UUID} OeBlockSpanApiService.$generateBlockSpanDetailedList: error while generating detailed block span list: ${
           e instanceof Error ? e.message : e
         }`
       );
@@ -196,7 +196,7 @@ export class OpBlockSpanApiService {
       );
     } catch (e) {
       throw new Error(
-        `${UUID} OpBlockSpanApiService.$getBlockSpanDetailedList: error while fetching detailed block span list: ${
+        `${UUID} OeBlockSpanApiService.$getBlockSpanDetailedList: error while fetching detailed block span list: ${
           e instanceof Error ? e.message : e
         }`
       );
@@ -204,4 +204,4 @@ export class OpBlockSpanApiService {
   }
 }
 
-export default new OpBlockSpanApiService();
+export default new OeBlockSpanApiService();

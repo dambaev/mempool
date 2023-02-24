@@ -8,7 +8,7 @@ import websocketHandler from '../../api/websocket-handler';
 import opEnergyApiService from './op-energy.service';
 import opEnergyWebsocket from './websocket';
 import opStatisticService from './op-statistics.service';
-import opBlockspanService from './op-blockspan.service';
+import oeBlockSpanService from './oe-blockspan.service';
 import { isValidPositiveNumber, toBoolean } from '../util/helper';
 
 class OpEnergyRoutes {
@@ -262,7 +262,14 @@ class OpEnergyRoutes {
       ) {
         throw Error('Not a valid input parameters.');
       }
-      const result = await opBlockspanService.$getBlockSpanDetailedList(UUID, +endBlockHeight, +span, +numberOfSpan, withNbdr);
+
+      const result = await oeBlockSpanService.$getBlockSpanDetailedList(
+        UUID,
+        +endBlockHeight,
+        +span,
+        +numberOfSpan,
+        withNbdr
+      );
       res.json(result);
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getBlockSpanDetailedList: ${e instanceof Error ? e.message: e}`);
