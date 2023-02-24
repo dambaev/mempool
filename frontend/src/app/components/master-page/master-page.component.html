@@ -1,17 +1,42 @@
 <ng-container *ngIf="{ val: network$ | async } as network">
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-dark">
-  <a class="navbar-brand" [ngClass]="{'dual-logos': subdomain}" [routerLink]="['/preview-page' | relativeUrl]">
-  <ng-template [ngIf]="subdomain">
-    <div class="subdomain_container">
-      <img [src]="'/api/v1/enterprise/images/' + subdomain + '/logo'" class="subdomain_logo">
-    </div>
-  </ng-template>
+  <a
+    class="navbar-brand"
+    [ngClass]="{ 'dual-logos': subdomain }"
+    [routerLink]="['/preview-page' | relativeUrl]"
+  >
+    <ng-template [ngIf]="subdomain">
+      <div class="subdomain_container">
+        <img
+          [src]="'/api/v1/enterprise/images/' + subdomain + '/logo'"
+          class="subdomain_logo"
+        />
+      </div>
+    </ng-template>
     <ng-container *ngIf="{ val: connectionState$ | async } as connectionState">
-      <img src="/resources/op-energy-toolbox.png" class="op-energy-logo" i18n-title="op-energy.preview-page" title="Preview page">
+      <img
+        src="/resources/op-energy-toolbox.png"
+        class="op-energy-logo"
+        i18n-title="op-energy.preview-page"
+        title="Preview page"
+        [ngStyle]="{ opacity: connectionState.val === 2 ? 1 : 0.5 }"
+      />
       <div class="connection-badge">
-        <div class="badge badge-warning" *ngIf="connectionState.val === 0" i18n="master-page.offline">Offline</div>
-        <div class="badge badge-warning" *ngIf="connectionState.val === 1" i18n="master-page.reconnecting">Reconnecting...</div>
+        <div
+          class="badge badge-warning"
+          *ngIf="connectionState.val === 0"
+          i18n="master-page.offline"
+        >
+          Offline
+        </div>
+        <div
+          class="badge badge-warning"
+          *ngIf="connectionState.val === 1"
+          i18n="master-page.reconnecting"
+        >
+          Reconnecting...
+        </div>
       </div>
     </ng-container>
   </a>
