@@ -20,7 +20,6 @@ import mempool from './api/mempool';
 import elementsParser from './api/liquid/elements-parser';
 import databaseMigration from './api/database-migration';
 import oedatabaseMigration from './oe/api/database-migration';
-import chainStats from './oe/chainstats';
 import opEnergyIndex from './oe/index';
 
 

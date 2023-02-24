@@ -24,7 +24,6 @@ import mining from './mining/mining';
 import DifficultyAdjustmentsRepository from '../repositories/DifficultyAdjustmentsRepository';
 import PricesRepository from '../repositories/PricesRepository';
 import priceUpdater from '../tasks/price-updater';
-import oeBlocks from './../oe/api/blocks';
 
 class Blocks {
   private blocks: BlockExtended[] = [];
@@ -395,8 +394,6 @@ class Blocks {
     } else {
       this.currentBlockHeight = this.blocks[this.blocks.length - 1].height;
     }
-    // this updates the oe side
-    await oeBlocks.$updateBlocks(blockHeightTip);
 
     if (blockHeightTip - this.currentBlockHeight > config.MEMPOOL.INITIAL_BLOCKS_AMOUNT * 2) {
       logger.info(`${blockHeightTip - this.currentBlockHeight} blocks since tip. Fast forwarding to the ${config.MEMPOOL.INITIAL_BLOCKS_AMOUNT} recent blocks`);

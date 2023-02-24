@@ -23,7 +23,6 @@ import crypto from "crypto-js";
 
 
 import opEnergyWebSocket from './../oe/api/websocket';
-import oeBlocks from './../oe/api/blocks';
 
 class WebsocketHandler {
   private wss: WebSocket.Server | undefined;

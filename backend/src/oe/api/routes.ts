@@ -237,7 +237,7 @@ class OpEnergyRoutes {
     try {
       logger.info( `${UUID}: PROFILE: start: $getBlockByHash`);
       const { hash } = req.params;
-      const result = await opEnergyApiService.$getBlockByHash(opEnergyApiService.verifyBlockHash(hash));
+      const result = await opEnergyApiService.$getBlockByHash(UUID, opEnergyApiService.verifyBlockHash(hash));
       res.json(result);
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getBlockByHash: ${e instanceof Error ? e.message: e}`);
