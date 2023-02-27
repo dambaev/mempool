@@ -79,19 +79,26 @@ export class OeBlockSpanApiService {
       let index = 0;
       const result: BlockSpanDetails[] = [];
       while (index < blockHeadersList.length - 1) {
+        const startBlock = blockHeadersList[index];
+        const endBlock = blockHeadersList[++index];
         result.push({
           startBlock: {
-            height: blockHeadersList[index].height,
-            hash: blockHeadersList[index].current_block_hash,
-            mediantime: blockHeadersList[index].mediantime,
-            timestamp: blockHeadersList[index].timestamp,
+            height: startBlock.height,
+            hash: startBlock.current_block_hash,
+            mediantime: startBlock.mediantime,
+            timestamp: startBlock.timestamp,
           },
           endBlock: {
-            height: blockHeadersList[++index].height,
-            hash: blockHeadersList[index].current_block_hash,
-            mediantime: blockHeadersList[index].mediantime,
-            timestamp: blockHeadersList[index].timestamp,
+            height: endBlock.height,
+            hash: endBlock.current_block_hash,
+            mediantime: endBlock.mediantime,
+            timestamp: endBlock.timestamp,
           },
+          nbdrValue: opStatisticsService.calculateNbdr(
+            span,
+            endBlock.timestamp,
+            startBlock.timestamp
+          ),
         });
       }
       return result;
@@ -177,13 +184,8 @@ export class OeBlockSpanApiService {
         if ('error' in statistics) {
           return statistics;
         }
-        blockSpanDetailedList[index]['nbdr'] = {
+        blockSpanDetailedList[index]['nbdrStatistics'] = {
           ...statistics.nbdr,
-          value: opStatisticsService.calculateNbdr(
-            span,
-            blockSpanDetailedList[index].endBlock.timestamp,
-            blockSpanDetailedList[index].startBlock.timestamp
-          ),
         };
       }
 

@@ -118,6 +118,7 @@ export interface BlockDetails {
 export interface BlockSpanDetails {
   startBlock: BlockDetails,
   endBlock: BlockDetails,
+  nbdrValue: number,
 }
 
 export interface BlockSpanDetailsWithNbdr extends BlockSpanDetails, NbdrStatistics {}
