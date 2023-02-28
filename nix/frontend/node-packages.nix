@@ -13575,7 +13575,7 @@ let
       sources."ngx-echarts-8.0.1"
       sources."ngx-infinite-scroll-10.0.1"
       sources."ngx-toastr-14.3.0"
-      sources."nice-napi-1.0.2"
+      (sources."nice-napi-1.0.2" // { dependencies = [ sources."node-gyp-build-4.3.0" ]; } )
       (sources."nise-5.1.1" // {
         dependencies = [
           sources."isarray-0.0.1"
