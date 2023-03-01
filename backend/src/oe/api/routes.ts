@@ -31,6 +31,7 @@ class OpEnergyRoutes {
       .get(config.MEMPOOL.API_URL_PREFIX + 'oe/block/:hash', this.$getBlockByHash)
       .get(config.MEMPOOL.API_URL_PREFIX + 'oe/blockbyheight/:height', this.$getBlockByHeight)
       .get(config.MEMPOOL.API_URL_PREFIX + 'oe/blockspanlist/:startBlockHeight/:span/:numberOfSpan', this.$getBlockSpanList)
+      .get(config.MEMPOOL.API_URL_PREFIX + 'oe/git-hash', this.$getGitHash)
   }
 
   private async $postLogin(req: Request, res: Response) {
@@ -285,6 +286,21 @@ class OpEnergyRoutes {
       res.status(500).send(`${UUID}: ${e instanceof Error? e.message : e}`);
     }
     logger.info( `${UUID}: PROFILE: end: $getBlockSpanList`);
+  }
+
+  private async $getGitHash(req: Request, res: Response) {
+    const UUID = await opEnergyApiService.$generateRandomHash();
+    try {
+      logger.info( `${UUID}: PROFILE: start: $getGitHash`);
+      const result = {
+        'gitCommitHash': config.GIT_COMMIT_HASH
+      };
+      res.json(result);
+    } catch(e) {
+      logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getGitHash: ${e instanceof Error ? e.message: e}`);
+      res.status(404).send(`${UUID}: ${e instanceof Error? e.message : e}`);
+    }
+    logger.info( `${UUID}: PROFILE: end: $getGitHash`);
   }
 };
 
