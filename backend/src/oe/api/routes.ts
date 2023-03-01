@@ -223,7 +223,7 @@ class OpEnergyRoutes {
     try {
       logger.info( `${UUID}: PROFILE: start: $getBlockSpanStatistics`);
       const { blockheight, span } = req.params;
-      const statistics = await opStatisticService.$getNbdrStatistics(UUID, opEnergyApiService.verifyBlockHeight(parseInt(blockheight)), parseInt(span));
+      const statistics = await opStatisticService.calculateStatistics(opEnergyApiService.verifyBlockHeight(parseInt(blockheight)), parseInt(span));
       res.json(statistics);
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getBlockSpanStatistics: ${e instanceof Error ? e.message: e}`);

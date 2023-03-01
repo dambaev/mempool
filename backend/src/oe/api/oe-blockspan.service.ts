@@ -1,14 +1,12 @@
 import opBlockHeaderService from '../service/op-block-header.service';
 import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
-import opStatisticsService from './op-statistics.service';
 
 import {
   BlockSpan,
   BlockSpanDetails,
-  BlockSpanDetailsWithNbdr,
   ConfirmedBlockHeight,
 } from './interfaces/op-energy.interface';
-import { NbdrStatisticsError } from './interfaces/op-statistics.interface';
+import { calculateNbdr } from '../util/helper';
 
 export class OeBlockSpanApiService {
   constructor() {}
@@ -94,11 +92,13 @@ export class OeBlockSpanApiService {
             mediantime: endBlock.mediantime,
             timestamp: endBlock.timestamp,
           },
-          nbdrValue: opStatisticsService.calculateNbdr(
-            span,
-            endBlock.timestamp,
-            startBlock.timestamp
-          ),
+          nbdr: {
+            value: calculateNbdr(
+              span,
+              endBlock.timestamp,
+              startBlock.timestamp
+            )
+          },
         });
       }
       return result;
@@ -113,42 +113,19 @@ export class OeBlockSpanApiService {
 
   /**
    * @Params
-   * UUID: For logging purpose
-   * endBlockHeight: Block height of the last block span's end block
+   * UUID: For tracking request
+   * endBlockHeight: for where the blockSpans list should end
    * span: Difference between blocks in one block span
-   * blockSpanCount: Number of block to generate; where -1 denotes no limit
-   * withNbdrStatistics: Boolean value which denotes presence of nbdr in return value
+   * blockSpanCount: Number of blockspan to generate based on below formula
+   *  Math.min(
+        Math.floor(endBlockHeight / span),
+        blockSpanCount === -1 ? Number.MAX_VALUE : blockSpanCount
+      );
+   * withNbdrStatistics: Boolean value which denotes presence of nbdr stats(avg, stddev) in return value
    *
    * @Returns
-   * Block span list with block header info OR
-   * Block span list with block header and Nbdr statistics data OR
+   * Block span list with block header details and nbdr value for block span
    * Nbdr statistics error
-   *
-   * @Description
-   * Generates block span list with blocker header information.
-   *
-   * blockSpanCount -1 denotes no limit to the block span in the list.
-   * Therefore it will generate all possible block span with the given values.
-   *
-   * If withNbdrStatistics is given as true it also includes nbdr data with each block span in the list.
-   * To calculate Nbdr data we explicitly generate 100 extra block span
-   * which exists before the first desired block span.
-   * Once we have all the block span as a list we use sliding window algorithm
-   * to get previous 100 block span associated with the current one to calculate it's Nbdr data
-   *
-   * @Return_Formate
-   * 1. If withNbdrStatistics is false
-   * [{
-   *  startBlock: Block details object,
-   *  endBlock: Block details object
-   * }]
-   *
-   * 2. If withNbdrStatistics is true
-   * [{
-   *  startBlock: Block details object,
-   *  endBlock: Block details object,
-   *  nbdr: Current block span's statistics data
-   * }]
    */
   public async $getBlockSpanDetailedList(
     UUID: string,
@@ -157,45 +134,17 @@ export class OeBlockSpanApiService {
     blockSpanCount: number,
     withNbdrStatistics: boolean
   ): Promise<
-    BlockSpanDetails[] | BlockSpanDetailsWithNbdr[] | NbdrStatisticsError
+    BlockSpanDetails[]
   > {
     try {
       const blockSpanDetailedList = await this.$generateBlockSpanDetailedList(
         UUID,
         endBlockHeight,
         span,
-        withNbdrStatistics && blockSpanCount !== -1
-          ? blockSpanCount + 100
-          : blockSpanCount
+        blockSpanCount
       );
-      if (!withNbdrStatistics) {
-        return blockSpanDetailedList;
-      }
-
-      for (let index = 100; index < blockSpanDetailedList.length; index++) {
-        const blockSpanListForStat = blockSpanDetailedList.slice(
-          index - 100,
-          index
-        );
-        const statistics = opStatisticsService.calculateStatisticsWithBlockSpan(
-          blockSpanListForStat,
-          span
-        );
-        if ('error' in statistics) {
-          return statistics;
-        }
-        blockSpanDetailedList[index]['nbdrStatistics'] = {
-          ...statistics.nbdr,
-        };
-      }
-
-      if (blockSpanCount === -1) {
-        return blockSpanDetailedList;
-      }
-
-      return blockSpanDetailedList.slice(
-        blockSpanDetailedList.length - blockSpanCount
-      );
+      return blockSpanDetailedList;
+      // TODO: Add nbdr statistics data to the response payload if withNbdrStatistics is true
     } catch (e) {
       throw new Error(
         `${UUID} OeBlockSpanApiService.$getBlockSpanDetailedList: error while fetching detailed block span list: ${
