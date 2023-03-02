@@ -213,7 +213,7 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
       this.nextBlockHeight = fromBlock.height + 1;
       this.setNextAndPreviousBlockLink();
 
-      this.opEnergyApiService.$getNbdrStatistics(fromBlock.height - (this.span * 100) , this.span).subscribe({
+      this.opEnergyApiService.$getNbdrStatistics(fromBlock.height, this.span).subscribe({
         next: (data: EnergyNbdrStatistics) => {
           this.average = data.nbdr.avg.toFixed(2);
           this.stddev = data.nbdr.stddev.toFixed(2);

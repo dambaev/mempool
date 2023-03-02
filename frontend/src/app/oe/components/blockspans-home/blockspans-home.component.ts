@@ -46,7 +46,7 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
   blocksFilled = false;
   transition = '1s';
 
-  span = 1;
+  span = 11;
 
   gradientColors = {
     '': ['#9339f4', '#105fb0'],
@@ -122,11 +122,12 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
             )
       )
     ).subscribe((params: any) => {
-      const span: string = params.params.span || '';
-      const tip: string = params.params.tip || params.tip || '';
+      const span: number = Number(params.params.span || '');
+      const tip: number = Number(params.params.tip || params.tip || '');
+
       this.blockspanChange({
-        tipBlock: +tip,
-        span: +span
+        tipBlock: tip - (tip % span),
+        span: span
       });
     });
   }
@@ -144,37 +145,24 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
     const blockNumbers = [];
     let blockSpanList = [];
     try {
-      blockSpanList = await lastValueFrom(this.opEnergyApiService.$getBlockSpanList(tipBlock - (span* numberOfSpan) , span, numberOfSpan), {defaultValue: []});
+      blockSpanList = await lastValueFrom(this.opEnergyApiService.$getBlockSpanList(tipBlock, span, numberOfSpan), {defaultValue: []});
     } catch (error) {
       this.toastr.error('Cannot fetch block height data!', 'Failed!');
     }
     blockSpanList.reverse().forEach((blockSpan: BlockSpan) => {
-      blockNumbers.push(blockSpan.endBlockHeight, blockSpan.startBlockHeight);
+      blockNumbers.push(blockSpan.endBlock, blockSpan.startBlock);
     });
-    this.pastBlocks = [];
-    forkJoin(
-      blockNumbers.map(
-        blockNo => this.electrsApiService.getBlockHashFromHeight$(blockNo).pipe(
-          switchMap(hash => this.opEnergyApiService.$getBlock(hash))
-        )
-      )
-    )
-    .pipe(take(1))
-    .subscribe((blocks: any[]) => {
-      this.pastBlocks = blocks;
-      this.cd.markForCheck();
-      this.lastPastBlock = this.pastBlocks[0];
-      this.lastPastBlock = {
-        ...this.lastPastBlock,
-        height: this.lastPastBlock.height + this.span
-      };
-      this.location.replaceState(
-        this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/hashstrikes/blockspans/`, this.span, tipBlock]).toString()
-      );
-      this.getTimeStrikes();
-    }, error => {
-      this.toastr.error('Blockspans are not found!', 'Failed!');
-    });
+    this.pastBlocks = blockNumbers;
+    this.cd.markForCheck();
+    this.lastPastBlock = this.pastBlocks[0];
+    this.lastPastBlock = {
+      ...this.lastPastBlock,
+      height: this.lastPastBlock.height + this.span
+    };
+    this.location.replaceState(
+      this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/hashstrikes/blockspans/`, this.span, tipBlock]).toString()
+    );
+    this.getTimeStrikes();
   }
 
   getTimeStrikes() {

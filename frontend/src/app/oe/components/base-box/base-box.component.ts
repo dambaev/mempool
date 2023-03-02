@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, Input } from '@a
 import { StateService } from 'src/app/services/state.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
-import { navigator, toHHMMSS } from 'src/app/shared/common.utils';
+import { calculateNbdr, calculateTimeSpan, navigator, toHHMMSS } from 'src/app/shared/common.utils';
 
 export const MAX_COUNT = 14;
 @Component({
@@ -33,12 +33,12 @@ export class BaseBoxComponent implements OnInit, OnDestroy {
     return this.type === 'Energy' ? 'fire' : this.type === 'Strike' ? 'tint' : 'cloud';
   }
 
-  get timeSpan() {
-    return toHHMMSS(this.toTime - this.fromTime);
+  get timeSpan(): string {
+    return calculateTimeSpan(this.toTime, this.fromTime);
   }
 
-  get nbdr() {
-    return this.span ? (600 * 100 * this.span / (this.toTime - this.fromTime)).toFixed(2) : '???'
+  get nbdr(): string {
+    return calculateNbdr(this.span, this.toTime, this.fromTime);
   }
 
   constructor(
