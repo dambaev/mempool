@@ -1,18 +1,42 @@
 <ng-container *ngIf="{ val: network$ | async } as network">
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-dark">
-  <a class="navbar-brand" [ngClass]="{'dual-logos': subdomain}" [routerLink]="['/' | relativeUrl]">
-  <ng-template [ngIf]="subdomain">
-    <div class="subdomain_container">
-      <img [src]="'/api/v1/enterprise/images/' + subdomain + '/logo'" class="subdomain_logo">
-    </div>
-  </ng-template>
+  <a
+    class="navbar-brand"
+    [ngClass]="{ 'dual-logos': subdomain }"
+    [routerLink]="['/preview-page' | relativeUrl]"
+  >
+    <ng-template [ngIf]="subdomain">
+      <div class="subdomain_container">
+        <img
+          [src]="'/api/v1/enterprise/images/' + subdomain + '/logo'"
+          class="subdomain_logo"
+        />
+      </div>
+    </ng-template>
     <ng-container *ngIf="{ val: connectionState$ | async } as connectionState">
-      <app-svg-images *ngIf="!officialMempoolSpace" name="mempoolSpace" viewBox="0 0 500 126" class="mempool-logo" [ngStyle]="{'opacity': connectionState.val === 2 ? 1 : 0.5 }"></app-svg-images>
-      <app-svg-images *ngIf="officialMempoolSpace" name="officialMempoolSpace" viewBox="0 0 500 126"></app-svg-images>
+      <img
+        src="/resources/op-energy-toolbox.png"
+        class="op-energy-logo"
+        i18n-title="op-energy.preview-page"
+        title="Preview page"
+        [ngStyle]="{ opacity: connectionState.val === 2 ? 1 : 0.5 }"
+      />
       <div class="connection-badge">
-        <div class="badge badge-warning" *ngIf="connectionState.val === 0" i18n="master-page.offline">Offline</div>
-        <div class="badge badge-warning" *ngIf="connectionState.val === 1" i18n="master-page.reconnecting">Reconnecting...</div>
+        <div
+          class="badge badge-warning"
+          *ngIf="connectionState.val === 0"
+          i18n="master-page.offline"
+        >
+          Offline
+        </div>
+        <div
+          class="badge badge-warning"
+          *ngIf="connectionState.val === 1"
+          i18n="master-page.reconnecting"
+        >
+          Reconnecting...
+        </div>
       </div>
     </ng-container>
   </a>
@@ -34,9 +58,6 @@
 
   <div class="navbar-collapse" id="navbarCollapse">
     <ul class="navbar-nav {{ network.val }}">
-      <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" id="btn-preview-page">
-        <a class="nav-link" [routerLink]="['/preview-page' | relativeUrl]" (click)="collapse()"><img src="/resources/op-energy-toolbox.png" i18n-title="op-energy.preview-page" title="Preview page" style="width: 22px"></a>
-      </li>
       <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" id="btn-home">
         <a class="nav-link" [routerLink]="['/' | relativeUrl]" (click)="collapse()"><fa-icon [icon]="['fas', 'tachometer-alt']" [fixedWidth]="true" i18n-title="master-page.dashboard" title="Dashboard"></fa-icon></a>
       </li>
