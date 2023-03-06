@@ -166,7 +166,7 @@ export class OpBlockHeaderService {
    * @param UUID string 
    * @returns ConfirmedBlockHeight
    */
-  public async getBlockHeightTip(UUID: string): Promise<ConfirmedBlockHeight> {
+  public async $getBlockHeightTip(UUID: string): Promise<ConfirmedBlockHeight> {
     return await opBlockHeaderRepository.$getLatestBlockHeight(UUID);
   }
 }
