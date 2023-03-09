@@ -155,7 +155,7 @@ export class OpBlockHeaderService {
   }
 
   public verifyConfirmedBlockHeight(blockHeight: number, currentTip: BlockHeight): ConfirmedBlockHeight {
-    if (blockHeight > currentTip.value - config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT) {
+    if (blockHeight < 0 || blockHeight > currentTip.value - config.OP_ENERGY.CONFIRMED_BLOCKS_AMOUNT) {
       throw new Error('block height haven\'t been confirmed');
     }
     return { value: blockHeight };
