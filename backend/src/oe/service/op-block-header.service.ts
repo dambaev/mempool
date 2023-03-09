@@ -160,6 +160,15 @@ export class OpBlockHeaderService {
     }
     return { value: blockHeight };
   }
+
+  /**
+   * Returns current tip for new block header table
+   * @param UUID string 
+   * @returns ConfirmedBlockHeight
+   */
+  public async $getBlockHeightTip(UUID: string): Promise<ConfirmedBlockHeight> {
+    return await opBlockHeaderRepository.$getLatestBlockHeight(UUID);
+  }
 }
 
 export default new OpBlockHeaderService();
