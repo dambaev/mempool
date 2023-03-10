@@ -4,7 +4,6 @@ import {
   BlockHeight,
   ConfirmedBlockHeight,
 } from './interfaces/op-energy.interface';
-import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 import {
   NbdrStatistics,
   NbdrStatisticsError,
@@ -31,21 +30,17 @@ export class OpStatisticService {
           blockSpan,
           NUMBER_OF_BLOCK_SPANS
         );
-        const currentTip = await bitcoinApi.$getBlockHeightTip();
+        const currentTip = await opBlockHeaderService.$getBlockHeightTip('nbdr');
 
         blockSpanList.forEach((blockNumber) =>
           confirmedBlocks.push(
             opBlockHeaderService.verifyConfirmedBlockHeight(
               blockNumber.startBlockHeight,
-              {
-                value: currentTip,
-              }
+              currentTip
             ),
             opBlockHeaderService.verifyConfirmedBlockHeight(
               blockNumber.endBlockHeight,
-              {
-                value: currentTip,
-              }
+              currentTip
             )
           )
         );

@@ -1,7 +1,5 @@
 import {DB} from '../database';
 import crypto from "crypto-js";
-import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
-import { IEsploraApi } from '../../api/bitcoin/esplora-api.interface';
 import opBlockHeaderService from '../service/op-block-header.service';
 import { BlockHeader } from './interfaces/op-energy.interface';
 import opBlockHeaderRepository from '../repositories/OpBlockHeaderRepository';
@@ -214,8 +212,8 @@ export class OpEnergyApiService {
   }
   public async $addTimeStrike( UUID: string, accountToken: AccountToken, blockHeight: BlockHeight, nlocktime: NLockTime): Promise<TimeStrikeDB> {
     // ensure blockheight is in the future, ie > currentTip yet, because we can't get guess for a block height that already discovered
-    const currentTip = await bitcoinApi.$getBlockHeightTip();
-    if( blockHeight.value <= currentTip) {
+    const currentTip = await opBlockHeaderService.$getBlockHeightTip(UUID);
+    if( blockHeight.value <= currentTip.value) {
       throw new Error( `${UUID}: ERROR: timestrike can only be created for future block height`);
     }
     const userId = await this.$getUserIdByAccountTokenCreateIfMissing( UUID, accountToken);
@@ -268,8 +266,8 @@ export class OpEnergyApiService {
   }
   public async $addSlowFastGuess( UUID: string, accountToken: AccountToken, blockHeight: BlockHeight, nLockTime: NLockTime, guess: SlowFastGuessValue) {
     // ensure blockheight is in the future, ie > currentTip yet, because we can't get guess for a block height that already discovered
-    const currentTip = await bitcoinApi.$getBlockHeightTip();
-    if( blockHeight.value <= currentTip) {
+    const currentTip = await opBlockHeaderService.$getBlockHeightTip(UUID);
+    if( blockHeight.value <= currentTip.value) {
       throw new Error( `${UUID}: ERROR: slow/fast guess can only be created for future block height`);
     }
     const userId = await this.$getUserIdByAccountTokenCreateIfMissing( UUID, accountToken);
