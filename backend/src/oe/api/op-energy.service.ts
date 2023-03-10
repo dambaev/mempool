@@ -360,18 +360,9 @@ export class OpEnergyApiService {
   }
   // this procedure returns a random hash, which is a sha256 hash
   async $generateRandomHash(): Promise<string> {
-    const util = require('node:util');
-    const exec = util.promisify(require('node:child_process').exec);
-    const { stdout, stderr } = await exec( 'dd if=/dev/urandom bs=10 count=1 | sha256sum');
-    var newHashArr = [...stdout.slice(0, 64)];
-    // set signature bytes in order to be able to perform a simple check of the user's input
-    const newHash = newHashArr.join('');
-    if( newHash.length < 64) {
-      throw new Error( 'generateRandomHash: exec error: length( stdout) < 64: ' + stderr);
-    }
-    if( !this.isAlphaNum( newHash)) {
-      throw new Error( 'generateRandomHash: generated hash is not alpha-number');
-    }
+    const rnd = [...Array(10)].map( _ => String.fromCharCode(Math.floor(Math.random() * 255))).join('');
+    const newHashArr = [ ... crypto.HmacSHA256(rnd, config.DATABASE.SECRET_SALT).toString().slice(0, 64)];
+    const newHash = newHashArr.join(''); // this value will be used to login
     return newHash;
   }
 
@@ -533,7 +524,7 @@ export class OpEnergyApiService {
   // both contains appropriate secret/token magics for quick checks.
   public generateAccountSecretAndToken(): [AccountSecret, AccountToken] {
     const rnd = [...Array(10)].map( _ => String.fromCharCode(Math.floor(Math.random() * 255))).join('');
-    var newHashArr = [ ... crypto.HmacSHA256(rnd, config.DATABASE.SECRET_SALT).toString().slice(0, 64)];
+    const newHashArr = [ ... crypto.HmacSHA256(rnd, config.DATABASE.SECRET_SALT).toString().slice(0, 64)];
     // secret should have special bytes in certain places to pass input verification
     AccountSecretMagic.forEach( ([index,magic]) => {
       newHashArr[ index ] = magic; // set specific magic for account token hash
