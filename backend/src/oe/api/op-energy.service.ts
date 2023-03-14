@@ -1,8 +1,6 @@
 import {DB} from '../database';
 import crypto from "crypto-js";
-import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
-import { IEsploraApi } from '../../api/bitcoin/esplora-api.interface';
-import opBlockHeaderService from '../service/op-block-header.service';
+import oeBlockHeaderService from '../service/op-block-header.service';
 import { BlockHeader } from './interfaces/op-energy.interface';
 import opBlockHeaderRepository from '../repositories/OpBlockHeaderRepository';
 import config from '../../config';
@@ -214,8 +212,8 @@ export class OpEnergyApiService {
   }
   public async $addTimeStrike( UUID: string, accountToken: AccountToken, blockHeight: BlockHeight, nlocktime: NLockTime): Promise<TimeStrikeDB> {
     // ensure blockheight is in the future, ie > currentTip yet, because we can't get guess for a block height that already discovered
-    const currentTip = await bitcoinApi.$getBlockHeightTip();
-    if( blockHeight.value <= currentTip) {
+    const currentTip = await oeBlockHeaderService.$getBlockHeightTip(UUID);
+    if( blockHeight.value <= currentTip.value) {
       throw new Error( `${UUID}: ERROR: timestrike can only be created for future block height`);
     }
     const userId = await this.$getUserIdByAccountTokenCreateIfMissing( UUID, accountToken);
@@ -268,8 +266,8 @@ export class OpEnergyApiService {
   }
   public async $addSlowFastGuess( UUID: string, accountToken: AccountToken, blockHeight: BlockHeight, nLockTime: NLockTime, guess: SlowFastGuessValue) {
     // ensure blockheight is in the future, ie > currentTip yet, because we can't get guess for a block height that already discovered
-    const currentTip = await bitcoinApi.$getBlockHeightTip();
-    if( blockHeight.value <= currentTip) {
+    const currentTip = await oeBlockHeaderService.$getBlockHeightTip(UUID);
+    if( blockHeight.value <= currentTip.value) {
       throw new Error( `${UUID}: ERROR: slow/fast guess can only be created for future block height`);
     }
     const userId = await this.$getUserIdByAccountTokenCreateIfMissing( UUID, accountToken);
@@ -436,7 +434,7 @@ export class OpEnergyApiService {
         const [timestrikesguesses] = await DB.$profile_query<any>( UUID, connection, 'SELECT id,user_id,block_height,nlocktime,UNIX_TIMESTAMP(creation_time) as creation_time FROM timestrikes WHERE block_height <= ?', [ latestConfirmedHeight.value ]);
         for( var i = 0; i < timestrikesguesses.length; i++) {
           const confirmedBlock = { value: timestrikesguesses[i].block_height}; // sql query above proves that block height i is always confirmed, so it is okay to not to use verifyConfirmedBlockHeight here
-          const block = await opBlockHeaderService.$getBlockHeader( UUID, confirmedBlock);
+          const block = await oeBlockHeaderService.$getBlockHeader( UUID, confirmedBlock);
           const [[timestrikehistory_id]] = await DB.$profile_query<any>( UUID, connection
             , 'INSERT INTO timestrikeshistory (user_id, block_height, nlocktime, mediantime, creation_time, archive_time, wrong_results, right_results) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), NOW(),0,0) returning id'
             , [ timestrikesguesses[i].user_id, timestrikesguesses[i].block_height, timestrikesguesses[i].nlocktime, block.mediantime, timestrikesguesses[i].creation_time ]
@@ -497,10 +495,10 @@ export class OpEnergyApiService {
   }
 
   /**
-   * just a wrapper over OpBlockHeaderService.$getBlockHeaderByHash
+   * just a wrapper over oeBlockHeaderService.$getBlockHeaderByHash
    */
   public async $getBlockByHash( UUID: string, hash: BlockHash): Promise<BlockHeader> {
-    return await opBlockHeaderService.$getBlockHeaderByHash(UUID, hash);
+    return await oeBlockHeaderService.$getBlockHeaderByHash(UUID, hash);
   }
 
   public $getBlockSpanList(UUID: string, startBlockHeight: number, span: number, numberOfSpan: number): BlockSpan[] {
