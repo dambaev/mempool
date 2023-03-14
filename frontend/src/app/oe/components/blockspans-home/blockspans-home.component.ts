@@ -154,9 +154,7 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
     this.pastBlocks = [];
     forkJoin(
       blockNumbers.map(
-        blockNo => this.electrsApiService.getBlockHashFromHeight$(blockNo).pipe(
-          switchMap(hash => this.opEnergyApiService.$getBlock(hash))
-        )
+        blockNo => this.opEnergyApiService.$getBlockByHeight(blockNo)
       )
     )
     .pipe(take(1))
