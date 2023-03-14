@@ -1,3 +1,4 @@
+{ GIT_COMMIT_HASH }:
 let
   # Pin nixpkgs, see pinning tutorial for more details
   nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/0f8f64b54ed07966b83db2f20c888d5e035012ef.tar.gz";
@@ -35,7 +36,7 @@ in pkgs.nixosTest ({
           op-energy-db-salt-mainnet    = op-energy-db-salt-mainnet;
           op-energy-db-salt-signet     = op-energy-db-salt-signet;
           mainnet_node_ssh_tunnel      = false; # disable ssh_tunnel and mainnet service for github action
-          OP_ENERGY_REPO_LOCATION      = ./op-energy-development/.git/modules/overlays/op-energy;
+          GIT_COMMIT_HASH              = GIT_COMMIT_HASH;
         };
     in {
       imports = [
