@@ -395,7 +395,7 @@
     },
     "/api/v1/oe/blockbyheight/{height}": {
       "get": {
-        "description": "Returns block's header by a given block hash, including chainwork, that is missing from mempool's blocks' headers cache",
+        "description": "Returns block's header by a given block height",
         "produces": [
           "application/json;charset=utf-8"
         ],
