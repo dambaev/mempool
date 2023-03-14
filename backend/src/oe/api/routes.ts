@@ -250,8 +250,12 @@ class OpEnergyRoutes {
     const UUID = await opEnergyApiService.$generateRandomHash();
     try {
       logger.info( `${UUID}: PROFILE: start: $getBlockByHeight`);
-      const { height } = req.params;
-      const result = await opEnergyApiService.$getBlockByHeight(UUID, opEnergyApiService.verifyBlockHeight(parseInt(height)));
+      const { heightS } = req.params;
+      const height = parseInt( heightS);
+      if( isNaN( height) ) {
+        throw new Error( 'height is not a number');
+      }
+      const result = await opEnergyApiService.$getBlockByHeight(UUID, opEnergyApiService.verifyBlockHeight(height));
       res.json(result);
     } catch(e) {
       logger.err( `ERROR: ${UUID}: OpEnergyApiService.$getBlockByHeight: ${e instanceof Error ? e.message: e}`);
