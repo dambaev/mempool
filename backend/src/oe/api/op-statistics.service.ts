@@ -1,5 +1,5 @@
 import logger from '../../logger';
-import opBlockHeaderService from '../service/op-block-header.service';
+import oeBlockHeaderService from '../service/op-block-header.service';
 import {
   BlockHeight,
   ConfirmedBlockHeight,
@@ -30,15 +30,15 @@ export class OpStatisticService {
           blockSpan,
           NUMBER_OF_BLOCK_SPANS
         );
-        const currentTip = await opBlockHeaderService.$getBlockHeightTip('nbdr');
+        const currentTip = await oeBlockHeaderService.$getBlockHeightTip('nbdr');
 
         blockSpanList.forEach((blockNumber) =>
           confirmedBlocks.push(
-            opBlockHeaderService.verifyConfirmedBlockHeight(
+            oeBlockHeaderService.verifyConfirmedBlockHeight(
               blockNumber.startBlockHeight,
               currentTip
             ),
-            opBlockHeaderService.verifyConfirmedBlockHeight(
+            oeBlockHeaderService.verifyConfirmedBlockHeight(
               blockNumber.endBlockHeight,
               currentTip
             )
@@ -46,7 +46,7 @@ export class OpStatisticService {
         );
 
         const blockHeadersList =
-          await opBlockHeaderService.$getBlockHeadersByHeights(
+          await oeBlockHeaderService.$getBlockHeadersByHeights(
             'nbdr',
             Array.from(new Set(confirmedBlocks))
           );
