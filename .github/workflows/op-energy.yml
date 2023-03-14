@@ -1,0 +1,18 @@
+name: "Op-Energy backend"
+on:
+  pull_request:
+    types: [opened, ready_for_review, synchronize]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: cachix/install-nix-action@v19
+      with:
+        nix_path: nixpkgs=channel:nixos-22.05
+        extra_nix_config: "system-features = nixos-test benchmark big-parallel kvm"
+    - run: git clone https://github.com/dambaev/op-energy-development.git --recursive
+    - run: rm -rf op-energy-development/overlays/op-energy && ln -s $(pwd) op-energy-development/overlays/op-energy
+    - run: pwd && ls -la $(pwd)
+    - run: ls -la op-energy-development/overlays
+    - run: nix-build .github/workflows/op-energy.nix
