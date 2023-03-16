@@ -155,7 +155,7 @@ export class OpEnergyApiService {
   }
 
   $getBlockByHeight( height: number): Observable<BlockHeader> {
-    return this.httpClient.get<BlockHeader>(this.apiBaseUrl + this.apiBasePath + '/api/oe/blockbyheight/' + height);
+    return this.httpClient.get<BlockHeader>(this.apiBaseUrl + this.apiBasePath + '/api/v1/oe/blockbyheight/' + height);
   }
 
   $getNbdrStatistics(blockHeight: number, span: number): Observable<EnergyNbdrStatistics> {
