@@ -469,6 +469,22 @@
           }
         }
       }
+    },
+    "/api/v1/oe/git-hash": {
+      "get": {
+        "description": "returns short hash of commit of the op-energy git repo that had been used to build backend",
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/GitHashResponse"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -926,6 +942,21 @@
       "example": {
         "endBlockHeight": 772473,
         "startBlockHeight": 772472
+      },
+      "type": "object"
+    },
+    "GitHashResponse": {
+      "description": "GitHashResponse schema",
+      "required": [
+        "gitCommitHash"
+      ],
+      "properties": {
+        "gitCommitHash": {
+          "type": "string"
+        }
+      },
+      "example": {
+        "gitCommitHash": "12345678"
       },
       "type": "object"
     }
