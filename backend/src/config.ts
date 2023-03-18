@@ -1,6 +1,7 @@
 const configFromFile = require(
     process.env.MEMPOOL_CONFIG_FILE ? process.env.MEMPOOL_CONFIG_FILE : '../mempool-config.json'
 );
+const gitCommitHash = require( '../revision.json');
 
 interface IConfig {
   MEMPOOL: {
@@ -121,7 +122,8 @@ interface IConfig {
   },
   OP_ENERGY: {
     CONFIRMED_BLOCKS_AMOUNT: number;
-  }
+  },
+  GIT_COMMIT_HASH: string
 }
 
 const defaults: IConfig = {
@@ -243,7 +245,8 @@ const defaults: IConfig = {
   },
   "OP_ENERGY": {
     "CONFIRMED_BLOCKS_AMOUNT": 6
-  }
+  },
+  "GIT_COMMIT_HASH": gitCommitHash
 };
 
 class Config implements IConfig {
@@ -264,6 +267,7 @@ class Config implements IConfig {
   EXTERNAL_DATA_SERVER: IConfig['EXTERNAL_DATA_SERVER'];
   MAXMIND: IConfig['MAXMIND'];
   OP_ENERGY: IConfig['OP_ENERGY'];
+  GIT_COMMIT_HASH: IConfig[ 'GIT_COMMIT_HASH'];
 
   constructor() {
     const configs = this.merge(configFromFile, defaults);
@@ -284,6 +288,7 @@ class Config implements IConfig {
     this.EXTERNAL_DATA_SERVER = configs.EXTERNAL_DATA_SERVER;
     this.MAXMIND = configs.MAXMIND;
     this.OP_ENERGY = configs.OP_ENERGY;
+    this.GIT_COMMIT_HASH = configs.GIT_COMMIT_HASH;
   }
 
   merge = (...objects: object[]): IConfig => {

@@ -57,16 +57,18 @@ resource "digitalocean_droplet" "droplet_instance" {
             permissions: '0644'
             content: |
               {pkgs, lib, ...}:
+              let
+                hostModule = import ./host.nix {}; # this file is part of op-energy-production repo
+              in
               {
                 imports = [
-                  ./host.nix # this file is part of op-energy-production repo
+                  hostModule
                 ];
                 networking.hostName = "${var.DROPLET_NAME}";
                 # hardware related part
                 # those mount points' options belong to hardware-configuration.nix, but patching it is much harder, than just importing another module
                 fileSystems."/" = { device = "/dev/vda1"; options = [ "noatime" "discard"]; };
                 fileSystems."/mnt/bitcoind-mainnet" = { device = "/dev/disk/by-id/scsi-0DO_Volume_${var.DROPLET_NAME}-bitcoind-mainnet"; fsType = "xfs"; options = [ "noatime" "discard"]; };
-                fileSystems."/mnt/electrs-mainnet" = { device = "/dev/disk/by-id/scsi-0DO_Volume_${var.DROPLET_NAME}-electrs-mainnet"; fsType = "xfs"; options = [ "noatime" "discard"]; };
                 swapDevices = [
                   { device = "/tmp/swap";
                     size = 2048;

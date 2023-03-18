@@ -26,8 +26,12 @@ class OpEnergyIndex {
 
   public async setUpHttpApiRoutes( app: Application) {
     opEnergyRoutes.setUpHttpApiRoutes( app);
-    const latestConfirmedBlockHeader = await opBlockHeaderService.$syncOlderBlockHeader('init');
-    await OpEnergyIndex.checkForNewConfirmedBlock( latestConfirmedBlockHeader);
+    try {
+      const latestConfirmedBlockHeader = await opBlockHeaderService.$syncOlderBlockHeader('init');
+      await OpEnergyIndex.checkForNewConfirmedBlock( latestConfirmedBlockHeader);
+    } catch( e) {
+      logger.warn( 'opBlockHeaderService.$syncOlderBlockHeader failed, maybe there is no confirmed blocks yet' + e);
+    }
   }
 
   public setUpWebsocketHandling( wss: WebSocket.Server) {
@@ -39,9 +43,13 @@ class OpEnergyIndex {
   }
 
   async handleNewUnconfirmedBlock( block: BlockExtended, txIds: string[], transactions: TransactionExtended[]) {
-    const latestConfirmedBlockHeader = await opBlockHeaderService.$syncOlderBlockHeader('handleNewUnconfirmedBlock callback', block.height);
+    try {
+      const latestConfirmedBlockHeader = await opBlockHeaderService.$syncOlderBlockHeader('handleNewUnconfirmedBlock callback', block.height);
 
-    await OpEnergyIndex.checkForNewConfirmedBlock( latestConfirmedBlockHeader);
+      await OpEnergyIndex.checkForNewConfirmedBlock( latestConfirmedBlockHeader);
+    } catch(e) {
+      logger.warn( 'opBlockHeaderService.$syncOlderBlockHeader failed, maybe there is no confirmed block yet: ' + e);
+    }
   }
 
   /**

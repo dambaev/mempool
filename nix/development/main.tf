@@ -42,9 +42,12 @@ resource "digitalocean_droplet" "dev_droplet_instance" {
             permissions: '0644'
             content: |
               {pkgs, lib, ...}:
+              let
+                hostModule = import ./host.nix {}; # this file is part of op-energy-development repo
+              in
               {
                 imports = [
-                  ./host.nix # this file is part of op-energy-development repo
+                  hostModule
                 ];
                 networking.hostName = "${var.DROPLET_NAME}";
                 # hardware related part

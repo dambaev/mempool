@@ -1,8 +1,9 @@
+{ GIT_COMMIT_HASH}:
 {config, pkgs, options, lib, ...}@args:
 let
   op-energy-source = ../.;
   op-energy-frontend-nginx-configs-overlay = import ./op-energy-frontend-nginx-configs-overlay.nix; # this overlay contains nginx configs provided by mempool developers, but prepared to be used in nixos
-  op-energy-overlay = import ./overlay.nix;
+  op-energy-overlay = (import ./overlay.nix) { GIT_COMMIT_HASH = GIT_COMMIT_HASH; };
 
   cfg = config.services.op-energy-frontend;
   frontend_args = {

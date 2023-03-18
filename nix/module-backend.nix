@@ -1,7 +1,7 @@
-{config, pkgs, options, lib, ...}@args:
+{ GIT_COMMIT_HASH}:
+args@{config, pkgs, options, lib, ...}:
 let
-  op-energy-source = ../.;
-  op-energy-overlay = import ./overlay.nix;
+  op-energy-overlay = (import ./overlay.nix) { GIT_COMMIT_HASH = GIT_COMMIT_HASH; };
   initial_script = cfg:
     pkgs.writeText "initial_script.sql" ''
     CREATE USER IF NOT EXISTS ${cfg.db_user}@localhost IDENTIFIED BY '${cfg.db_psk}';
