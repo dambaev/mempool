@@ -55,7 +55,7 @@ let
             "DB_USER": "openergy",
             "DB_NAME": "openergy",
             "DB_PASSWORD": "password",
-            "SECRET_SALT": "salt"
+            "SECRET_SALT": "salt",
             "API_HTTP_PORT": 8999,
             "BTC_URL": "http://127.0.0.1:8332",
             "BTC_USER": "op-energy",
@@ -82,7 +82,7 @@ in
             "DB_USER": "openergy",
             "DB_NAME": "openergy",
             "DB_PASSWORD": "password",
-            "SECRET_SALT": "salt"
+            "SECRET_SALT": "salt",
             "API_HTTP_PORT": 8999,
             "BTC_URL": "http://127.0.0.1:8332",
             "BTC_USER": "op-energy",
