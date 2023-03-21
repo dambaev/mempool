@@ -13,6 +13,7 @@
 , async
 , exceptions
 , op-energy-api
+, GIT_COMMIT_HASH
 , ...
 }:
 mkDerivation {
@@ -35,6 +36,9 @@ mkDerivation {
     random
     exceptions
   ];
+  preBuild = ''
+    sed -i 's/GIT_COMMIT_HASH/${GIT_COMMIT_HASH}/' src/OpEnergy/Server/GitCommitHash.hs
+  '';
   executableHaskellDepends = [ base warp async ];
   enableLibraryProfiling = false;
   enableExecutableProfiling = false;
