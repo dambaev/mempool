@@ -5,9 +5,10 @@ import           Data.Proxy
 import Servant
 import Data.OpEnergy.API
 import OpEnergy.Server.API
+import OpEnergy.Server.V1
 import OpEnergy.Server.V1.Config
 import OpEnergy.Server.V1.DB
-import OpEnergy.Server.V1
+import OpEnergy.Server.V1.Class (State(..), defaultState)
 import Control.Concurrent.Async
 import System.IO
 import Control.Monad (forM, mapM)
@@ -19,11 +20,15 @@ main = do
   config <- OpEnergy.Server.V1.Config.getConfigFromEnvironment
   print config
   pool <- OpEnergy.Server.V1.DB.getConnection config
+  defState <- defaultState pool
+  let state = defState
+                { config = config
+                }
   hFlush stdout
   serverA <- asyncBound $ do
     print $ "serving API"
     hFlush stdout
-    run (configHTTPAPIPort config) $ serve (Proxy :: Proxy API) $ OpEnergy.Server.API.server config pool
+    runServer state
   waitAnyCancel $
     [ serverA
 --    , schedulerA

@@ -13,6 +13,8 @@
 , async
 , exceptions
 , op-energy-api
+, stm
+, transformers
 , GIT_COMMIT_HASH
 , ...
 }:
@@ -35,6 +37,9 @@ mkDerivation {
     cryptohash-sha256 base16-bytestring
     random
     exceptions
+    stm
+    transformers
+    warp
   ];
   preBuild = ''
     sed -i 's/GIT_COMMIT_HASH/${GIT_COMMIT_HASH}/' src/OpEnergy/Server/GitCommitHash.hs

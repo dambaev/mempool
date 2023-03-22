@@ -8,16 +8,12 @@
 module OpEnergy.Server.V1 where
 
 import           Data.Text                  (Text)
-import           Data.Pool(Pool)
 import           Servant
 import           Control.Concurrent
 import           Control.Exception( Exception)
 import qualified Control.Exception as E
-
-
-
-import Database.Persist.Postgresql as DB
-
+import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Trans.Reader (ask)
 
 import           Data.OpEnergy.API.V1
 import           Data.OpEnergy.API.V1.Block
@@ -25,78 +21,79 @@ import           Data.OpEnergy.API.V1.Account
 import           Data.OpEnergy.API.V1.Positive
 import qualified OpEnergy.Server.GitCommitHash as Server
 import           OpEnergy.Server.V1.Config
+import           OpEnergy.Server.V1.Class (AppT, State(..))
 
 -- | here goes implementation of OpEnergy API, which should match Data.OpEnergy.API.V1.V1API
-server:: Config-> Pool SqlBackend -> Server V1API
-server _ _
-  = registerPost
-  :<|> loginPost 
-  :<|> strikeMediantimeGet 
-  :<|> strikeBlockMediantimeGet 
-  :<|> strikeMediantimePost 
-  :<|> slowFastGuessMediantimeGet 
-  :<|> slowFastGuessMediantimePost 
-  :<|> strikeHistoryMediantimeGet 
-  :<|> slowFastResultsMediantimeGet 
-  :<|> userDisplayNamePost 
-  :<|> statisticsGet 
-  :<|> oeBlockGet 
-  :<|> oeBlockByHeightGet 
-  :<|> oeBlockSpanListGet 
-  :<|> oeGitHashGet
+server:: ServerT V1API (AppT Handler)
+server = registerPost
+    :<|> loginPost
+    :<|> strikeMediantimeGet
+    :<|> strikeBlockMediantimeGet
+    :<|> strikeMediantimePost
+    :<|> slowFastGuessMediantimeGet
+    :<|> slowFastGuessMediantimePost
+    :<|> strikeHistoryMediantimeGet
+    :<|> slowFastResultsMediantimeGet
+    :<|> userDisplayNamePost
+    :<|> statisticsGet
+    :<|> oeBlockGet
+    :<|> oeBlockByHeightGet
+    :<|> oeBlockSpanListGet
+    :<|> oeGitHashGet
 
-schedulerMain :: Config -> Pool SqlBackend-> IO ()
-schedulerMain config pool = do
-  putStrLn "scheduler main loop"
-  threadDelay ((fromPositive (configSchedulerPollRateSecs config)) * 1000000)
-  schedulerMain config pool
+schedulerMain :: AppT IO ()
+schedulerMain = do
+  State{ config = Config{ configSchedulerPollRateSecs = delaySecs }} <- ask
+  liftIO $ putStrLn "scheduler main loop"
+  liftIO $ threadDelay ((fromPositive delaySecs) * 1000000)
+  schedulerMain
 
 handle :: Exception e => (e -> IO a) -> IO a -> IO a
 handle hfoo payload = E.handle hfoo (payload >>= E.evaluate)
 
-registerPost :: Handler RegisterResult
+registerPost :: AppT Handler RegisterResult
 registerPost = undefined
 
-loginPost :: [AccountSecret]-> Handler [AccountToken]
+loginPost :: [AccountSecret]-> AppT Handler [AccountToken]
 loginPost = undefined
 
-strikeMediantimeGet :: Handler [TimeStrike]
+strikeMediantimeGet :: AppT Handler [TimeStrike]
 strikeMediantimeGet = undefined
 
-strikeBlockMediantimeGet :: BlockHeight-> Handler [TimeStrike]
+strikeBlockMediantimeGet :: BlockHeight-> AppT Handler [TimeStrike]
 strikeBlockMediantimeGet = undefined
 
-strikeMediantimePost :: CreateTimeStrikeRequest -> Handler TimeStrike
+strikeMediantimePost :: CreateTimeStrikeRequest -> AppT Handler TimeStrike
 strikeMediantimePost = undefined
 
-slowFastGuessMediantimeGet :: BlockHeight-> NLockTime-> Handler [SlowFastGuess]
+slowFastGuessMediantimeGet :: BlockHeight-> NLockTime-> AppT Handler [SlowFastGuess]
 slowFastGuessMediantimeGet = undefined
 
-slowFastGuessMediantimePost :: CreateSlowFastGuessRequest -> Handler SlowFastGuess
+slowFastGuessMediantimePost :: CreateSlowFastGuessRequest -> AppT Handler SlowFastGuess
 slowFastGuessMediantimePost = undefined
 
-strikeHistoryMediantimeGet :: Handler [TimeStrikeHistory]
+strikeHistoryMediantimeGet :: AppT Handler [TimeStrikeHistory]
 strikeHistoryMediantimeGet = undefined
 
-slowFastResultsMediantimeGet :: [AccountToken]-> NLockTime-> BlockHeight-> Handler [SlowFastResult]
+slowFastResultsMediantimeGet :: [AccountToken]-> NLockTime-> BlockHeight-> AppT Handler [SlowFastResult]
 slowFastResultsMediantimeGet = undefined
 
-userDisplayNamePost :: PostUserDisplayNameRequest -> Handler ()
+userDisplayNamePost :: PostUserDisplayNameRequest -> AppT Handler ()
 userDisplayNamePost = undefined
 
-statisticsGet :: BlockHeight -> Text-> Handler Statistics
+statisticsGet :: BlockHeight -> Text-> AppT Handler Statistics
 statisticsGet = undefined
 
-oeBlockGet :: BlockHash-> Handler BlockHeader
+oeBlockGet :: BlockHash-> AppT Handler BlockHeader
 oeBlockGet = undefined
 
-oeBlockByHeightGet :: BlockHeight -> Handler BlockHeader
+oeBlockByHeightGet :: BlockHeight -> AppT Handler BlockHeader
 oeBlockByHeightGet = undefined
 
-oeBlockSpanListGet :: BlockHeight-> Positive Int-> Positive Int-> Handler [BlockSpan]
+oeBlockSpanListGet :: BlockHeight-> Positive Int-> Positive Int-> AppT Handler [BlockSpan]
 oeBlockSpanListGet = undefined
 
-oeGitHashGet :: Handler GitHashResponse
+oeGitHashGet :: AppT Handler GitHashResponse
 oeGitHashGet = return $ GitHashResponse
   { gitCommitHash = Server.gitCommitHash
   }

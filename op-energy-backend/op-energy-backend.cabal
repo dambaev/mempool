@@ -44,6 +44,7 @@ library
                    , OpEnergy.Server.API
                    , OpEnergy.Server.V1.Config
                    , OpEnergy.Server.V1.DB
+                   , OpEnergy.Server.V1.Class
     build-depends:    base ^>=4.15.1.0
                     , aeson
                     , aeson-pretty
@@ -67,6 +68,9 @@ library
                     , conduit
                     , exceptions
                     , mtl
+                    , stm
+                    , transformers
+                    , warp
     ghc-options:    -O2 -Wall -Werror -Wno-unticked-promoted-constructors -fno-warn-name-shadowing -Wno-orphans
     extensions:       OverloadedStrings
 
