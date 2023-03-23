@@ -18,7 +18,7 @@ import           Data.OpEnergy.API.V1.Account
 import           Data.OpEnergy.API.V1.Positive
 import qualified OpEnergy.Server.GitCommitHash as Server
 import           OpEnergy.Server.V1.Class (AppT)
-import           OpEnergy.Server.V1.BlockHeadersService(syncBlockHeaders, getBlockHeaderByHeight)
+import           OpEnergy.Server.V1.BlockHeadersService(syncBlockHeaders, getBlockHeaderByHash, getBlockHeaderByHeight)
 
 -- | here goes implementation of OpEnergy API, which should match Data.OpEnergy.API.V1.V1API
 server:: ServerT V1API (AppT Handler)
@@ -33,7 +33,7 @@ server = registerPost
     :<|> slowFastResultsMediantimeGet
     :<|> userDisplayNamePost
     :<|> statisticsGet
-    :<|> oeBlockGet
+    :<|> OpEnergy.Server.V1.BlockHeadersService.getBlockHeaderByHash
     :<|> OpEnergy.Server.V1.BlockHeadersService.getBlockHeaderByHeight
     :<|> oeBlockSpanListGet
     :<|> oeGitHashGet
@@ -76,9 +76,6 @@ userDisplayNamePost = undefined
 
 statisticsGet :: BlockHeight -> Text-> AppT Handler Statistics
 statisticsGet = undefined
-
-oeBlockGet :: BlockHash-> AppT Handler BlockHeader
-oeBlockGet = undefined
 
 oeBlockSpanListGet :: BlockHeight-> Positive Int-> Positive Int-> AppT Handler [BlockSpan]
 oeBlockSpanListGet = undefined

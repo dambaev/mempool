@@ -25,15 +25,36 @@ import           OpEnergy.Server.V1.DB (tshow)
 import           OpEnergy.Server.V1.Class (AppT, AppM, State(..))
 
 
+getBlockHeaderByHash :: BlockHash -> AppM BlockHeader
+getBlockHeaderByHash hash = do
+  State{ blockHeadersDBPool = pool, blockHeadersHashCache = blockHeadersHashCacheV, blockHeadersHeightCache = blockHeadersHeightCacheV } <- ask
+  blockHeadersHashCache <- liftIO $ TVar.readTVarIO blockHeadersHashCacheV
+  case Map.lookup hash blockHeadersHashCache of -- check cache first
+    Just height -> do
+      liftIO $ Text.putStrLn $ "hash " <> tshow hash <> " is a height " <> tshow height <> " and had been found in the cache"
+      getBlockHeaderByHeight height
+    Nothing -> do -- there is no header in cache
+      mheader <- liftIO $ flip runSqlPersistMPool pool $ selectFirst [ BlockHeaderHash ==. hash ] []
+      case mheader of
+        Nothing-> throwError err404
+        Just (Entity _ header) -> do
+          height <- liftIO $ STM.atomically $ do
+            let height = blockHeaderHeight header
+            TVar.modifyTVar blockHeadersHeightCacheV $ \cache-> Map.insert height header cache -- update cache
+            TVar.modifyTVar blockHeadersHashCacheV $ \cache-> Map.insert hash height cache -- update cache
+            return height
+          liftIO $ Text.putStrLn $ "header with height " <> tshow height <> " and hash " <> tshow hash <> " inserted into the cache"
+          return header
+
 getBlockHeaderByHeight :: BlockHeight -> AppM BlockHeader
 getBlockHeaderByHeight height = do
-  State{ blockHeadersDBPool = pool, currentHeightTip = currentHeightTipV, blockHeadersCache = blockHeadersCacheV } <- ask
+  State{ blockHeadersDBPool = pool, currentHeightTip = currentHeightTipV, blockHeadersHashCache = blockHeadersHashCacheV, blockHeadersHeightCache = blockHeadersHeightCacheV } <- ask
   mcurrentHeightTip <- liftIO $ TVar.readTVarIO currentHeightTipV
-  blockHeadersCache <- liftIO $ TVar.readTVarIO blockHeadersCacheV
+  blockHeadersHeightCache <- liftIO $ TVar.readTVarIO blockHeadersHeightCacheV
   case mcurrentHeightTip of
     Just currentHeightTip
       | height < currentHeightTip -> do
-          case Map.lookup height blockHeadersCache of -- check cache first
+          case Map.lookup height blockHeadersHeightCache of -- check cache first
             Just header -> do
               liftIO $ Text.putStrLn $ "header with height " <> tshow height <> " found in the cache"
               return header
@@ -42,7 +63,9 @@ getBlockHeaderByHeight height = do
               case mheader of
                 Nothing-> throwError err404
                 Just (Entity _ header) -> do
-                  liftIO $ STM.atomically $ TVar.modifyTVar blockHeadersCacheV $ \cache-> Map.insert height header cache -- update cache
+                  liftIO $ STM.atomically $ do
+                    TVar.modifyTVar blockHeadersHeightCacheV $ \cache-> Map.insert height header cache -- update cache
+                    TVar.modifyTVar blockHeadersHashCacheV $ \cache-> Map.insert (blockHeaderHash header) height cache -- update cache
                   liftIO $ Text.putStrLn $ "header with height " <> tshow height <> " inserted in the cache"
                   return header
     _ -> throwError err404
