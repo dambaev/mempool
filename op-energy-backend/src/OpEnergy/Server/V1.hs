@@ -9,19 +9,16 @@ module OpEnergy.Server.V1 where
 
 import           Data.Text                  (Text)
 import           Servant
-import           Control.Concurrent
 import           Control.Exception( Exception)
 import qualified Control.Exception as E
-import           Control.Monad.IO.Class (liftIO)
-import           Control.Monad.Trans.Reader (ask)
 
 import           Data.OpEnergy.API.V1
 import           Data.OpEnergy.API.V1.Block
 import           Data.OpEnergy.API.V1.Account
 import           Data.OpEnergy.API.V1.Positive
 import qualified OpEnergy.Server.GitCommitHash as Server
-import           OpEnergy.Server.V1.Config
-import           OpEnergy.Server.V1.Class (AppT, State(..))
+import           OpEnergy.Server.V1.Class (AppT)
+import           OpEnergy.Server.V1.BlockHeadersService(syncBlockHeaders)
 
 -- | here goes implementation of OpEnergy API, which should match Data.OpEnergy.API.V1.V1API
 server:: ServerT V1API (AppT Handler)
@@ -41,12 +38,8 @@ server = registerPost
     :<|> oeBlockSpanListGet
     :<|> oeGitHashGet
 
-schedulerMain :: AppT IO ()
-schedulerMain = do
-  State{ config = Config{ configSchedulerPollRateSecs = delaySecs }} <- ask
-  liftIO $ putStrLn "scheduler main loop"
-  liftIO $ threadDelay ((fromPositive delaySecs) * 1000000)
-  schedulerMain
+schedulerIteration :: AppT IO ()
+schedulerIteration = OpEnergy.Server.V1.BlockHeadersService.syncBlockHeaders
 
 handle :: Exception e => (e -> IO a) -> IO a -> IO a
 handle hfoo payload = E.handle hfoo (payload >>= E.evaluate)

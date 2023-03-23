@@ -1,16 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 module OpEnergy.Server.V1.Config where
 
-import Data.Text (Text)
-import Data.Maybe
+import           Data.Text (Text)
+import           Data.Maybe
 import           Data.Aeson
 import           Data.Aeson.Types
 import qualified Data.Aeson as A
 import qualified Data.ByteString.Char8 as BS
 import qualified System.Environment as E
-import Servant.Client (BaseUrl(..), showBaseUrl, parseBaseUrl, Scheme(..))
-import Data.OpEnergy.API.V1.Positive
-import Control.Monad.Catch
+import           Servant.Client (BaseUrl(..), showBaseUrl, parseBaseUrl, Scheme(..))
+import           Data.OpEnergy.API.V1.Positive
+import           Data.OpEnergy.API.V1.Natural
+import           Control.Monad.Catch
 
 instance MonadThrow Parser where
   throwM = fail . show
@@ -28,6 +29,7 @@ data Config = Config
   , configBTCPassword :: Text
   , configBTCPollRateSecs :: Positive Int
   , configSchedulerPollRateSecs :: Positive Int
+  , configBlocksToConfirm :: Natural Int
   }
   deriving Show
 instance FromJSON Config where
@@ -44,6 +46,7 @@ instance FromJSON Config where
     <*> ( v .:? "BTC_PASSWORD" .!= (configBTCPassword defaultConfig))
     <*> ( v .:? "BTC_POLL_RATE_SECS" .!= (configBTCPollRateSecs defaultConfig))
     <*> ( v .:? "SCHEDULER_POLL_RATE_SECS" .!= (configSchedulerPollRateSecs defaultConfig))
+    <*> ( v .:? "BLOCKS_TO_CONFIRM" .!= (configBlocksToConfirm defaultConfig))
 
 defaultConfig:: Config
 defaultConfig = Config
@@ -59,6 +62,7 @@ defaultConfig = Config
   , configBTCPassword = "password"
   , configBTCPollRateSecs = verifyPositive 1
   , configSchedulerPollRateSecs = verifyPositive 1
+  , configBlocksToConfirm = 6
   }
 
 getConfigFromEnvironment :: IO Config

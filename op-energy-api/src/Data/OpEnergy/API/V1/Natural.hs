@@ -24,7 +24,7 @@ import qualified Data.Text                  as T
 import           Numeric
 
 newtype (Ord a, Num a) => Natural a = Natural a
-  deriving (Show, Typeable, Eq, Ord)
+  deriving (Show, Typeable, Eq, Ord, Enum)
 instance (Ord a, Num a) => Num (Natural a) where
   (+) (Natural left) (Natural right) = verifyNatural $! left + right
   (-) (Natural left) (Natural right) = verifyNatural $! left - right
@@ -34,7 +34,7 @@ instance (Ord a, Num a) => Num (Natural a) where
   fromInteger v = verifyNatural (fromInteger v)
 
 instance ToJSON (Natural Int) where
-  toJSON (Natural v) = Number $ scientific (toInteger v) 1
+  toJSON (Natural v) = Number $ scientific (toInteger v) 0
 instance FromJSON (Natural Int) where
   parseJSON = withScientific "Natural" $ \v-> return (verifyNaturalScientific v)
 instance ToSchema (Natural Int) where
@@ -86,8 +86,14 @@ instance PersistFieldSql (Natural Integer) where
   sqlType _ = SqlBlob
 
 
-verifyNaturalScientific:: Scientific -> (Natural Int)
+verifyNaturalScientific:: (Integral a, Bounded a) => Scientific -> (Natural a)
 verifyNaturalScientific s =
+  case toBoundedInteger s of
+    Just v -> verifyNatural v
+    _ -> error "verifyNaturalScientific: wrong value"
+
+verifyNaturalScientificInt:: Scientific -> (Natural Int)
+verifyNaturalScientificInt s =
   case toBoundedInteger s of
     Just v -> verifyNatural v
     _ -> error "verifyNaturalScientific: wrong value"

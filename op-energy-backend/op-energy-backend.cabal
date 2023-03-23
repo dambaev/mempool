@@ -32,19 +32,25 @@ executable op-energy-backend
                     , servant-server
                     , warp
                     , async
+                    , text
                     , op-energy-api
     hs-source-dirs:   app
     default-language: Haskell2010
+    extensions:       OverloadedStrings
     ghc-options:    -O2 -threaded -rtsopts
 
 library
     hs-source-dirs: src
     exposed-modules: OpEnergy.Server.V1
                    , OpEnergy.Server.GitCommitHash
-                   , OpEnergy.Server.API
+                   , OpEnergy.Server
                    , OpEnergy.Server.V1.Config
                    , OpEnergy.Server.V1.DB
                    , OpEnergy.Server.V1.Class
+                   , OpEnergy.Server.V1.BlockHeadersService
+                   , Data.Bitcoin.API
+                   , Data.Bitcoin.BlockStats
+                   , Data.Bitcoin.BlockInfo
     build-depends:    base ^>=4.15.1.0
                     , aeson
                     , aeson-pretty

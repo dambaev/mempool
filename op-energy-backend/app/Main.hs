@@ -1,19 +1,20 @@
 module Main where
 
-import Network.Wai.Handler.Warp
+import           Network.Wai.Handler.Warp
 import           Data.Proxy
-import Servant
-import Data.OpEnergy.API
-import OpEnergy.Server.API
-import OpEnergy.Server.V1
-import OpEnergy.Server.V1.Config
-import OpEnergy.Server.V1.DB
-import OpEnergy.Server.V1.Class (State(..), defaultState)
-import Control.Concurrent.Async
-import System.IO
-import Control.Monad (forM, mapM)
-import Data.List as L
-import Control.Exception as E
+import qualified Data.Text.IO as Text
+import           Servant
+import           Data.OpEnergy.API
+import           OpEnergy.Server
+import           OpEnergy.Server.V1
+import           OpEnergy.Server.V1.Config
+import           OpEnergy.Server.V1.DB
+import           OpEnergy.Server.V1.Class (State(..), defaultState)
+import           Control.Concurrent.Async
+import           System.IO
+import           Control.Monad (forM, mapM)
+import           Data.List as L
+import           Control.Exception as E
 
 main :: IO ()
 main = do
@@ -25,13 +26,20 @@ main = do
                 { config = config
                 }
   hFlush stdout
+  Text.putStrLn "bootstrap tasks"
+  OpEnergy.Server.bootstrapTasks state
+  -- now spawn worker threads
+  schedulerA <- asyncBound $ do
+    Text.putStrLn "scheduler thread"
+    hFlush stdout
+    runAppT state OpEnergy.Server.schedulerMainLoop
   serverA <- asyncBound $ do
-    print $ "serving API"
+    Text.putStrLn "serving API"
     hFlush stdout
     runServer state
   waitAnyCancel $
     [ serverA
---    , schedulerA
+    , schedulerA
 --    , websocketsA
     ]
   return ()

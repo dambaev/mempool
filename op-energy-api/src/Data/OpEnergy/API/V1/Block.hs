@@ -25,6 +25,7 @@ import           Data.Typeable              (Typeable)
 import           Data.Aeson
 import           Data.Int
 import           Data.Word
+import qualified Data.Text                  as T
 
 import           Data.OpEnergy.API.V1.Natural
 import           Data.OpEnergy.API.V1.Hash
@@ -40,15 +41,16 @@ BlockHeader
   height (Natural Int)
   version Int32 -- bitcoin/src/primitives/block.h: int32_t nVersion;
   timestamp Word32 -- bitcoin/src/primitives/block.h uint32_t nTime
-  bits Word32 -- bitcoin/src/primitives/block.h uint32_t nBits
+  bits Bits  -- bitcoin/src/primitives/block.h uint32_t nBits
   nonce Word32 -- bitcoin/src/primitives/block.h uint32_t nNonce;
   difficulty Double -- ./src/rpc/blockchain.h:double GetDifficulty(const CBlockIndex* blockindex);
   merkle_root Hash -- bitcoin/src/primitives/block.h uint256 hashMerkleRoot
-  tx_count (Natural Int)
-  size (Natural Int)
-  weight Int64 -- src/consensus/validation.h:static inline int64_t GetBlockWeight(const CBlock& block)
+  tx_count Word64
+  size Word64
+  weight Word64 -- src/consensus/validation.h:static inline int64_t GetBlockWeight(const CBlock& block)
   chainwork (Natural Integer) -- bitcoin/src/chain.h arith_uint256 nChainWork{}; (memory only) Total amount of work (expected number of hashes) in the chain up to and including this block
   mediantime Word32
+  reward Word64
   UniqueHash hash
   UniqueHeight height
   deriving Eq Show Generic
@@ -71,6 +73,7 @@ defaultBlockHeader = BlockHeader
   , blockHeaderWeight = 3992705
   , blockHeaderChainwork = verifyNatural $ fst $ head $ readHex "00000000000000000000000000000000000000003dfd08c2b6932fc194a1fee4"
   , blockHeaderMediantime = 1674012509
+  , blockHeaderReward = 5000000000
   }
 
 instance ToJSON BlockHeader
@@ -103,3 +106,20 @@ type BlockHeight = Natural Int
 defaultBlockHeight :: BlockHeight
 defaultBlockHeight = verifyNaturalInt 1
   
+
+newtype Bits = Bits Word32
+  deriving (Eq, Show, Num, Generic)
+
+instance ToJSON (Bits) where
+  toJSON (Bits v) = toJSON (showHex v "")
+instance FromJSON (Bits) where
+  parseJSON = withText "Bits" $ \v-> return (Bits $ fst $ head $ readHex $ T.unpack v)
+instance ToSchema (Bits) where
+  declareNamedSchema _ = return $ NamedSchema (Just "Bits") $ mempty
+    & type_ ?~ SwaggerString
+instance PersistField (Bits) where
+  toPersistValue (Bits s) = toPersistValue s
+  fromPersistValue (PersistInt64 s) = Right $! Bits (fromIntegral s) -- TODO
+  fromPersistValue _ = Left $ "InputVerification.hs fromPersistValue Natural, expected Text"
+instance PersistFieldSql (Bits) where
+  sqlType _ = SqlInt64
