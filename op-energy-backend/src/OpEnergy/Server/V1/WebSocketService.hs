@@ -18,6 +18,7 @@ import           Data.OpEnergy.API.V1.Block( BlockHeader)
 
 data WebsocketRequest
   = ActionInit
+  | ActionWant [Text]
   deriving (Eq, Show)
 
 instance FromJSON WebsocketRequest where
@@ -25,9 +26,14 @@ instance FromJSON WebsocketRequest where
     action::Text <- v .: "action"
     case action of
       "init" -> return ActionInit
+      "want" -> ActionWant <$> v .: "data"
       _ -> return ActionInit
 instance ToJSON WebsocketRequest where
   toJSON ActionInit = object [ "action" .= ("init" :: Text)]
+  toJSON (ActionWant topics) = object
+    [ "action" .= ("want" :: Text)
+    , "data" .= topics
+    ]
 instance WebSocketsData WebsocketRequest where
   fromLazyByteString lbs =
     case Aeson.decode lbs of
@@ -62,9 +68,18 @@ webSocketConnection conn = do
   liftIO $ withPingThread conn 10 (sendTextData conn ("{\"pong\": true}" :: Text)) $ forever $ flip runReaderT state $ do
     req <- liftIO $ receiveData conn
     case req of
+      ActionWant topics -> sendTopics topics
       ActionInit -> do
         mpi <- getMempoolInfo
         liftIO $ sendTextData conn $ Aeson.encode mpi
+  where
+    sendTopics [] = return ()
+    sendTopics ("generatedaccounttoken" : rest) = do
+      liftIO $ sendTextData conn ("{\"generatedAccountSecret\" : \"test\", \"generatedAccountToken\": \"test\"}"::Text)
+      sendTopics rest
+    sendTopics ( topic : rest) = do
+      liftIO $ Text.putStrLn ("received unsupported ActionWant " <> topic) >> IO.hFlush stdout
+      sendTopics rest
 
 getMempoolInfo :: AppT IO MempoolInfo
 getMempoolInfo = do
