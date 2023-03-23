@@ -56,9 +56,16 @@ data MempoolInfo = MempoolInfo
   deriving (Show)
 instance ToJSON MempoolInfo where
   toJSON mpi = object
-    [ "mempoolInfo" .= object
-      [ "oe-newest-confirmed-block" .= newestConfirmedBlock mpi
+    [ "oe-newest-confirmed-block" .= newestConfirmedBlock mpi -- the only field which should be interesting for OpEnergy frontend
+    , "mempoolInfo" .= object
+      [ "loaded" .= True
+      , "size" .= (0:: Int)
+      , "bytes" .= (0::Int)
       ]
+    , "blocks" .= ([] :: [Text])
+    , "mempool-blocks" .= ([] :: [Text])
+    , "transactions" .= ([] :: [Text])
+    , "backendInfo" .= ("{ \"hostname\": \"test\", \"version\": \"test\", \"gitCommit\": \"test\"}":: Text)
     ]
 
 webSocketConnection :: Connection-> AppM ()
