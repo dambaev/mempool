@@ -4,14 +4,13 @@ module OpEnergy.Server.V1.BlockHeadersService where
 import qualified Control.Concurrent.STM as STM
 import qualified Control.Concurrent.STM.TVar as TVar
 import           Data.Pool(Pool)
---import           Data.Map (Map)
---import qualified Data.Map as Map
+import qualified Data.Map.Strict as Map
 import           Servant.API (BasicAuthData(..))
+import           Servant (err404, throwError)
 import           Servant.Client.JsonRpc
 import           Control.Monad (forM_)
 import           Control.Monad.Trans.Reader (ask)
 import           Control.Monad.IO.Class (liftIO)
-import           Data.Text                  (Text)
 import qualified Data.Text.IO as Text
 import qualified Data.Text.Encoding as Text
 
@@ -26,8 +25,27 @@ import           OpEnergy.Server.V1.DB (tshow)
 import           OpEnergy.Server.V1.Class (AppT, AppM, State(..))
 
 
-egetBlockHeaderByHeight :: BlockHeight -> AppM (Either Text BlockHeader)
-egetBlockHeaderByHeight = undefined
+getBlockHeaderByHeight :: BlockHeight -> AppM BlockHeader
+getBlockHeaderByHeight height = do
+  State{ blockHeadersDBPool = pool, currentHeightTip = currentHeightTipV, blockHeadersCache = blockHeadersCacheV } <- ask
+  mcurrentHeightTip <- liftIO $ TVar.readTVarIO currentHeightTipV
+  blockHeadersCache <- liftIO $ TVar.readTVarIO blockHeadersCacheV
+  case mcurrentHeightTip of
+    Just currentHeightTip
+      | height < currentHeightTip -> do
+          case Map.lookup height blockHeadersCache of -- check cache first
+            Just header -> do
+              liftIO $ Text.putStrLn $ "header with height " <> tshow height <> " found in the cache"
+              return header
+            Nothing -> do -- there is no header in cache
+              mheader <- liftIO $ flip runSqlPersistMPool pool $ selectFirst [ BlockHeaderHeight ==. height ] []
+              case mheader of
+                Nothing-> throwError err404
+                Just (Entity _ header) -> do
+                  liftIO $ STM.atomically $ TVar.modifyTVar blockHeadersCacheV $ \cache-> Map.insert height header cache -- update cache
+                  liftIO $ Text.putStrLn $ "header with height " <> tshow height <> " inserted in the cache"
+                  return header
+    _ -> throwError err404
 
 mgetLastBlockHeader :: Pool SqlBackend-> IO (Maybe (Entity BlockHeader))
 mgetLastBlockHeader pool = flip runSqlPersistMPool pool $ selectFirst ([] :: [Filter BlockHeader]) [ Desc BlockHeaderHeight ]
