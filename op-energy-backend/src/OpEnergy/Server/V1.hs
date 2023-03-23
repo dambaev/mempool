@@ -20,6 +20,7 @@ import qualified OpEnergy.Server.GitCommitHash as Server
 import           OpEnergy.Server.V1.Class (AppT)
 import           OpEnergy.Server.V1.BlockHeadersService(syncBlockHeaders, getBlockHeaderByHash, getBlockHeaderByHeight)
 import           OpEnergy.Server.V1.WebSocketService(webSocketConnection)
+import           OpEnergy.Server.V1.BlockSpanService(getBlockSpanList)
 
 -- | here goes implementation of OpEnergy API, which should match Data.OpEnergy.API.V1.V1API
 server:: ServerT V1API (AppT Handler)
@@ -37,7 +38,7 @@ server = OpEnergy.Server.V1.WebSocketService.webSocketConnection
     :<|> statisticsGet
     :<|> OpEnergy.Server.V1.BlockHeadersService.getBlockHeaderByHash
     :<|> OpEnergy.Server.V1.BlockHeadersService.getBlockHeaderByHeight
-    :<|> oeBlockSpanListGet
+    :<|> OpEnergy.Server.V1.BlockSpanService.getBlockSpanList
     :<|> oeGitHashGet
 
 schedulerIteration :: AppT IO ()

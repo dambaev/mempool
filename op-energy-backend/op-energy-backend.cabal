@@ -49,6 +49,7 @@ library
                    , OpEnergy.Server.V1.Class
                    , OpEnergy.Server.V1.BlockHeadersService
                    , OpEnergy.Server.V1.WebSocketService
+                   , OpEnergy.Server.V1.BlockSpanService
                    , Data.Bitcoin.API
                    , Data.Bitcoin.BlockStats
                    , Data.Bitcoin.BlockInfo

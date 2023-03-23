@@ -60,7 +60,7 @@ mgetBlockHeaderByHeight height = do
   blockHeadersHeightCache <- liftIO $ TVar.readTVarIO blockHeadersHeightCacheV
   case mcurrentHeightTip of
     Just currentHeightTip
-      | height < currentHeightTip -> do
+      | height <= currentHeightTip -> do
           case Map.lookup height blockHeadersHeightCache of -- check cache first
             Just header -> do
               liftIO $ Text.putStrLn $ "header with height " <> tshow height <> " found in the cache"
@@ -101,16 +101,15 @@ syncBlockHeaders = do
   case mstartSyncHeightFromTo of
     Nothing-> return () -- do nothing if sync is not needed
     Just (startSyncHeightFrom, startSyncHeightTo) -> do
-      performSyncFromTo startSyncHeightFrom startSyncHeightTo
+      newestConfirmedBlockHeader <- performSyncFromTo startSyncHeightFrom startSyncHeightTo
       liftIO $ Text.putStrLn $ "new latest confirmed block height " <> tshow startSyncHeightTo
-      updateLatestConfirmedHeightTip startSyncHeightTo
+      updateLatestConfirmedHeightTip newestConfirmedBlockHeader
   where
-    updateLatestConfirmedHeightTip startSyncHeightTo = do
+    updateLatestConfirmedHeightTip header = do
       State{ currentHeightTip = currentHeightTipV, currentTip = currentTipV } <- ask
-      mblockHeader <- mgetBlockHeaderByHeight startSyncHeightTo
       liftIO $ STM.atomically $ do
-        TVar.writeTVar currentHeightTipV (Just startSyncHeightTo)
-        TVar.writeTVar currentTipV mblockHeader
+        TVar.writeTVar currentHeightTipV (Just (blockHeaderHeight header))
+        TVar.writeTVar currentTipV (Just header)
 
     mgetHeightToStartSyncFromTo = do
       State{ config = config, currentHeightTip = currentHeightTipV } <- ask
@@ -140,6 +139,8 @@ syncBlockHeaders = do
         (bi, reward) <- getBlockInfos height
         let bh = blockHeaderFromBlockInfos bi reward
         persistBlockHeader bh
+      (bi, reward) <- getBlockInfos confirmedHeightTo -- now we need to return the last confirmed block to the caller
+      return $ blockHeaderFromBlockInfos bi reward
       where
         persistBlockHeader :: BlockHeader -> AppT IO ()
         persistBlockHeader header = do

@@ -109,3 +109,6 @@ verifyNaturalInt v =
   case () of
     _ | v >= 0 -> Natural v
     _ -> error "verifyNatural: wrong value"
+
+fromNatural :: (Ord a, Num a ) => Natural a -> a
+fromNatural (Natural v) = v

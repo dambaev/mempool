@@ -51,7 +51,7 @@ schedulerMainLoop :: AppT IO ()
 schedulerMainLoop = do
   State{ config = Config{ configSchedulerPollRateSecs = delaySecs }} <- ask
   liftIO $ Text.putStrLn "scheduler main loop"
-  liftIO $ IO.hFlush stdout
   OpEnergy.Server.V1.schedulerIteration
   liftIO $ threadDelay ((fromPositive delaySecs) * 1000000)
+  liftIO $ IO.hFlush stdout
   schedulerMainLoop
