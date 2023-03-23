@@ -55,12 +55,13 @@ getBlockHeaderByHeight height = do
 
 mgetBlockHeaderByHeight :: MonadIO m => BlockHeight -> AppT m (Maybe BlockHeader)
 mgetBlockHeaderByHeight height = do
-  State{ blockHeadersDBPool = pool, currentHeightTip = currentHeightTipV, blockHeadersHashCache = blockHeadersHashCacheV, blockHeadersHeightCache = blockHeadersHeightCacheV } <- ask
-  mcurrentHeightTip <- liftIO $ TVar.readTVarIO currentHeightTipV
+  State{ blockHeadersDBPool = pool, currentTip = currentTipV, blockHeadersHashCache = blockHeadersHashCacheV, blockHeadersHeightCache = blockHeadersHeightCacheV } <- ask
+  mcurrentTip <- liftIO $ TVar.readTVarIO currentTipV
   blockHeadersHeightCache <- liftIO $ TVar.readTVarIO blockHeadersHeightCacheV
-  case mcurrentHeightTip of
-    Just currentHeightTip
-      | height <= currentHeightTip -> do
+  case mcurrentTip of
+    Just currentTip
+      | height == blockHeaderHeight currentTip -> return (Just currentTip) -- the fastest case is that caller is looking for a current tip
+      | height < blockHeaderHeight currentTip -> do -- requested height is confirmed one
           case Map.lookup height blockHeadersHeightCache of -- check cache first
             Just header -> do
               liftIO $ Text.putStrLn $ "header with height " <> tshow height <> " found in the cache"
@@ -83,14 +84,12 @@ mgetLastBlockHeader pool = flip runSqlPersistMPool pool $ selectFirst ([] :: [Fi
 -- | performs read from DB in order to set State.currentHeightTip
 loadDBState :: AppT IO ()
 loadDBState = do
-  State{ blockHeadersDBPool = pool, currentHeightTip = currentHeightTipV, currentTip = currentTipV } <- ask
+  State{ blockHeadersDBPool = pool, currentTip = currentTipV } <- ask
   mlast <- liftIO $ mgetLastBlockHeader pool
   case mlast of
     Nothing-> return () -- do nothing
     Just (Entity _ header) -> liftIO $ do
-      STM.atomically $ do
-        TVar.writeTVar currentHeightTipV (Just (blockHeaderHeight header))
-        TVar.writeTVar currentTipV (Just header)
+      STM.atomically $ TVar.writeTVar currentTipV (Just header)
       Text.putStrLn ("current confirmed height tip " <> tshow (blockHeaderHeight header))
 
 -- | this procedure ensures that BlockHeaders table is in sync with block chain
@@ -106,29 +105,28 @@ syncBlockHeaders = do
       updateLatestConfirmedHeightTip newestConfirmedBlockHeader
   where
     updateLatestConfirmedHeightTip header = do
-      State{ currentHeightTip = currentHeightTipV, currentTip = currentTipV } <- ask
-      liftIO $ STM.atomically $ do
-        TVar.writeTVar currentHeightTipV (Just (blockHeaderHeight header))
-        TVar.writeTVar currentTipV (Just header)
+      State{ currentTip = currentTipV } <- ask
+      liftIO $ STM.atomically $ TVar.writeTVar currentTipV (Just header)
 
+    mgetHeightToStartSyncFromTo :: AppT IO (Maybe (BlockHeight, BlockHeight))
     mgetHeightToStartSyncFromTo = do
-      State{ config = config, currentHeightTip = currentHeightTipV } <- ask
-      mcurrentConfirmedHeightTip <- liftIO $ TVar.readTVarIO currentHeightTipV
+      State{ config = config, currentTip = currentTipV } <- ask
+      mcurrentConfirmedTip <- liftIO $ TVar.readTVarIO currentTipV
       let userPass = BasicAuthData (Text.encodeUtf8 $ configBTCUser config) (Text.encodeUtf8 $ configBTCPassword config)
       eblockchainInfo <- liftIO $ Bitcoin.withBitcoin ( configBTCURL config) (getBlockchainInfo userPass [])
       case eblockchainInfo of
         (Result _ blockchainInfo ) -> do
           let newUnconfirmedHeightTip = Bitcoin.blocks blockchainInfo
           liftIO $ Text.putStrLn ( "current unconfirmed height tip is " <> tshow newUnconfirmedHeightTip)
-          case mcurrentConfirmedHeightTip of
-            Just currentConfirmedHeightTip
-              | currentConfirmedHeightTip + (configBlocksToConfirm config) == newUnconfirmedHeightTip -> return Nothing
+          case mcurrentConfirmedTip of
+            Just currentConfirmedTip
+              | blockHeaderHeight currentConfirmedTip + (configBlocksToConfirm config) == newUnconfirmedHeightTip -> return Nothing
             _ | newUnconfirmedHeightTip < (configBlocksToConfirm config) -> return Nothing -- do nothing, if there are no confirmed blocks yet
             _ -> do -- there are some confirmed blocks, that we are not aware of, need to sync DB
               let confirmedHeightFrom =
-                    case mcurrentConfirmedHeightTip of
+                    case mcurrentConfirmedTip of
                       Nothing -> 0 -- no previously confirmed tip, start with 0
-                      Just some -> (some + 1) -- start with the next unconfired tip
+                      Just currentConfirmedTip -> (blockHeaderHeight currentConfirmedTip + 1) -- start with the next unconfirmed tip
                   confirmedHeightTo = newUnconfirmedHeightTip - (configBlocksToConfirm config)
               return $ Just (confirmedHeightFrom, confirmedHeightTo)
         some -> error ( "syncBlockHeaders: getBlockchainInfo error: " ++ show some)
