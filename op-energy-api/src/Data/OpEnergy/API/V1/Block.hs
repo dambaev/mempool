@@ -19,7 +19,7 @@
 module Data.OpEnergy.API.V1.Block where
 
 import           Data.Swagger
-import           Control.Lens
+import           Control.Lens ((&), mapped, (?~))
 import           GHC.Generics
 import           Data.Typeable              (Typeable)
 import           Data.Aeson
@@ -76,8 +76,41 @@ defaultBlockHeader = BlockHeader
   , blockHeaderReward = 5000000000
   }
 
-instance ToJSON BlockHeader
-instance FromJSON BlockHeader
+instance ToJSON BlockHeader where -- generic instance adds 'blockHeader' prefix to each field, which breaks compatibility, so provide custom instance
+  toJSON bh = object
+    [ "hash"              .= blockHeaderHash bh
+    , "previousblockhash" .= blockHeaderPreviousblockhash bh
+    , "height"            .= blockHeaderHeight bh
+    , "version"           .= blockHeaderVersion bh
+    , "timestamp"         .= blockHeaderTimestamp bh
+    , "bits"              .= blockHeaderBits bh
+    , "nonce"             .= blockHeaderNonce bh
+    , "difficulty"        .= blockHeaderDifficulty bh
+    , "merkle_root"       .= blockHeaderMerkle_root bh
+    , "tx_count"          .= blockHeaderTx_count bh
+    , "size"              .= blockHeaderSize bh
+    , "weight"            .= blockHeaderWeight bh
+    , "chainwork"         .= blockHeaderChainwork bh
+    , "mediantime"        .= blockHeaderMediantime bh
+    , "reward"            .= blockHeaderReward bh
+    ]
+instance FromJSON BlockHeader where
+  parseJSON = withObject "BlockHeader" $ \v -> BlockHeader
+    <$> v .: "hash"
+    <*> v .: "previousblockhash"
+    <*> v .: "height"
+    <*> v .: "version"
+    <*> v .: "timestamp"
+    <*> v .: "bits"
+    <*> v .: "nonce"
+    <*> v .: "difficulty"
+    <*> v .: "merkle_root"
+    <*> v .: "tx_count"
+    <*> v .: "size"
+    <*> v .: "weight"
+    <*> v .: "chainwork"
+    <*> v .: "mediantime"
+    <*> v .: "reward"
 instance ToSchema BlockHeader where
   declareNamedSchema proxy = genericDeclareNamedSchema defaultSchemaOptions proxy
     & mapped.schema.description ?~ "BlockHeader schema"
