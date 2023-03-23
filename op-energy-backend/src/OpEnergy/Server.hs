@@ -6,6 +6,7 @@
 {-# LANGUAGE TypeOperators              #-}
 module OpEnergy.Server where
 
+import           System.IO as IO
 import           Servant
 import           Network.Wai.Handler.Warp
 import           Control.Monad.Trans.Reader (runReaderT, ask)
@@ -50,6 +51,7 @@ schedulerMainLoop :: AppT IO ()
 schedulerMainLoop = do
   State{ config = Config{ configSchedulerPollRateSecs = delaySecs }} <- ask
   liftIO $ Text.putStrLn "scheduler main loop"
+  liftIO $ IO.hFlush stdout
   OpEnergy.Server.V1.schedulerIteration
   liftIO $ threadDelay ((fromPositive delaySecs) * 1000000)
   schedulerMainLoop

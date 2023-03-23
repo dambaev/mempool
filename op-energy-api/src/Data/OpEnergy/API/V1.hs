@@ -15,7 +15,11 @@ import           Control.Lens
 import           GHC.Generics
 import           Data.Typeable              (Typeable)
 import           Data.Aeson
+
+import           Data.Proxy
 import           Servant.API
+import           Servant.API.WebSocket (WebSocket)
+import           Servant.Swagger(HasSwagger(..))
 import           Data.Text                  (Text)
 
 import           Data.OpEnergy.API.V1.Natural
@@ -25,7 +29,10 @@ import           Data.OpEnergy.API.V1.Block
 
 -- | API specifications of a backend service for Swagger
 type V1API
-  = "register"
+  = "ws"
+    :> Description "websockets handler"
+    :> WebSocket
+  :<|> "register"
     :> Description "Registers new user and returns randomly generated account secret and account token.\n Account secret should be used for /login API encpoint.\n Account token should be used in the rest API calls as an authentication cookie"
     :> Post '[JSON] RegisterResult
 
@@ -114,6 +121,13 @@ type V1API
     :> Description "returns short hash of commit of the op-energy git repo that had been used to build backend"
     :> Get '[JSON] GitHashResponse
 
+
+type FakeWSAPI = Get '[JSON] ()
+instance HasSwagger WebSocket where
+  toSwagger _ = toSwagger api
+    where
+      api :: Proxy FakeWSAPI
+      api = Proxy
 
 data GitHashResponse = GitHashResponse
   { gitCommitHash :: Text

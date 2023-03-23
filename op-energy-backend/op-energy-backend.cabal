@@ -48,6 +48,7 @@ library
                    , OpEnergy.Server.V1.DB
                    , OpEnergy.Server.V1.Class
                    , OpEnergy.Server.V1.BlockHeadersService
+                   , OpEnergy.Server.V1.WebSocketService
                    , Data.Bitcoin.API
                    , Data.Bitcoin.BlockStats
                    , Data.Bitcoin.BlockInfo
@@ -59,6 +60,7 @@ library
                     , containers
                     , servant
                     , servant-server, servant-client, servant-jsonrpc, servant-jsonrpc-client
+                    , websockets, servant-websockets
                     , http-client
                     , servant-swagger
                     , swagger2
