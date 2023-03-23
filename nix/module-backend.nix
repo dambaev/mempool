@@ -180,7 +180,7 @@ in
         ];
         script = ''
           set -ex
-          OPENERGY_BACKEND_CONFIG_FILE="${openergy_config}" op-energy-backend +RTS -N -s
+          OPENERGY_BACKEND_CONFIG_FILE="${openergy_config}" op-energy-backend +RTS -c -N -s
         '';
       })) eachInstance);
   };
