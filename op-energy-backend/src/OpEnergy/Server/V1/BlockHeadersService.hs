@@ -10,7 +10,7 @@ import           Servant (err404, throwError)
 import           Servant.Client.JsonRpc
 import           Control.Monad (forM_)
 import           Control.Monad.Trans.Reader (ask)
-import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Data.Text.IO as Text
 import qualified Data.Text.Encoding as Text
 
@@ -48,6 +48,13 @@ getBlockHeaderByHash hash = do
 
 getBlockHeaderByHeight :: BlockHeight -> AppM BlockHeader
 getBlockHeaderByHeight height = do
+  mheader <- mgetBlockHeaderByHeight height
+  case mheader of
+    Just header -> return header
+    _ -> throwError err404
+
+mgetBlockHeaderByHeight :: MonadIO m => BlockHeight -> AppT m (Maybe BlockHeader)
+mgetBlockHeaderByHeight height = do
   State{ blockHeadersDBPool = pool, currentHeightTip = currentHeightTipV, blockHeadersHashCache = blockHeadersHashCacheV, blockHeadersHeightCache = blockHeadersHeightCacheV } <- ask
   mcurrentHeightTip <- liftIO $ TVar.readTVarIO currentHeightTipV
   blockHeadersHeightCache <- liftIO $ TVar.readTVarIO blockHeadersHeightCacheV
@@ -57,18 +64,18 @@ getBlockHeaderByHeight height = do
           case Map.lookup height blockHeadersHeightCache of -- check cache first
             Just header -> do
               liftIO $ Text.putStrLn $ "header with height " <> tshow height <> " found in the cache"
-              return header
+              return (Just header)
             Nothing -> do -- there is no header in cache
               mheader <- liftIO $ flip runSqlPersistMPool pool $ selectFirst [ BlockHeaderHeight ==. height ] []
               case mheader of
-                Nothing-> throwError err404
+                Nothing-> return Nothing
                 Just (Entity _ header) -> do
                   liftIO $ STM.atomically $ do
                     TVar.modifyTVar blockHeadersHeightCacheV $ \cache-> Map.insert height header cache -- update cache
                     TVar.modifyTVar blockHeadersHashCacheV $ \cache-> Map.insert (blockHeaderHash header) height cache -- update cache
                   liftIO $ Text.putStrLn $ "header with height " <> tshow height <> " inserted in the cache"
-                  return header
-    _ -> throwError err404
+                  return (Just header)
+    _ -> return Nothing
 
 mgetLastBlockHeader :: Pool SqlBackend-> IO (Maybe (Entity BlockHeader))
 mgetLastBlockHeader pool = flip runSqlPersistMPool pool $ selectFirst ([] :: [Filter BlockHeader]) [ Desc BlockHeaderHeight ]
@@ -76,12 +83,14 @@ mgetLastBlockHeader pool = flip runSqlPersistMPool pool $ selectFirst ([] :: [Fi
 -- | performs read from DB in order to set State.currentHeightTip
 loadDBState :: AppT IO ()
 loadDBState = do
-  State{ blockHeadersDBPool = pool, currentHeightTip = currentHeightTipV } <- ask
+  State{ blockHeadersDBPool = pool, currentHeightTip = currentHeightTipV, currentTip = currentTipV } <- ask
   mlast <- liftIO $ mgetLastBlockHeader pool
   case mlast of
     Nothing-> return () -- do nothing
     Just (Entity _ header) -> liftIO $ do
-      STM.atomically $ TVar.writeTVar currentHeightTipV (Just (blockHeaderHeight header))
+      STM.atomically $ do
+        TVar.writeTVar currentHeightTipV (Just (blockHeaderHeight header))
+        TVar.writeTVar currentTipV (Just header)
       Text.putStrLn ("current confirmed height tip " <> tshow (blockHeaderHeight header))
 
 -- | this procedure ensures that BlockHeaders table is in sync with block chain
@@ -97,8 +106,11 @@ syncBlockHeaders = do
       updateLatestConfirmedHeightTip startSyncHeightTo
   where
     updateLatestConfirmedHeightTip startSyncHeightTo = do
-      State{ currentHeightTip = currentHeightTipV } <- ask
-      liftIO $ STM.atomically $ TVar.writeTVar currentHeightTipV (Just startSyncHeightTo)
+      State{ currentHeightTip = currentHeightTipV, currentTip = currentTipV } <- ask
+      mblockHeader <- mgetBlockHeaderByHeight startSyncHeightTo
+      liftIO $ STM.atomically $ do
+        TVar.writeTVar currentHeightTipV (Just startSyncHeightTo)
+        TVar.writeTVar currentTipV mblockHeader
 
     mgetHeightToStartSyncFromTo = do
       State{ config = config, currentHeightTip = currentHeightTipV } <- ask
