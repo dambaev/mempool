@@ -30,7 +30,7 @@ import           Database.Persist
 import           Database.Persist.Sql
 
 data Hash = Hash Text
-  deriving (Show, Generic, Typeable, Eq)
+  deriving (Show, Generic, Typeable, Eq, Ord)
 instance ToJSON Hash
 instance FromJSON Hash
 instance ToParamSchema Hash where
