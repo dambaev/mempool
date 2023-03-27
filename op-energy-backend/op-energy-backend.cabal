@@ -49,6 +49,7 @@ library
                    , OpEnergy.Server.V1.Class
                    , OpEnergy.Server.V1.BlockHeadersService
                    , OpEnergy.Server.V1.WebSocketService
+                   , OpEnergy.Server.V1.WebSocketService.Message
                    , OpEnergy.Server.V1.BlockSpanService
                    , Data.Bitcoin.API
                    , Data.Bitcoin.BlockStats
@@ -77,7 +78,7 @@ library
                     , conduit
                     , exceptions
                     , mtl
-                    , stm
+                    , stm, stm-chans
                     , transformers
                     , warp
     ghc-options:    -O2 -Wall -Werror -Wno-unticked-promoted-constructors -fno-warn-name-shadowing -Wno-orphans

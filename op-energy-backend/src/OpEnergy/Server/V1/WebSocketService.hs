@@ -5,81 +5,76 @@ import           Data.Aeson as Aeson
 import           System.IO as IO
 import           Data.Text(Text)
 import qualified Data.Text.IO as Text
+import           Control.Exception as E
 import           Control.Monad ( forever)
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Reader (ask, runReaderT)
+import           Data.IORef
+import qualified Control.Concurrent.STM as STM
 import qualified Control.Concurrent.STM.TVar as TVar
-import           Network.WebSockets (DataMessage(..), WebSocketsData(..), Connection, receiveData, withPingThread, sendTextData)
+import           Network.WebSockets ( Connection, receiveData, withPingThread, sendTextData)
+import           OpEnergy.Server.V1.DB (tshow)
 
 -- import           Servant.API.WebSocket
 import           OpEnergy.Server.V1.Class (AppT, AppM, State(..))
-import           Data.OpEnergy.API.V1.Block( BlockHeader)
+import           Data.OpEnergy.API.V1.Hash( Hash, generateRandomHash)
+import           Data.OpEnergy.API.V1.Block( BlockHeight, BlockHeader(..))
+import           OpEnergy.Server.V1.WebSocketService.Message
 
 
-data WebsocketRequest
-  = ActionInit
-  | ActionWant [Text]
-  deriving (Eq, Show)
-
-instance FromJSON WebsocketRequest where
-  parseJSON = withObject "WebsocketRequest" $ \v-> do
-    action::Text <- v .: "action"
-    case action of
-      "init" -> return ActionInit
-      "want" -> ActionWant <$> v .: "data"
-      _ -> return ActionInit
-instance ToJSON WebsocketRequest where
-  toJSON ActionInit = object [ "action" .= ("init" :: Text)]
-  toJSON (ActionWant topics) = object
-    [ "action" .= ("want" :: Text)
-    , "data" .= topics
-    ]
-instance WebSocketsData WebsocketRequest where
-  fromLazyByteString lbs =
-    case Aeson.decode lbs of
-      Just ret -> ret
-      _ -> error "failed to parse Action from websockets data"
-  toLazyByteString action = Aeson.encode action
-  fromDataMessage (Text bs _) =
-    case Aeson.decode bs of
-      Just ret -> ret
-      _ -> error "failed to parse Action from websockets data message"
-  fromDataMessage (Binary bs) =
-    case Aeson.decode bs of
-      Just ret -> ret
-      _ -> error "failed to parse Action from websockets data message"
-
--- | TODO: compatibility with mempool's frontend
-data MempoolInfo = MempoolInfo
-  { newestConfirmedBlock :: Maybe BlockHeader -- TODO: do we actually need BlockHeader here?
-  }
-  deriving (Show)
-instance ToJSON MempoolInfo where
-  toJSON mpi = object
-    [ "oe-newest-confirmed-block" .= newestConfirmedBlock mpi -- the only field which should be interesting for OpEnergy frontend
-    , "mempoolInfo" .= object
-      [ "loaded" .= True
-      , "size" .= (0:: Int)
-      , "bytes" .= (0::Int)
-      ]
-    , "blocks" .= ([] :: [Text])
-    , "mempool-blocks" .= ([] :: [Text])
-    , "transactions" .= ([] :: [Text])
-    , "backendInfo" .= ("{ \"hostname\": \"test\", \"version\": \"test\", \"gitCommit\": \"test\"}":: Text)
-    ]
 
 webSocketConnection :: Connection-> AppM ()
 webSocketConnection conn = do
   state <- ask
-  liftIO $ Text.putStrLn "new websocket connection" >> IO.hFlush stdout
-  liftIO $ withPingThread conn 10 (sendTextData conn ("{\"pong\": true}" :: Text)) $ forever $ flip runReaderT state $ do
-    req <- liftIO $ receiveData conn
-    case req of
-      ActionWant topics -> sendTopics topics
-      ActionInit -> do
-        mpi <- getMempoolInfo
-        liftIO $ sendTextData conn $ Aeson.encode mpi
+  liftIO $ bracket (initConnection state) (closeConnection state) $ \(uuid, witnessedHeightV)-> do
+    timeoutCounterV <- newIORef (10:: Int) -- used to determine if ping packet should be sent
+    liftIO $ withPingThread conn 1 (checkIteration state uuid witnessedHeightV timeoutCounterV) $ forever $ flip runReaderT state $ do
+      req <- liftIO $ receiveData conn
+      case req of
+        ActionWant topics -> sendTopics topics
+        ActionInit -> do
+          liftIO $ Text.putStrLn (tshow uuid <> " init data request")
+          mpi <- getMempoolInfo
+          liftIO $ sendTextData conn $ Aeson.encode mpi
+          writeIORef timeoutCounterV 10 -- TODO: make it configurable
   where
+    checkIteration state _ witnessedHeightV timeoutCounterV = do
+      let State{ currentTip = currentTipV } = state
+      mwitnessedHeight <- readIORef witnessedHeightV
+      mcurrentTip <- STM.atomically $ TVar.readTVar currentTipV
+      case (mwitnessedHeight, mcurrentTip) of
+        ( _, Nothing) -> do -- haven't witnessed current tip and there is no tip loaded yet. decrease timeout
+          decreaseTimeoutOrSendPing
+        (Nothing, Just currentTip) -> do -- current connection saw no current tip yet: need to send one to the client and store
+          sendTextData conn $ MessageNewestBlockHeader currentTip
+          writeIORef timeoutCounterV 10 -- TODO: make it configurable
+          writeIORef witnessedHeightV $! Just $! blockHeaderHeight currentTip
+        ( Just witnessedHeight, Just currentTip)
+          | witnessedHeight == blockHeaderHeight currentTip -> decreaseTimeoutOrSendPing -- current tip had already been witnessed
+          | otherwise -> do
+              sendTextData conn $ MessageNewestBlockHeader currentTip
+              writeIORef timeoutCounterV 10 -- TODO: make it configurable
+              writeIORef witnessedHeightV $! Just $! blockHeaderHeight currentTip
+      where
+        decreaseTimeoutOrSendPing :: IO ()
+        decreaseTimeoutOrSendPing = do
+          counter <- readIORef timeoutCounterV
+          if counter == 0
+            then do
+              writeIORef timeoutCounterV 10 -- TODO: make it configurable
+              sendTextData conn ("{\"pong\": true}" :: Text)
+            else writeIORef timeoutCounterV (pred counter) -- decrease counter
+
+    initConnection :: State-> IO (Hash, IORef (Maybe BlockHeight))
+    initConnection state = do
+      let State{websocketsBroadcastChan = _chan} = state
+      witnessedTipV <- newIORef Nothing
+      uuid <- generateRandomHash
+      liftIO $ Text.putStrLn (tshow uuid <> ": new websocket connection") >> IO.hFlush stdout
+      return (uuid, witnessedTipV)
+    closeConnection _ (uuid, _) = do
+      liftIO $ Text.putStrLn (tshow uuid <> ": closed websocket connection") >> IO.hFlush stdout
+      return ()
     sendTopics [] = return ()
     sendTopics ("generatedaccounttoken" : rest) = do
       liftIO $ sendTextData conn ("{\"generatedAccountSecret\" : \"test\", \"generatedAccountToken\": \"test\"}"::Text)

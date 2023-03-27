@@ -14,7 +14,7 @@
 , async
 , exceptions
 , op-energy-api
-, stm
+, stm, stm-chans
 , transformers
 , GIT_COMMIT_HASH
 , ...
@@ -39,7 +39,7 @@ mkDerivation {
     cryptohash-sha256 base16-bytestring
     random
     exceptions
-    stm
+    stm stm-chans
     transformers
     warp
   ];
