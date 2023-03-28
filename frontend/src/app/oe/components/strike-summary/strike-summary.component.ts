@@ -145,7 +145,7 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
     )
     .subscribe(([fromBlock, toBlock]: [Block, Block]) => {
       this.fromBlock = fromBlock;
-      if (typeof toBlock === BlockTypes.STRING) {
+      if (typeof toBlock === BlockTypes.NUMBER) {
         this.toBlock = {
           ...this.fromBlock,
           height: +toBlock,
