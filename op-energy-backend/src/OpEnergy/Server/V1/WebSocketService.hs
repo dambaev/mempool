@@ -32,11 +32,16 @@ webSocketConnection conn = do
       req <- liftIO $ receiveData conn
       case req of
         ActionWant topics -> sendTopics topics
+        ActionPing -> do
+          liftIO $ do
+            sendTextData conn MessagePong
+            writeIORef timeoutCounterV 10 -- TODO: make it configurable
         ActionInit -> do
           liftIO $ Text.putStrLn (tshow uuid <> " init data request")
           mpi <- getMempoolInfo
-          liftIO $ sendTextData conn $ Aeson.encode mpi
-          writeIORef timeoutCounterV 10 -- TODO: make it configurable
+          liftIO $ do
+            sendTextData conn $ Aeson.encode mpi
+            writeIORef timeoutCounterV 10 -- TODO: make it configurable
   where
     checkIteration state _ witnessedHeightV timeoutCounterV = do
       let State{ currentTip = currentTipV } = state

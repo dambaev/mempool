@@ -11,6 +11,7 @@ import           Data.OpEnergy.API.V1.Block( BlockHeader)
 
 data WebsocketRequest
   = ActionInit
+  | ActionPing
   | ActionWant [Text]
   deriving (Eq, Show)
 
@@ -19,10 +20,12 @@ instance FromJSON WebsocketRequest where
     action::Text <- v .: "action"
     case action of
       "init" -> return ActionInit
+      "ping" -> return ActionPing
       "want" -> ActionWant <$> v .: "data"
-      _ -> return ActionInit
+      _ -> return ActionPing
 instance ToJSON WebsocketRequest where
   toJSON ActionInit = object [ "action" .= ("init" :: Text)]
+  toJSON ActionPing = object [ "action" .= ("ping" :: Text)]
   toJSON (ActionWant topics) = object
     [ "action" .= ("want" :: Text)
     , "data" .= topics
@@ -63,6 +66,7 @@ instance ToJSON MempoolInfo where
 
 data Message
   = MessageNewestBlockHeader BlockHeader
+  | MessagePong
   deriving (Show)
 
 instance WebSocketsData Message where
@@ -85,4 +89,7 @@ instance FromJSON Message where
 instance ToJSON Message where
   toJSON (MessageNewestBlockHeader header) = object
     [ "oe-newest-confirmed-block" .= toJSON header
+    ]
+  toJSON (MessagePong) = object
+    [ "pong" .= True
     ]
