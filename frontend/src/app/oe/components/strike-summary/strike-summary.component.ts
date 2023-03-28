@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { ElectrsApiService } from '../../../services/electrs-api.service';
 import { switchMap, catchError, map, take } from 'rxjs/operators';
 import { Block, Transaction } from '../../../interfaces/electrs.interface';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
@@ -84,7 +83,6 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
     private router: Router,
     private modalService: NgbModal,
     private opEnergyApiService: OpEnergyApiService,
-    private electrsApiService: ElectrsApiService,
     public stateService: StateService,
     private seoService: SeoService,
     private websocketService: WebsocketService,
@@ -107,8 +105,8 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
 
     this.subscription = this.route.paramMap.pipe(
       switchMap((params: ParamMap) => {
-        const fromBlockHash: string = params.get('from') || '';
-        const toBlockHash: string = params.get('to') || '';
+        const fromBlockHeight: number = parseInt(params.get('from'), 10);
+        const toBlockHeight: number = parseInt( params.get('to'), 10);
         this.fromBlock = null;
         this.toBlock = null;
         this.page = 1;
@@ -120,11 +118,6 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
           this.blockHeight = history.state.data.blockHeight;
         }
 
-        const isBlockHeight = this.getIsBlockHeight(fromBlockHash, toBlockHash);
-        if (!isBlockHeight) {
-          this.fromBlockHash = fromBlockHash;
-          this.toBlockHash = toBlockHash;
-        }
         document.body.scrollTo(0, 0);
 
         if (history.state.data && history.state.data.block) {
@@ -136,38 +129,17 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
 
         let fromBlockInCache: Block;
         let toBlockInCache: Block;
-        if (isBlockHeight) {
-          fromBlockInCache = this.latestBlocks.find((block: Block) => block.height === parseInt(fromBlockHash, 10));
-          toBlockInCache = this.latestBlocks.find((block: Block) => block.height === parseInt(toBlockHash, 10));
-          if (fromBlockInCache && toBlockInCache) {
-            return of([fromBlockInCache, toBlockInCache]);
-          }
-          return combineLatest([
-            this.getBlockHashFromHeight(fromBlockHash),
-            this.getBlockHashFromHeight(toBlockHash),
-          ])
-            .pipe(
-              switchMap(([fromHash, toHash]) => {
-                this.fromBlockHash = fromHash;
-                this.toBlockHash = toHash;
-                this.location.replaceState(
-                  this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/hashstrikes/strike_summary/`, fromHash, toHash]).toString()
-                );
-                return combineLatest([
-                  this.getBlock(fromHash),
-                  this.getBlock(toHash),
-                ]);
-              })
-            );
-        }
-        fromBlockInCache = this.latestBlocks.find((block: Block) => block.id === this.fromBlockHash);
-        toBlockInCache = this.latestBlocks.find((block: Block) => block.id === this.toBlockHash);
+
+        fromBlockInCache = this.latestBlocks.find((block: Block) => block.height === fromBlockHeight);
+        toBlockInCache = this.latestBlocks.find((block: Block) => block.height === toBlockHeight);
         if (fromBlockInCache && toBlockInCache) {
           return of([fromBlockInCache, toBlockInCache]);
         }
         return combineLatest([
-          this.getBlock(fromBlockHash),
-          this.getBlock(toBlockHash),
+          this.opEnergyApiService.$getBlockByHeight(fromBlockHeight),
+          this.opEnergyApiService.$getBlockByHeight(toBlockHeight).pipe(
+            catchError(() => of( toBlockHeight)),
+          ),
         ]);
       }),
     )
@@ -309,22 +281,6 @@ export class StrikeSummaryComponent implements OnInit, OnDestroy {
       hexValue += str;
     }
     return hexValue;
-  }
-
-  getIsBlockHeight(fromBlockHash: string, toBlockHash: string): boolean {
-    return /^[0-9]+$/.test(fromBlockHash) && /^[0-9]+$/.test(toBlockHash);
-  }
-
-  getBlockHashFromHeight(blockHash: string): Observable<string> {
-    return this.electrsApiService.getBlockHashFromHeight$(parseInt(blockHash, 10)).pipe(
-      catchError(() => of(blockHash)),
-    );
-  }
-
-  getBlock(blockHash: string): Observable<string | Block> {
-    return this.opEnergyApiService.$getBlock(blockHash).pipe(
-      catchError(() => of(blockHash)),
-    );
   }
 
   goDetail(fromBlock, strike): void {
