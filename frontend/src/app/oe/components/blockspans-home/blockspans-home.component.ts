@@ -6,7 +6,6 @@ import { Block } from 'src/app/interfaces/electrs.interface';
 import { StateService } from 'src/app/services/state.service';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { specialBlocks } from 'src/app/app.constants';
-import { ElectrsApiService } from 'src/app/services/electrs-api.service';
 import { switchMap, take } from 'rxjs/operators';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
 import { OpEnergyApiService } from 'src/app/oe/services/op-energy.service';
@@ -83,7 +82,6 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
     private router: Router,
     private relativeUrlPipe: RelativeUrlPipe,
     private cd: ChangeDetectorRef,
-    private electrsApiService: ElectrsApiService,
     private opEnergyApiService: OpEnergyApiService
   ) { }
 
