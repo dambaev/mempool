@@ -51,6 +51,7 @@ library
                    , OpEnergy.Server.V1.WebSocketService
                    , OpEnergy.Server.V1.WebSocketService.Message
                    , OpEnergy.Server.V1.BlockSpanService
+                   , OpEnergy.Server.V1.StatisticsService
                    , Data.Bitcoin.API
                    , Data.Bitcoin.BlockStats
                    , Data.Bitcoin.BlockInfo
@@ -83,4 +84,5 @@ library
                     , warp
     ghc-options:    -O2 -Wall -Werror -Wno-unticked-promoted-constructors -fno-warn-name-shadowing -Wno-orphans
     extensions:       OverloadedStrings
+                    , ScopedTypeVariables
 

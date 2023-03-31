@@ -30,6 +30,7 @@ data Config = Config
   , configBTCPollRateSecs :: Positive Int
   , configSchedulerPollRateSecs :: Positive Int
   , configBlocksToConfirm :: Natural Int
+  , configStatisticsBlockSpansCount :: Positive Int
   }
   deriving Show
 instance FromJSON Config where
@@ -47,6 +48,7 @@ instance FromJSON Config where
     <*> ( v .:? "BTC_POLL_RATE_SECS" .!= (configBTCPollRateSecs defaultConfig))
     <*> ( v .:? "SCHEDULER_POLL_RATE_SECS" .!= (configSchedulerPollRateSecs defaultConfig))
     <*> ( v .:? "BLOCKS_TO_CONFIRM" .!= (configBlocksToConfirm defaultConfig))
+    <*> ( v .:? "STATISTICS_BLOCK_SPANS_COUNT" .!= (configStatisticsBlockSpansCount defaultConfig))
 
 defaultConfig:: Config
 defaultConfig = Config
@@ -63,6 +65,7 @@ defaultConfig = Config
   , configBTCPollRateSecs = verifyPositive 1
   , configSchedulerPollRateSecs = verifyPositive 1
   , configBlocksToConfirm = 6
+  , configStatisticsBlockSpansCount = 100
   }
 
 getConfigFromEnvironment :: IO Config

@@ -7,7 +7,6 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 module OpEnergy.Server.V1 where
 
-import           Data.Text                  (Text)
 import           Servant
 import           Control.Exception( Exception)
 import qualified Control.Exception as E
@@ -21,6 +20,7 @@ import           OpEnergy.Server.V1.Class (AppT)
 import           OpEnergy.Server.V1.BlockHeadersService(syncBlockHeaders, getBlockHeaderByHash, getBlockHeaderByHeight)
 import           OpEnergy.Server.V1.WebSocketService(webSocketConnection)
 import           OpEnergy.Server.V1.BlockSpanService(getBlockSpanList)
+import           OpEnergy.Server.V1.StatisticsService(calculateStatistics)
 
 -- | here goes implementation of OpEnergy API, which should match Data.OpEnergy.API.V1.V1API
 server:: ServerT V1API (AppT Handler)
@@ -35,7 +35,7 @@ server = OpEnergy.Server.V1.WebSocketService.webSocketConnection
     :<|> strikeHistoryMediantimeGet
     :<|> slowFastResultsMediantimeGet
     :<|> userDisplayNamePost
-    :<|> statisticsGet
+    :<|> OpEnergy.Server.V1.StatisticsService.calculateStatistics
     :<|> OpEnergy.Server.V1.BlockHeadersService.getBlockHeaderByHash
     :<|> OpEnergy.Server.V1.BlockHeadersService.getBlockHeaderByHeight
     :<|> OpEnergy.Server.V1.BlockSpanService.getBlockSpanList
@@ -76,9 +76,6 @@ slowFastResultsMediantimeGet = undefined
 
 userDisplayNamePost :: PostUserDisplayNameRequest -> AppT Handler ()
 userDisplayNamePost = undefined
-
-statisticsGet :: BlockHeight -> Text-> AppT Handler Statistics
-statisticsGet = undefined
 
 oeBlockSpanListGet :: BlockHeight-> Positive Int-> Positive Int-> AppT Handler [BlockSpan]
 oeBlockSpanListGet = undefined
