@@ -20,7 +20,7 @@ import           Servant.API
 import qualified Data.Text.Read as TR
 
 newtype Positive a = Positive Int
-  deriving (Show, Generic, Typeable, Eq)
+  deriving (Ord, Real, Enum, Integral, Show, Generic, Typeable, Eq)
 
 instance Num (Positive a) where
   (+) (Positive left) (Positive right) = verifyPositiveInt $! left + right

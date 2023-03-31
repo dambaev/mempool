@@ -92,7 +92,7 @@ type V1API
 
   :<|> "statistics"
     :> Capture "blockheight" BlockHeight
-    :> Capture "span" Text
+    :> Capture "span" (Positive Int)
     :> Description "Calculates NBDR statistics for a given block height and span"
     :> Get '[JSON] Statistics
 

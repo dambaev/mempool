@@ -24,7 +24,7 @@ import qualified Data.Text                  as T
 import           Numeric
 
 newtype (Ord a, Num a) => Natural a = Natural a
-  deriving (Show, Typeable, Eq, Ord, Enum)
+  deriving (Ord, Real, Enum, Integral, Show, Typeable, Eq)
 instance (Ord a, Num a) => Num (Natural a) where
   (+) (Natural left) (Natural right) = verifyNatural $! left + right
   (-) (Natural left) (Natural right) = verifyNatural $! left - right
