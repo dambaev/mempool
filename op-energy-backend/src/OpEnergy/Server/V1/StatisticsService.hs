@@ -15,7 +15,7 @@ import OpEnergy.Server.V1.BlockHeadersService
 calculateStatistics :: BlockHeight -> Positive Int -> AppM Statistics
 calculateStatistics startHeight span = do
   State{ config = Config { configStatisticsBlockSpansCount = statisticsBlockSpansCount}} <- ask
-  blockSpans <- getBlockSpanList startHeight span statisticsBlockSpansCount
+  blockSpans <- getBlockSpanList startHeight span $! positiveFromPositive2 statisticsBlockSpansCount
   let theoreticalBlockSpanTime = span * 600
       theoreticalBlockSpanTimePercent = theoreticalBlockSpanTime * 100
   discoverSpeeds::[Double] <- forM blockSpans $ \(BlockSpan start end) -> do
@@ -23,7 +23,7 @@ calculateStatistics startHeight span = do
     endBlock <- getBlockHeaderByHeight end
     return $! (fromIntegral theoreticalBlockSpanTimePercent) / ((fromIntegral (blockHeaderTimestamp endBlock)) - (fromIntegral (blockHeaderTimestamp startBlock)))
   let avg = (List.foldl' (\acc v -> acc + v) 0.0 discoverSpeeds ) / (fromIntegral statisticsBlockSpansCount)
-      stddev = sqrt $! (List.foldl' (\_ i-> (i - avg) ^ (2 :: Int)) 0.0 discoverSpeeds) / (fromIntegral statisticsBlockSpansCount)
+      stddev = sqrt $! (List.foldl' (\acc i-> acc + (i - avg) ^ (2 :: Int)) 0.0 discoverSpeeds) / (fromIntegral ((unPositive2 statisticsBlockSpansCount) - 1))
   return $ Statistics
     { nbdr = NbdrStatistics
       { avg = avg

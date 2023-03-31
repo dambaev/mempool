@@ -70,3 +70,62 @@ verifyPositive s =
 
 fromPositive :: Positive a -> Int
 fromPositive (Positive v) = v
+
+-- | Like Positive, but defines type-level parameter of the minimum value
+newtype Positive2 a = Positive2
+  { unPositive2 :: Int
+  }
+  deriving (Ord, Real, Enum, Integral, Show, Generic, Typeable, Eq)
+
+minimumPositive2 :: Positive2 Int
+minimumPositive2 = Positive2 2
+
+instance Num (Positive2 a) where
+  (+) (Positive2 left) (Positive2 right) = verifyPositive2Int $! left + right
+  (-) (Positive2 left) (Positive2 right) = verifyPositive2Int $! left - right
+  (*) (Positive2 left) (Positive2 right) = verifyPositive2Int $! left * right
+  abs v = v
+  signum (Positive2 left) = verifyPositive2Int $ signum left
+  fromInteger v = verifyPositive2Int (fromInteger v)
+
+instance ToJSON (Positive2 Int) where
+  toJSON (Positive2 v) = toJSON v
+instance FromJSON (Positive2 Int) where
+  parseJSON = withScientific "Positive2" $ \v-> return (verifyPositive2 v)
+instance ToSchema (Positive2 Int) where
+  declareNamedSchema _ = return $ NamedSchema (Just "Positive2") $ mempty
+    & type_ ?~ SwaggerNumber
+    & maximum_ ?~ fromIntegral (maxBound ::Int)
+    & minimum_ ?~ fromIntegral (unPositive2 minimumPositive2)
+instance ToParamSchema (Positive2 Int) where
+  toParamSchema _ = mempty
+    & type_ ?~ SwaggerNumber
+    & maximum_ ?~ fromIntegral (maxBound ::Int)
+    & minimum_ ?~ fromIntegral (unPositive2 minimumPositive2)
+instance FromHttpApiData (Positive2 Int) where
+  parseUrlPiece t =
+    case TR.decimal t of
+      Left _ -> Left "Positive2: wrong value"
+      Right (v, _) -> Right (verifyPositive2Int v)
+  parseQueryParam t =
+    case TR.decimal t of
+      Left _ -> Left "Positive2: wrong value"
+      Right (v, _)-> Right (verifyPositive2Int v)
+instance ToHttpApiData (Positive2 Int) where
+  toUrlPiece (Positive2 v) = toUrlPiece v
+  toQueryParam (Positive2 v) = toQueryParam v
+
+verifyPositive2Int:: Int -> Positive2 a
+verifyPositive2Int v =
+  if v >= unPositive2 minimumPositive2
+  then Positive2 v
+  else error $ "verifyPositive2Int: " ++ show v ++ " wrong value"
+
+verifyPositive2:: Scientific -> Positive2 a
+verifyPositive2 s =
+  case toBoundedInteger s of
+    Just v -> verifyPositive2Int v
+    _  -> error "verifyPositive2: wrong value"
+
+positiveFromPositive2 :: Positive2 a -> Positive a
+positiveFromPositive2 (Positive2 v) = Positive v

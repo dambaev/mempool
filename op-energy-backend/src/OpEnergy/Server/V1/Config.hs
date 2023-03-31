@@ -30,7 +30,7 @@ data Config = Config
   , configBTCPollRateSecs :: Positive Int
   , configSchedulerPollRateSecs :: Positive Int
   , configBlocksToConfirm :: Natural Int
-  , configStatisticsBlockSpansCount :: Positive Int
+  , configStatisticsBlockSpansCount :: Positive2 Int
   }
   deriving Show
 instance FromJSON Config where
