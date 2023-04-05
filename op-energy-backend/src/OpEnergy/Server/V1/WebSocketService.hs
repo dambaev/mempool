@@ -19,7 +19,9 @@ import           OpEnergy.Server.V1.DB (tshow)
 import           OpEnergy.Server.V1.Class (AppT, AppM, State(..))
 import           Data.OpEnergy.API.V1.Hash( Hash, generateRandomHash)
 import           Data.OpEnergy.API.V1.Block( BlockHeight, BlockHeader(..))
+import           Data.OpEnergy.API.V1.Positive(naturalFromPositive)
 import           OpEnergy.Server.V1.WebSocketService.Message
+import           OpEnergy.Server.V1.Config
 
 
 
@@ -27,52 +29,53 @@ webSocketConnection :: Connection-> AppM ()
 webSocketConnection conn = do
   state <- ask
   liftIO $ bracket (initConnection state) (closeConnection state) $ \(uuid, witnessedHeightV)-> do
-    timeoutCounterV <- newIORef (10:: Int) -- used to determine if ping packet should be sent
+    let State{ config = Config { configWebsocketKeepAliveSecs = configWebsocketKeepAliveSecs} } = state
+    timeoutCounterV <- newIORef (naturalFromPositive configWebsocketKeepAliveSecs)
     liftIO $ withPingThread conn 1 (checkIteration state uuid witnessedHeightV timeoutCounterV) $ forever $ flip runReaderT state $ do
       req <- liftIO $ receiveData conn
       case req of
-        ActionWant topics -> sendTopics topics
+        ActionWant topics -> sendTopics topics -- handle requested topics
         ActionPing -> do
           liftIO $ do
             sendTextData conn MessagePong
-            writeIORef timeoutCounterV 10 -- TODO: make it configurable
+            writeIORef timeoutCounterV (naturalFromPositive configWebsocketKeepAliveSecs)
         ActionInit -> do
           liftIO $ Text.putStrLn (tshow uuid <> " init data request")
           mpi <- getMempoolInfo
           liftIO $ do
             sendTextData conn $ Aeson.encode mpi
-            writeIORef timeoutCounterV 10 -- TODO: make it configurable
+            writeIORef timeoutCounterV (naturalFromPositive configWebsocketKeepAliveSecs )
   where
     checkIteration state _ witnessedHeightV timeoutCounterV = do
-      let State{ currentTip = currentTipV } = state
+      let State{ currentTip = currentTipV, config = Config {configWebsocketKeepAliveSecs = configWebsocketKeepAliveSecs} } = state
       mwitnessedHeight <- readIORef witnessedHeightV
       mcurrentTip <- STM.atomically $ TVar.readTVar currentTipV
       case (mwitnessedHeight, mcurrentTip) of
         ( _, Nothing) -> do -- haven't witnessed current tip and there is no tip loaded yet. decrease timeout
-          decreaseTimeoutOrSendPing
+          decreaseTimeoutOrSendPing state
         (Nothing, Just currentTip) -> do -- current connection saw no current tip yet: need to send one to the client and store
           sendTextData conn $ MessageNewestBlockHeader currentTip
-          writeIORef timeoutCounterV 10 -- TODO: make it configurable
+          writeIORef timeoutCounterV (naturalFromPositive configWebsocketKeepAliveSecs)
           writeIORef witnessedHeightV $! Just $! blockHeaderHeight currentTip
         ( Just witnessedHeight, Just currentTip)
-          | witnessedHeight == blockHeaderHeight currentTip -> decreaseTimeoutOrSendPing -- current tip had already been witnessed
+          | witnessedHeight == blockHeaderHeight currentTip -> decreaseTimeoutOrSendPing state -- current tip had already been witnessed
           | otherwise -> do
               sendTextData conn $ MessageNewestBlockHeader currentTip
-              writeIORef timeoutCounterV 10 -- TODO: make it configurable
+              writeIORef timeoutCounterV (naturalFromPositive configWebsocketKeepAliveSecs)
               writeIORef witnessedHeightV $! Just $! blockHeaderHeight currentTip
       where
-        decreaseTimeoutOrSendPing :: IO ()
-        decreaseTimeoutOrSendPing = do
+        decreaseTimeoutOrSendPing :: State-> IO ()
+        decreaseTimeoutOrSendPing state = do
+          let State{ config = Config { configWebsocketKeepAliveSecs = configWebsocketKeepAliveSecs} } = state
           counter <- readIORef timeoutCounterV
           if counter == 0
             then do
-              writeIORef timeoutCounterV 10 -- TODO: make it configurable
+              writeIORef timeoutCounterV (naturalFromPositive configWebsocketKeepAliveSecs)
               sendTextData conn ("{\"pong\": true}" :: Text)
             else writeIORef timeoutCounterV (pred counter) -- decrease counter
 
     initConnection :: State-> IO (Hash, IORef (Maybe BlockHeight))
-    initConnection state = do
-      let State{websocketsBroadcastChan = _chan} = state
+    initConnection _state = do
       witnessedTipV <- newIORef Nothing
       uuid <- generateRandomHash
       liftIO $ Text.putStrLn (tshow uuid <> ": new websocket connection") >> IO.hFlush stdout

@@ -16,6 +16,7 @@ import           Control.Monad.Catch
 instance MonadThrow Parser where
   throwM = fail . show
 
+-- | Describes configurable options
 data Config = Config
   { configDBPort :: Int
   , configDBHost:: Text
@@ -23,14 +24,23 @@ data Config = Config
   , configDBName :: Text
   , configDBPassword :: Text
   , configSalt :: Text
+    -- ^ this value is being used as a salt for secrets/token generation
   , configHTTPAPIPort :: Int
+    -- ^ this port should be used to receive HTTP requests
   , configBTCURL :: BaseUrl
+    -- ^ URL to bitcoin node
   , configBTCUser :: Text
   , configBTCPassword :: Text
   , configBTCPollRateSecs :: Positive Int
+    -- ^ how often to poll btc node
   , configSchedulerPollRateSecs :: Positive Int
+    -- ^ scheduler interval
   , configBlocksToConfirm :: Natural Int
+    -- ^ only blocks [ 0 .. (tip - configBlockToConfirm)] are assumed to be confirmed
   , configStatisticsBlockSpansCount :: Positive2 Int
+    -- ^ size of a block span to use for calculating statistics
+  , configWebsocketKeepAliveSecs :: Positive Int
+    -- ^ how many seconds to wait until ping packet will be sent
   }
   deriving Show
 instance FromJSON Config where
@@ -49,6 +59,7 @@ instance FromJSON Config where
     <*> ( v .:? "SCHEDULER_POLL_RATE_SECS" .!= (configSchedulerPollRateSecs defaultConfig))
     <*> ( v .:? "BLOCKS_TO_CONFIRM" .!= (configBlocksToConfirm defaultConfig))
     <*> ( v .:? "STATISTICS_BLOCK_SPANS_COUNT" .!= (configStatisticsBlockSpansCount defaultConfig))
+    <*> ( v .:? "WEBSOCKET_KEEP_ALIVE_SECS" .!= (configWebsocketKeepAliveSecs defaultConfig))
 
 defaultConfig:: Config
 defaultConfig = Config
@@ -66,6 +77,7 @@ defaultConfig = Config
   , configSchedulerPollRateSecs = verifyPositive 1
   , configBlocksToConfirm = 6
   , configStatisticsBlockSpansCount = 100
+  , configWebsocketKeepAliveSecs = 10
   }
 
 getConfigFromEnvironment :: IO Config
