@@ -1,3 +1,6 @@
+{--
+ - This module describes Positive numbers
+ -}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TypeOperators              #-}
@@ -18,6 +21,8 @@ import           Data.Aeson
 import           Data.Scientific( Scientific, toBoundedInteger)
 import           Servant.API
 import qualified Data.Text.Read as TR
+
+import Data.OpEnergy.API.V1.Natural (Natural(..))
 
 newtype Positive a = Positive Int
   deriving (Ord, Real, Enum, Integral, Show, Generic, Typeable, Eq)
@@ -129,3 +134,6 @@ verifyPositive2 s =
 
 positiveFromPositive2 :: Positive2 a -> Positive a
 positiveFromPositive2 (Positive2 v) = Positive v
+
+naturalFromPositive :: Positive a-> Natural Int
+naturalFromPositive (Positive v) = Natural v
