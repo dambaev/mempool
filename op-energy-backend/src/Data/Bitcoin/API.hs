@@ -1,10 +1,15 @@
+{-- | This module exports API and client functions of Bitcoin JSON-RPC
+ - There are some bitcoin rpc libraries on hackage, but there were some
+ - issues with wallets and those libraries are HTTP. bitcoin-cli is using
+ - JSON-RPC, so I made a decision to make a small JSON-RPC library.
+ -}
 {-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE DataKinds     #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE EmptyDataDecls  #-}
-{-# LANGUAGE FlexibleInstances  #-}
-{-# LANGUAGE DuplicateRecordFields  #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE DuplicateRecordFields      #-}
 
 module Data.Bitcoin.API where
 

@@ -1,3 +1,5 @@
+{-- | This module describes WebsocketRequest from frontend and Message from backend
+ -}
 {-# LANGUAGE ScopedTypeVariables #-}
 module OpEnergy.Server.V1.WebSocketService.Message where
 
@@ -5,10 +7,9 @@ import           Data.Aeson as Aeson
 import           Data.Text(Text)
 import           Network.WebSockets (DataMessage(..), WebSocketsData(..))
 
--- import           Servant.API.WebSocket
 import           Data.OpEnergy.API.V1.Block( BlockHeader)
 
-
+-- | Request from frontend
 data WebsocketRequest
   = ActionInit
   | ActionPing
@@ -45,9 +46,8 @@ instance WebSocketsData WebsocketRequest where
       Just ret -> ret
       _ -> error "failed to parse Action from websockets data message"
 
--- | TODO: compatibility with mempool's frontend
 data MempoolInfo = MempoolInfo
-  { newestConfirmedBlock :: Maybe BlockHeader -- TODO: do we actually need BlockHeader here?
+  { newestConfirmedBlock :: Maybe BlockHeader
   }
   deriving (Show)
 instance ToJSON MempoolInfo where
@@ -64,6 +64,7 @@ instance ToJSON MempoolInfo where
     , "backendInfo" .= ("{ \"hostname\": \"test\", \"version\": \"test\", \"gitCommit\": \"test\"}":: Text)
     ]
 
+-- | Message from backend
 data Message
   = MessageNewestBlockHeader BlockHeader
   | MessagePong

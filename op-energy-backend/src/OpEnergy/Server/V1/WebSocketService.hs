@@ -5,6 +5,7 @@ import           Data.Aeson as Aeson
 import           System.IO as IO
 import           Data.Text(Text)
 import qualified Data.Text.IO as Text
+import           Data.Text.Show (tshow)
 import           Control.Exception as E
 import           Control.Monad ( forever)
 import           Control.Monad.IO.Class (liftIO)
@@ -13,9 +14,7 @@ import           Data.IORef
 import qualified Control.Concurrent.STM as STM
 import qualified Control.Concurrent.STM.TVar as TVar
 import           Network.WebSockets ( Connection, receiveData, withPingThread, sendTextData)
-import           OpEnergy.Server.V1.DB (tshow)
 
--- import           Servant.API.WebSocket
 import           OpEnergy.Server.V1.Class (AppT, AppM, State(..))
 import           Data.OpEnergy.API.V1.Hash( Hash, generateRandomHash)
 import           Data.OpEnergy.API.V1.Block( BlockHeight, BlockHeader(..))
@@ -25,6 +24,10 @@ import           OpEnergy.Server.V1.Config
 
 
 
+-- | This procedure is an mainloop for every websocket connection, which:
+-- - handles requests from clients;
+-- - sends notification about newest confirmed block
+-- - sends keepalive packets
 webSocketConnection :: Connection-> AppM ()
 webSocketConnection conn = do
   state <- ask
@@ -59,7 +62,7 @@ webSocketConnection conn = do
           writeIORef witnessedHeightV $! Just $! blockHeaderHeight currentTip
         ( Just witnessedHeight, Just currentTip)
           | witnessedHeight == blockHeaderHeight currentTip -> decreaseTimeoutOrSendPing state -- current tip had already been witnessed
-          | otherwise -> do
+          | otherwise -> do -- notify client about newest confirmed block
               sendTextData conn $ MessageNewestBlockHeader currentTip
               writeIORef timeoutCounterV (naturalFromPositive configWebsocketKeepAliveSecs)
               writeIORef witnessedHeightV $! Just $! blockHeaderHeight currentTip
@@ -84,13 +87,14 @@ webSocketConnection conn = do
       liftIO $ Text.putStrLn (tshow uuid <> ": closed websocket connection") >> IO.hFlush stdout
       return ()
     sendTopics [] = return ()
-    sendTopics ("generatedaccounttoken" : rest) = do
+    sendTopics ("generatedaccounttoken" : rest) = do -- for now send dummy secret/token
       liftIO $ sendTextData conn ("{\"generatedAccountSecret\" : \"test\", \"generatedAccountToken\": \"test\"}"::Text)
       sendTopics rest
     sendTopics ( topic : rest) = do
       liftIO $ Text.putStrLn ("received unsupported ActionWant " <> topic) >> IO.hFlush stdout
       sendTopics rest
 
+-- currently, frontend expects 'mempool info' initial message from backend. This function provides such info
 getMempoolInfo :: AppT IO MempoolInfo
 getMempoolInfo = do
   State{ currentTip = currentTipV} <- ask

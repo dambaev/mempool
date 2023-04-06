@@ -1,44 +1,51 @@
+{--
+ - This module defines data type that keep all the state, used by backend
+ -}
 module OpEnergy.Server.V1.Class where
-
 
 import           Control.Concurrent.STM.TVar (TVar)
 import qualified Control.Concurrent.STM.TVar as TVar
-import           Control.Concurrent.STM.TMChan (TMChan)
-import qualified Control.Concurrent.STM.TMChan as TMChan
-import           Control.Monad.Trans.Reader (ReaderT)
+import           Control.Monad.Trans.Reader (runReaderT, ReaderT)
 import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Servant (Handler)
 
 import           Data.OpEnergy.API.V1.Block (BlockHash, BlockHeight, BlockHeader)
-import           OpEnergy.Server.V1.WebSocketService.Message as WS (Message)
 import           OpEnergy.Server.V1.Config
 import           Data.Pool(Pool)
 import           Database.Persist.Postgresql (SqlBackend)
 
+-- | defines the whole state used by backend
 data State = State
-  { config :: Config -- app config
-  , blockHeadersDBPool :: Pool SqlBackend -- connection pool to BlockHeadersDB
-  , blockHeadersHeightCache :: TVar (Map BlockHeight BlockHeader) -- BlockHeaders' cache: Height -> BlockHeader
-  , blockHeadersHashCache :: TVar (Map BlockHash BlockHeight) -- BlockHeaders' cache: BlockHash -> BlockHeight
-  , currentTip :: TVar (Maybe BlockHeader) -- ^ defines the newest witnessed confirmed block
-  , websocketsBroadcastChan :: TMChan WS.Message
+  { config :: Config
+  -- ^ app config, loaded from file
+  , blockHeadersDBPool :: Pool SqlBackend
+  -- ^ DB connection pool to BlockHeadersDB
+  , blockHeadersHeightCache :: TVar (Map BlockHeight BlockHeader)
+  -- ^ BlockHeaders' cache: BlockHeight -> BlockHeader. At the moment, cache is not expireable
+  , blockHeadersHashCache :: TVar (Map BlockHash BlockHeight)
+  -- ^ BlockHeaders' cache: BlockHash -> BlockHeight. At the moment, cache is not expireable
+  , currentTip :: TVar (Maybe BlockHeader)
+  -- ^ defines the newest witnessed confirmed block
   }
 
 type AppT = ReaderT State
 type AppM = ReaderT State Handler
 
-defaultState :: Pool SqlBackend-> IO State
-defaultState _blockHeadersDBPool = do
+-- | constructs default state with given config and DB pool
+defaultState :: Config-> Pool SqlBackend-> IO State
+defaultState config _blockHeadersDBPool = do
   _blockHeadersHeightCache <- TVar.newTVarIO Map.empty
   _blockHeadersHashCache <- TVar.newTVarIO Map.empty
   _currentTip <- TVar.newTVarIO Nothing
-  _websocketsBroadcastChan <- TMChan.newBroadcastTMChanIO
   return $ State
-    { config = defaultConfig
+    { config = config
     , blockHeadersHeightCache = _blockHeadersHeightCache
     , blockHeadersHashCache = _blockHeadersHashCache
     , blockHeadersDBPool = _blockHeadersDBPool
     , currentTip = _currentTip -- websockets' init data relies on whole BlockHeader
-    , websocketsBroadcastChan = _websocketsBroadcastChan
     }
+
+-- | Runs app transformer with given context
+runAppT :: Monad m => State-> AppT m a-> m a
+runAppT s x = runReaderT x s

@@ -1,3 +1,6 @@
+{-- |
+ - exports BlockInfo data type
+ -}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE DataKinds     #-}

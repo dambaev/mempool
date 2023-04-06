@@ -52,6 +52,7 @@ library
                    , OpEnergy.Server.V1.WebSocketService.Message
                    , OpEnergy.Server.V1.BlockSpanService
                    , OpEnergy.Server.V1.StatisticsService
+                   , Data.Text.Show
                    , Data.Bitcoin.API
                    , Data.Bitcoin.BlockStats
                    , Data.Bitcoin.BlockInfo

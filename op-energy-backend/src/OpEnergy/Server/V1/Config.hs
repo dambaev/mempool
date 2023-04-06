@@ -23,6 +23,8 @@ data Config = Config
   , configDBUser :: Text
   , configDBName :: Text
   , configDBPassword :: Text
+  , configDBConnectionPoolSize :: Positive Int
+    -- ^ DB connection pool size
   , configSalt :: Text
     -- ^ this value is being used as a salt for secrets/token generation
   , configHTTPAPIPort :: Int
@@ -50,6 +52,7 @@ instance FromJSON Config where
     <*> ( v .:? "DB_USER" .!= (configDBUser defaultConfig))
     <*> ( v .:? "DB_NAME" .!= (configDBName defaultConfig))
     <*> ( v .:? "DB_PASSWORD" .!= (configDBPassword defaultConfig))
+    <*> ( v .:? "DB_CONNECTION_POOL_SIZE" .!= (configDBConnectionPoolSize defaultConfig))
     <*> ( v .:? "SECRET_SALT" .!= (configSalt defaultConfig))
     <*> ( v .:? "API_HTTP_PORT" .!= (configHTTPAPIPort defaultConfig))
     <*> (( v .:? "BTC_URL" .!= (showBaseUrl $ configBTCURL defaultConfig)) >>= parseBaseUrl)
@@ -68,6 +71,7 @@ defaultConfig = Config
   , configDBUser = "openergy"
   , configDBName = "openergy"
   , configDBPassword = ""
+  , configDBConnectionPoolSize = 32
   , configSalt = ""
   , configHTTPAPIPort = 8999
   , configBTCURL = BaseUrl Http "localhost" 8332 ""

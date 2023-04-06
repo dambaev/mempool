@@ -1,3 +1,6 @@
+{-- |
+ - This module is the top module of backend V1
+ -}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveDataTypeable         #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -5,16 +8,16 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
-module OpEnergy.Server.V1 where
+module OpEnergy.Server.V1
+  ( server
+  , schedulerIteration
+  )where
 
 import           Servant
-import           Control.Exception( Exception)
-import qualified Control.Exception as E
 
 import           Data.OpEnergy.API.V1
 import           Data.OpEnergy.API.V1.Block
 import           Data.OpEnergy.API.V1.Account
-import           Data.OpEnergy.API.V1.Positive
 import qualified OpEnergy.Server.GitCommitHash as Server
 import           OpEnergy.Server.V1.Class (AppT)
 import           OpEnergy.Server.V1.BlockHeadersService(syncBlockHeaders, getBlockHeaderByHash, getBlockHeaderByHeight)
@@ -41,12 +44,17 @@ server = OpEnergy.Server.V1.WebSocketService.webSocketConnection
     :<|> OpEnergy.Server.V1.BlockSpanService.getBlockSpanList
     :<|> oeGitHashGet
 
+-- | one iteration that called from scheduler thread
 schedulerIteration :: AppT IO ()
 schedulerIteration = OpEnergy.Server.V1.BlockHeadersService.syncBlockHeaders
 
-handle :: Exception e => (e -> IO a) -> IO a -> IO a
-handle hfoo payload = E.handle hfoo (payload >>= E.evaluate)
+-- returns just commit hash, provided by build system
+oeGitHashGet :: AppT Handler GitHashResponse
+oeGitHashGet = return $ GitHashResponse
+  { gitCommitHash = Server.gitCommitHash
+  }
 
+{- here goes a set of unimplemented yet handlers --> -}
 registerPost :: AppT Handler RegisterResult
 registerPost = undefined
 
@@ -76,11 +84,3 @@ slowFastResultsMediantimeGet = undefined
 
 userDisplayNamePost :: PostUserDisplayNameRequest -> AppT Handler ()
 userDisplayNamePost = undefined
-
-oeBlockSpanListGet :: BlockHeight-> Positive Int-> Positive Int-> AppT Handler [BlockSpan]
-oeBlockSpanListGet = undefined
-
-oeGitHashGet :: AppT Handler GitHashResponse
-oeGitHashGet = return $ GitHashResponse
-  { gitCommitHash = Server.gitCommitHash
-  }

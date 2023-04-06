@@ -1,5 +1,11 @@
-
-module OpEnergy.Server.V1.BlockHeadersService where
+{-- | This module provides service responsible for synchronizing BlockHeaders DB with Bitcoin node
+ -}
+module OpEnergy.Server.V1.BlockHeadersService
+  ( syncBlockHeaders
+  , getBlockHeaderByHash
+  , getBlockHeaderByHeight
+  , loadDBState
+  ) where
 
 import qualified Control.Concurrent.STM as STM
 import qualified Control.Concurrent.STM.TVar as TVar
@@ -13,6 +19,7 @@ import           Control.Monad.Trans.Reader (ask)
 import           Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Data.Text.IO as Text
 import qualified Data.Text.Encoding as Text
+import           Data.Text.Show (tshow)
 
 import           Database.Persist.Postgresql
 
@@ -21,10 +28,10 @@ import           Data.Bitcoin.BlockStats as BlockStats
 import           Data.Bitcoin.BlockInfo as BlockInfo
 import           Data.OpEnergy.API.V1.Block
 import           OpEnergy.Server.V1.Config
-import           OpEnergy.Server.V1.DB (tshow)
 import           OpEnergy.Server.V1.Class (AppT, AppM, State(..))
 
 
+-- | returns BlockHeader by given hash
 getBlockHeaderByHash :: BlockHash -> AppM BlockHeader
 getBlockHeaderByHash hash = do
   State{ blockHeadersDBPool = pool, blockHeadersHashCache = blockHeadersHashCacheV, blockHeadersHeightCache = blockHeadersHeightCacheV } <- ask
@@ -46,6 +53,7 @@ getBlockHeaderByHash hash = do
           liftIO $ Text.putStrLn $ "header with height " <> tshow height <> " and hash " <> tshow hash <> " inserted into the cache"
           return header
 
+-- | returns BlockHeader by given height
 getBlockHeaderByHeight :: BlockHeight -> AppM BlockHeader
 getBlockHeaderByHeight height = do
   mheader <- mgetBlockHeaderByHeight height
@@ -53,6 +61,7 @@ getBlockHeaderByHeight height = do
     Just header -> return header
     _ -> throwError err404
 
+-- | returns Just BlockHeader by given height or Nothing if there no block with given height
 mgetBlockHeaderByHeight :: MonadIO m => BlockHeight -> AppT m (Maybe BlockHeader)
 mgetBlockHeaderByHeight height = do
   State{ blockHeadersDBPool = pool, currentTip = currentTipV, blockHeadersHashCache = blockHeadersHashCacheV, blockHeadersHeightCache = blockHeadersHeightCacheV } <- ask
@@ -78,6 +87,7 @@ mgetBlockHeaderByHeight height = do
                   return (Just header)
     _ -> return Nothing
 
+-- | returns the newest confirmed BlockHeader or Nothing if there are no blocks found yet
 mgetLastBlockHeader :: Pool SqlBackend-> IO (Maybe (Entity BlockHeader))
 mgetLastBlockHeader pool = flip runSqlPersistMPool pool $ selectFirst ([] :: [Filter BlockHeader]) [ Desc BlockHeaderHeight ]
 
@@ -102,12 +112,13 @@ syncBlockHeaders = do
     Just (startSyncHeightFrom, startSyncHeightTo) -> do
       newestConfirmedBlockHeader <- performSyncFromTo startSyncHeightFrom startSyncHeightTo
       liftIO $ Text.putStrLn $ "new latest confirmed block height " <> tshow startSyncHeightTo
-      updateLatestConfirmedHeightTip newestConfirmedBlockHeader
+      updateLatestConfirmedHeightTip newestConfirmedBlockHeader -- cache newest header
   where
     updateLatestConfirmedHeightTip header = do
       State{ currentTip = currentTipV } <- ask
       liftIO $ STM.atomically $ TVar.writeTVar currentTipV (Just header)
 
+    -- | queries bitcoin node and compares with latest witnessed block
     mgetHeightToStartSyncFromTo :: AppT IO (Maybe (BlockHeight, BlockHeight))
     mgetHeightToStartSyncFromTo = do
       State{ config = config, currentTip = currentTipV } <- ask
@@ -120,7 +131,7 @@ syncBlockHeaders = do
           liftIO $ Text.putStrLn ( "current unconfirmed height tip is " <> tshow newUnconfirmedHeightTip)
           case mcurrentConfirmedTip of
             Just currentConfirmedTip
-              | blockHeaderHeight currentConfirmedTip + (configBlocksToConfirm config) == newUnconfirmedHeightTip -> return Nothing
+              | blockHeaderHeight currentConfirmedTip + (configBlocksToConfirm config) >= newUnconfirmedHeightTip -> return Nothing
             _ | newUnconfirmedHeightTip < (configBlocksToConfirm config) -> return Nothing -- do nothing, if there are no confirmed blocks yet
             _ -> do -- there are some confirmed blocks, that we are not aware of, need to sync DB
               let confirmedHeightFrom =
@@ -151,14 +162,11 @@ syncBlockHeaders = do
           let userPass = BasicAuthData (Text.encodeUtf8 $ configBTCUser config) (Text.encodeUtf8 $ configBTCPassword config)
           liftIO $ Bitcoin.withBitcoin ( configBTCURL config) $ do
             Result _ hash <- getBlockHash userPass [height]
-            liftIO $ Text.putStrLn $ "getBlockHash " <> tshow hash
             Result _ bi <- getBlock userPass [ hash ]
-            liftIO $ Text.putStrLn $ "getBlock " <> tshow bi
             if height == 0
               then return (bi, 5000000000 {- default subsidy-} )
               else do
                 Result _ bs <- getBlockStats userPass [height]
-                liftIO $ Text.putStrLn $ "getBlockStats " <> tshow bs
                 return (bi, BlockStats.totalfee bs + BlockStats.subsidy bs)
 
         blockHeaderFromBlockInfos bi reward = BlockHeader
