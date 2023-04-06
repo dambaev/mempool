@@ -94,7 +94,7 @@ data BlockchainInfo = BlockchainInfo
   , headers:: Natural Int
   , bestblockhash:: BlockHash
   , difficulty:: Double
-  , time:: Word32
+  , time:: Maybe Word32 -- Looks like this field is absent when bitcoin node has only base block (0)
   , mediantime:: Word32
   , verificationprogress:: Double
   , initialblockdownload:: Bool
