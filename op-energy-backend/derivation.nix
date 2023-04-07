@@ -42,6 +42,7 @@ mkDerivation {
     stm stm-chans
     transformers
     warp
+    monad-logger
   ];
   preBuild = ''
     sed -i 's/GIT_COMMIT_HASH/${GIT_COMMIT_HASH}/' src/OpEnergy/Server/GitCommitHash.hs

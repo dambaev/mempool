@@ -6,6 +6,8 @@ module OpEnergy.Server.V1.Class where
 import           Control.Concurrent.STM.TVar (TVar)
 import qualified Control.Concurrent.STM.TVar as TVar
 import           Control.Monad.Trans.Reader (runReaderT, ReaderT)
+import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Logger (runLoggingT, LoggingT, MonadLoggerIO, Loc, LogSource, LogLevel, LogStr)
 import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Servant (Handler)
@@ -14,6 +16,8 @@ import           Data.OpEnergy.API.V1.Block (BlockHash, BlockHeight, BlockHeader
 import           OpEnergy.Server.V1.Config
 import           Data.Pool(Pool)
 import           Database.Persist.Postgresql (SqlBackend)
+
+type LogFunc = Loc -> LogSource -> LogLevel -> LogStr -> IO ()
 
 -- | defines the whole state used by backend
 data State = State
@@ -29,15 +33,15 @@ data State = State
   -- ^ defines the newest witnessed confirmed block
   }
 
-type AppT = ReaderT State
-type AppM = ReaderT State Handler
+type AppT m = ReaderT State (LoggingT m)
+type AppM = ReaderT State ( LoggingT Handler)
 
 -- | constructs default state with given config and DB pool
-defaultState :: Config-> Pool SqlBackend-> IO State
+defaultState :: (MonadLoggerIO m ) => Config-> Pool SqlBackend-> m State
 defaultState config _blockHeadersDBPool = do
-  _blockHeadersHeightCache <- TVar.newTVarIO Map.empty
-  _blockHeadersHashCache <- TVar.newTVarIO Map.empty
-  _currentTip <- TVar.newTVarIO Nothing
+  _blockHeadersHeightCache <- liftIO $ TVar.newTVarIO Map.empty
+  _blockHeadersHashCache <- liftIO $ TVar.newTVarIO Map.empty
+  _currentTip <- liftIO $ TVar.newTVarIO Nothing
   return $ State
     { config = config
     , blockHeadersHeightCache = _blockHeadersHeightCache
@@ -47,5 +51,6 @@ defaultState config _blockHeadersDBPool = do
     }
 
 -- | Runs app transformer with given context
-runAppT :: Monad m => State-> AppT m a-> m a
-runAppT s x = runReaderT x s
+runAppT :: (Monad m) => LogFunc -> State-> AppT m a-> m a
+runAppT logFunc s x = runLoggingT (runReaderT x s) logFunc
+

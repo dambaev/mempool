@@ -1,21 +1,21 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell     #-}
 module OpEnergy.Server.V1.WebSocketService where
 
 import           Data.Aeson as Aeson
-import           System.IO as IO
 import           Data.Text(Text)
-import qualified Data.Text.IO as Text
 import           Data.Text.Show (tshow)
 import           Control.Exception as E
 import           Control.Monad ( forever)
-import           Control.Monad.IO.Class (liftIO)
-import           Control.Monad.Trans.Reader (ask, runReaderT)
+import           Control.Monad.IO.Class (liftIO, MonadIO)
+import           Control.Monad.Trans.Reader (ask)
+import           Control.Monad.Logger (askLoggerIO, logDebug, logError)
 import           Data.IORef
 import qualified Control.Concurrent.STM as STM
 import qualified Control.Concurrent.STM.TVar as TVar
 import           Network.WebSockets ( Connection, receiveData, withPingThread, sendTextData)
 
-import           OpEnergy.Server.V1.Class (AppT, AppM, State(..))
+import           OpEnergy.Server.V1.Class (AppT, AppM, State(..), runAppT)
 import           Data.OpEnergy.API.V1.Hash( Hash, generateRandomHash)
 import           Data.OpEnergy.API.V1.Block( BlockHeight, BlockHeader(..))
 import           Data.OpEnergy.API.V1.Positive(naturalFromPositive)
@@ -31,10 +31,11 @@ import           OpEnergy.Server.V1.Config
 webSocketConnection :: Connection-> AppM ()
 webSocketConnection conn = do
   state <- ask
-  liftIO $ bracket (initConnection state) (closeConnection state) $ \(uuid, witnessedHeightV)-> do
+  logFunc <- askLoggerIO
+  liftIO $ bracket (runAppT logFunc state $ initConnection state) (\uuid -> runAppT logFunc state $ closeConnection state uuid) $ \(uuid, witnessedHeightV)-> do
     let State{ config = Config { configWebsocketKeepAliveSecs = configWebsocketKeepAliveSecs} } = state
     timeoutCounterV <- newIORef (naturalFromPositive configWebsocketKeepAliveSecs)
-    liftIO $ withPingThread conn 1 (checkIteration state uuid witnessedHeightV timeoutCounterV) $ forever $ flip runReaderT state $ do
+    liftIO $ withPingThread conn 1 (checkIteration state uuid witnessedHeightV timeoutCounterV) $ forever $ runAppT logFunc state $ do
       req <- liftIO $ receiveData conn
       case req of
         ActionWant topics -> sendTopics topics -- handle requested topics
@@ -43,7 +44,7 @@ webSocketConnection conn = do
             sendTextData conn MessagePong
             writeIORef timeoutCounterV (naturalFromPositive configWebsocketKeepAliveSecs)
         ActionInit -> do
-          liftIO $ Text.putStrLn (tshow uuid <> " init data request")
+          $(logDebug) (tshow uuid <> " init data request")
           mpi <- getMempoolInfo
           liftIO $ do
             sendTextData conn $ Aeson.encode mpi
@@ -77,21 +78,24 @@ webSocketConnection conn = do
               sendTextData conn ("{\"pong\": true}" :: Text)
             else writeIORef timeoutCounterV (pred counter) -- decrease counter
 
-    initConnection :: State-> IO (Hash, IORef (Maybe BlockHeight))
+    initConnection :: MonadIO m => State-> AppT m (Hash, IORef (Maybe BlockHeight))
     initConnection _state = do
-      witnessedTipV <- newIORef Nothing
-      uuid <- generateRandomHash
-      liftIO $ Text.putStrLn (tshow uuid <> ": new websocket connection") >> IO.hFlush stdout
+      witnessedTipV <- liftIO $ newIORef Nothing
+      uuid <- liftIO $ generateRandomHash
+      $(logDebug) (tshow uuid <> ": new websocket connection")
       return (uuid, witnessedTipV)
+
     closeConnection _ (uuid, _) = do
-      liftIO $ Text.putStrLn (tshow uuid <> ": closed websocket connection") >> IO.hFlush stdout
+      $(logDebug) (tshow uuid <> ": closed websocket connection")
       return ()
+
+    sendTopics :: MonadIO m => [Text] -> AppT m ()
     sendTopics [] = return ()
     sendTopics ("generatedaccounttoken" : rest) = do -- for now send dummy secret/token
       liftIO $ sendTextData conn ("{\"generatedAccountSecret\" : \"test\", \"generatedAccountToken\": \"test\"}"::Text)
       sendTopics rest
     sendTopics ( topic : rest) = do
-      liftIO $ Text.putStrLn ("received unsupported ActionWant " <> topic) >> IO.hFlush stdout
+      $(logError) ("received unsupported ActionWant " <> topic)
       sendTopics rest
 
 -- currently, frontend expects 'mempool info' initial message from backend. This function provides such info

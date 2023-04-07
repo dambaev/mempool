@@ -14,6 +14,7 @@ module OpEnergy.Server.V1
   )where
 
 import           Servant
+import           Control.Monad.IO.Class(MonadIO)
 
 import           Data.OpEnergy.API.V1
 import           Data.OpEnergy.API.V1.Block
@@ -45,7 +46,7 @@ server = OpEnergy.Server.V1.WebSocketService.webSocketConnection
     :<|> oeGitHashGet
 
 -- | one iteration that called from scheduler thread
-schedulerIteration :: AppT IO ()
+schedulerIteration :: MonadIO m => AppT m ()
 schedulerIteration = OpEnergy.Server.V1.BlockHeadersService.syncBlockHeaders
 
 -- returns just commit hash, provided by build system

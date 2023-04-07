@@ -1,5 +1,6 @@
 {-- | This module provides service responsible for synchronizing BlockHeaders DB with Bitcoin node
  -}
+{-# LANGUAGE TemplateHaskell     #-}
 module OpEnergy.Server.V1.BlockHeadersService
   ( syncBlockHeaders
   , getBlockHeaderByHash
@@ -15,9 +16,9 @@ import           Servant.API (BasicAuthData(..))
 import           Servant (err404, throwError)
 import           Servant.Client.JsonRpc
 import           Control.Monad (forM_)
+import           Control.Monad.Logger (logDebug, logInfo)
 import           Control.Monad.Trans.Reader (ask)
 import           Control.Monad.IO.Class (MonadIO, liftIO)
-import qualified Data.Text.IO as Text
 import qualified Data.Text.Encoding as Text
 import           Data.Text.Show (tshow)
 
@@ -41,7 +42,7 @@ getBlockHeaderByHash hash = do
   blockHeadersHashCache <- liftIO $ TVar.readTVarIO blockHeadersHashCacheV
   case Map.lookup hash blockHeadersHashCache of -- check cache first
     Just height -> do
-      liftIO $ Text.putStrLn $ "hash " <> tshow hash <> " is a height " <> tshow height <> " and had been found in the cache"
+      $(logDebug) $ "hash " <> tshow hash <> " is a height " <> tshow height <> " and had been found in the cache"
       getBlockHeaderByHeight height
     Nothing -> do -- there is no header in cache
       mheader <- liftIO $ flip runSqlPersistMPool pool $ selectFirst [ BlockHeaderHash ==. hash ] []
@@ -53,7 +54,7 @@ getBlockHeaderByHash hash = do
             TVar.modifyTVar blockHeadersHeightCacheV $ \cache-> Map.insert height header cache -- update cache
             TVar.modifyTVar blockHeadersHashCacheV $ \cache-> Map.insert hash height cache -- update cache
             return height
-          liftIO $ Text.putStrLn $ "header with height " <> tshow height <> " and hash " <> tshow hash <> " inserted into the cache"
+          $(logDebug) $ "header with height " <> tshow height <> " and hash " <> tshow hash <> " inserted into the cache"
           return header
 
 -- | returns BlockHeader by given height. See mgetBlockHeaderByHeight for reference
@@ -78,7 +79,7 @@ mgetBlockHeaderByHeight height = do
       | height < blockHeaderHeight currentTip -> do -- requested height is confirmed one
           case Map.lookup height blockHeadersHeightCache of -- check cache first
             Just header -> do
-              liftIO $ Text.putStrLn $ "header with height " <> tshow height <> " found in the cache"
+              $(logDebug) $ "header with height " <> tshow height <> " found in the cache"
               return (Just header)
             Nothing -> do -- there is no header in cache
               mheader <- liftIO $ flip runSqlPersistMPool pool $ selectFirst [ BlockHeaderHeight ==. height ] []
@@ -88,7 +89,7 @@ mgetBlockHeaderByHeight height = do
                   liftIO $ STM.atomically $ do
                     TVar.modifyTVar blockHeadersHeightCacheV $ \cache-> Map.insert height header cache -- update cache
                     TVar.modifyTVar blockHeadersHashCacheV $ \cache-> Map.insert (blockHeaderHash header) height cache -- update cache
-                  liftIO $ Text.putStrLn $ "header with height " <> tshow height <> " inserted in the cache"
+                  $(logDebug) $ "header with height " <> tshow height <> " inserted in the cache"
                   return (Just header)
     _ -> return Nothing
 
@@ -97,26 +98,26 @@ mgetLastBlockHeader :: Pool SqlBackend-> IO (Maybe (Entity BlockHeader))
 mgetLastBlockHeader pool = flip runSqlPersistMPool pool $ selectFirst ([] :: [Filter BlockHeader]) [ Desc BlockHeaderHeight ]
 
 -- | performs read from DB in order to set State.currentHeightTip
-loadDBState :: AppT IO ()
+loadDBState :: MonadIO m => AppT m ()
 loadDBState = do
   State{ blockHeadersDBPool = pool, currentTip = currentTipV } <- ask
   mlast <- liftIO $ mgetLastBlockHeader pool
   case mlast of
     Nothing-> return () -- do nothing
-    Just (Entity _ header) -> liftIO $ do
-      STM.atomically $ TVar.writeTVar currentTipV (Just header)
-      Text.putStrLn ("current confirmed height tip " <> tshow (blockHeaderHeight header))
+    Just (Entity _ header) -> do
+      liftIO $ STM.atomically $ TVar.writeTVar currentTipV (Just header)
+      $(logInfo) ("current confirmed height tip " <> tshow (blockHeaderHeight header))
 
 -- | this procedure ensures that BlockHeaders table is in sync with block chain
-syncBlockHeaders :: AppT IO ()
+syncBlockHeaders :: MonadIO m => AppT m ()
 syncBlockHeaders = do
-  liftIO $ Text.putStrLn "syncBlockHeaders"
+  $(logDebug) "syncBlockHeaders"
   mstartSyncHeightFromTo <- mgetHeightToStartSyncFromTo
   case mstartSyncHeightFromTo of
     Nothing-> return () -- do nothing if sync is not needed
     Just (startSyncHeightFrom, startSyncHeightTo) -> do
       newestConfirmedBlockHeader <- performSyncFromTo startSyncHeightFrom startSyncHeightTo
-      liftIO $ Text.putStrLn $ "new latest confirmed block height " <> tshow startSyncHeightTo
+      $(logDebug) $ "new latest confirmed block height " <> tshow startSyncHeightTo
       updateLatestConfirmedHeightTip newestConfirmedBlockHeader -- cache newest header
   where
     updateLatestConfirmedHeightTip header = do
@@ -124,7 +125,7 @@ syncBlockHeaders = do
       liftIO $ STM.atomically $ TVar.writeTVar currentTipV (Just header)
 
     -- | queries bitcoin node and compares with latest witnessed block
-    mgetHeightToStartSyncFromTo :: AppT IO (Maybe (BlockHeight, BlockHeight))
+    mgetHeightToStartSyncFromTo :: MonadIO m => AppT m (Maybe (BlockHeight, BlockHeight))
     mgetHeightToStartSyncFromTo = do
       State{ config = config, currentTip = currentTipV } <- ask
       mcurrentConfirmedTip <- liftIO $ TVar.readTVarIO currentTipV
@@ -133,7 +134,7 @@ syncBlockHeaders = do
       case eblockchainInfo of
         (Result _ blockchainInfo ) -> do
           let newUnconfirmedHeightTip = Bitcoin.blocks blockchainInfo
-          liftIO $ Text.putStrLn ( "current unconfirmed height tip is " <> tshow newUnconfirmedHeightTip)
+          $(logDebug) ( "current unconfirmed height tip is " <> tshow newUnconfirmedHeightTip)
           case mcurrentConfirmedTip of
             Just currentConfirmedTip
               | blockHeaderHeight currentConfirmedTip + (configBlocksToConfirm config) >= newUnconfirmedHeightTip -> return Nothing
@@ -149,14 +150,14 @@ syncBlockHeaders = do
 
     performSyncFromTo confirmedHeightFrom confirmedHeightTo = do
       forM_ [ confirmedHeightFrom .. confirmedHeightTo ] $ \height -> do
-        liftIO $ Text.putStrLn $ "height " <> tshow height
+        $(logDebug) $ "height " <> tshow height
         (bi, reward) <- getBlockInfos height
         let bh = blockHeaderFromBlockInfos bi reward
         persistBlockHeader bh
       (bi, reward) <- getBlockInfos confirmedHeightTo -- now we need to return the last confirmed block to the caller
       return $ blockHeaderFromBlockInfos bi reward
       where
-        persistBlockHeader :: BlockHeader -> AppT IO ()
+        persistBlockHeader :: MonadIO m => BlockHeader -> AppT m ()
         persistBlockHeader header = do
           State{ blockHeadersDBPool = pool } <- ask
           _ <- liftIO $ flip runSqlPersistMPool pool $ insert header
