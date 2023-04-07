@@ -32,6 +32,9 @@ import           OpEnergy.Server.V1.Class (AppT, AppM, State(..))
 
 
 -- | returns BlockHeader by given hash
+-- Complexity:
+-- - O(log n) {cache Hash -> Height lookup} + O(log n) { Height -> Header cache lookup} - in case if hash exists in cache
+-- - 2 * O(log n) {cache lookup } + DB lookup + 2 * O(log n) {cache insertion} - in case if hash is not cached yet
 getBlockHeaderByHash :: BlockHash -> AppM BlockHeader
 getBlockHeaderByHash hash = do
   State{ blockHeadersDBPool = pool, blockHeadersHashCache = blockHeadersHashCacheV, blockHeadersHeightCache = blockHeadersHeightCacheV } <- ask
@@ -53,7 +56,7 @@ getBlockHeaderByHash hash = do
           liftIO $ Text.putStrLn $ "header with height " <> tshow height <> " and hash " <> tshow hash <> " inserted into the cache"
           return header
 
--- | returns BlockHeader by given height
+-- | returns BlockHeader by given height. See mgetBlockHeaderByHeight for reference
 getBlockHeaderByHeight :: BlockHeight -> AppM BlockHeader
 getBlockHeaderByHeight height = do
   mheader <- mgetBlockHeaderByHeight height
@@ -62,6 +65,8 @@ getBlockHeaderByHeight height = do
     _ -> throwError err404
 
 -- | returns Just BlockHeader by given height or Nothing if there no block with given height
+-- - O(log n) - in case if block with given height is in Height -> BlockHeader cache;
+-- - O(log n) {cache lookup} + O(DB lookup) + 2 * O(log n) {cache insertion} in case if no such block header in the cache yet
 mgetBlockHeaderByHeight :: MonadIO m => BlockHeight -> AppT m (Maybe BlockHeader)
 mgetBlockHeaderByHeight height = do
   State{ blockHeadersDBPool = pool, currentTip = currentTipV, blockHeadersHashCache = blockHeadersHashCacheV, blockHeadersHeightCache = blockHeadersHeightCacheV } <- ask
