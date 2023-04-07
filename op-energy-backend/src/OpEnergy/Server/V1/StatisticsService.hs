@@ -31,7 +31,7 @@ calculateStatistics startHeight span = do
   discoverSpeeds::[Double] <- forM blockSpans $ \(BlockSpan start end) -> do
     startBlock <- getBlockHeaderByHeight start
     endBlock <- getBlockHeaderByHeight end
-    return $! (fromIntegral theoreticalBlockSpanTimePercent) / ((fromIntegral (blockHeaderTimestamp endBlock)) - (fromIntegral (blockHeaderTimestamp startBlock)))
+    return $! (fromIntegral theoreticalBlockSpanTimePercent) / ((fromIntegral (blockHeaderMediantime endBlock)) - (fromIntegral (blockHeaderMediantime startBlock)))
   let avg = (List.foldl' (\acc v -> acc + v) 0.0 discoverSpeeds ) / (fromIntegral statisticsBlockSpansCount)
       stddev = sqrt $! (List.foldl' (\acc i-> acc + (i - avg) ^ (2 :: Int)) 0.0 discoverSpeeds) / (fromIntegral ((unPositive2 statisticsBlockSpansCount) - 1))
   return $ Statistics
