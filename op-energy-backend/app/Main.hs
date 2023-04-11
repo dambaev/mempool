@@ -19,22 +19,21 @@ import           Data.OpEnergy.API
 import           OpEnergy.Server
 import           OpEnergy.Server.V1
 import           OpEnergy.Server.V1.Config
-import           OpEnergy.Server.V1.Class (State(..), defaultState, runAppT)
+import           OpEnergy.Server.V1.Class (State(..), defaultState, runAppT, runLogging)
 
 
 -- | entry point
 main :: IO ()
 main = runStdoutLoggingT $ do
-  logFunc <- askLoggerIO
   state <- OpEnergy.Server.initState
-  $(logInfo) "bootstrap tasks"
+  runAppT state $ runLogging $ $(logInfo) "bootstrap tasks"
   OpEnergy.Server.bootstrapTasks state
   -- now spawn worker threads
-  schedulerA <- liftIO $ asyncBound $ runAppT logFunc state $ do -- this is scheduler thread, which goal is to perform periodical tasks
-    $(logInfo) "scheduler thread"
+  schedulerA <- liftIO $ asyncBound $ runAppT state $ do -- this is scheduler thread, which goal is to perform periodical tasks
+    runLogging $ $(logInfo) "scheduler thread"
     OpEnergy.Server.schedulerMainLoop
-  serverA <- liftIO $ asyncBound $ runAppT logFunc state $ do -- this thread is for serving HTTP/websockets requests
-    $(logInfo) "serving API"
+  serverA <- liftIO $ asyncBound $ runAppT state $ do -- this thread is for serving HTTP/websockets requests
+    runLogging $ $(logInfo) "serving API"
     runServer
   liftIO $ waitAnyCancel $ -- waits for any of threads to shutdown in order to shutdown the rest
     [ serverA

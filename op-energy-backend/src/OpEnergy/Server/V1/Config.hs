@@ -12,9 +12,19 @@ import           Servant.Client (BaseUrl(..), showBaseUrl, parseBaseUrl, Scheme(
 import           Data.OpEnergy.API.V1.Positive
 import           Data.OpEnergy.API.V1.Natural
 import           Control.Monad.Catch
+import           Control.Monad.Logger(LogLevel(..))
 
 instance MonadThrow Parser where
   throwM = fail . show
+
+instance FromJSON LogLevel where
+  parseJSON = withText "LogLevel" $ \v->
+    pure $ case v of
+      "Debug" -> LevelDebug
+      "Info" -> LevelInfo
+      "Warn" -> LevelWarn
+      "Error" -> LevelError
+      other -> LevelOther other
 
 -- | Describes configurable options
 data Config = Config
@@ -43,6 +53,8 @@ data Config = Config
     -- ^ size of a block span to use for calculating statistics
   , configWebsocketKeepAliveSecs :: Positive Int
     -- ^ how many seconds to wait until ping packet will be sent
+  , configLogLevelMin :: LogLevel
+    -- ^ minimum log level to display
   }
   deriving Show
 instance FromJSON Config where
@@ -63,6 +75,7 @@ instance FromJSON Config where
     <*> ( v .:? "BLOCKS_TO_CONFIRM" .!= (configBlocksToConfirm defaultConfig))
     <*> ( v .:? "STATISTICS_BLOCK_SPANS_COUNT" .!= (configStatisticsBlockSpansCount defaultConfig))
     <*> ( v .:? "WEBSOCKET_KEEP_ALIVE_SECS" .!= (configWebsocketKeepAliveSecs defaultConfig))
+    <*> ( v .:? "LOG_LEVEL_MIN" .!= (configLogLevelMin defaultConfig))
 
 defaultConfig:: Config
 defaultConfig = Config
@@ -82,6 +95,7 @@ defaultConfig = Config
   , configBlocksToConfirm = 6
   , configStatisticsBlockSpansCount = 100
   , configWebsocketKeepAliveSecs = 10
+  , configLogLevelMin = LevelWarn
   }
 
 getConfigFromEnvironment :: IO Config
