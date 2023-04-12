@@ -2,22 +2,24 @@
  --}
 module OpEnergy.Server.V1.BlockSpanService where
 
+import           Control.Monad.IO.Class(MonadIO)
 
 import           Data.OpEnergy.API.V1.Block
 import           Data.OpEnergy.API.V1.Positive
 import           Data.OpEnergy.API.V1.Natural
-import           OpEnergy.Server.V1.Class ( AppM)
+import           OpEnergy.Server.V1.Class ( AppT)
 
 
 -- | generates list of block spans starting from given BlockHeight
 getBlockSpanList
-  :: BlockHeight
+  :: MonadIO m
+  => BlockHeight
   -- ^ block span list start
   -> Positive Int
   -- ^ size of spans
   -> Positive Int
   -- ^ number of block spans in resulted list
-  -> AppM [BlockSpan]
+  -> AppT m [BlockSpan]
 getBlockSpanList startHeight span numberOfSpans = return spans
   where
     _span = fromPositive span

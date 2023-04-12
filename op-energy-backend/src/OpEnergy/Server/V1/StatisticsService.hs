@@ -4,7 +4,9 @@ module OpEnergy.Server.V1.StatisticsService where
 
 import           Control.Monad (forM)
 import           Control.Monad.Reader (ask)
+import           Control.Monad.IO.Class (MonadIO)
 import qualified Data.List as List
+import           Data.Maybe(fromJust)
 
 import Data.OpEnergy.API.V1.Block
 import Data.OpEnergy.API.V1.Positive
@@ -18,19 +20,20 @@ import OpEnergy.Server.V1.BlockHeadersService
 -- which shows how fast blocks had been discovered: if it less than 100% - then blocks in block span are being discovered slower than theoretical speed. If it more than 100% - faster.
 -- current implementation will try to calculate statistics for 'configStatisticsBlockSpansCount' spans of size 'span' starting from 'startHeight' block
 calculateStatistics
-  :: BlockHeight
+  :: MonadIO m
+  => BlockHeight
   -- ^ starting block height of a range for which statistics will be generated
   -> Positive Int
   -- ^ size of block span
-  -> AppM Statistics
+  -> AppT m Statistics
 calculateStatistics startHeight span = do
   State{ config = Config { configStatisticsBlockSpansCount = statisticsBlockSpansCount}} <- ask
   blockSpans <- getBlockSpanList startHeight span $! positiveFromPositive2 statisticsBlockSpansCount
   let theoreticalBlockSpanTime = span * 600
       theoreticalBlockSpanTimePercent = theoreticalBlockSpanTime * 100
   discoverSpeeds::[Double] <- forM blockSpans $ \(BlockSpan start end) -> do
-    startBlock <- getBlockHeaderByHeight start
-    endBlock <- getBlockHeaderByHeight end
+    startBlock <- mgetBlockHeaderByHeight start >>= pure . fromJust
+    endBlock <- mgetBlockHeaderByHeight end >>= pure . fromJust
     return $! (fromIntegral theoreticalBlockSpanTimePercent) / ((fromIntegral (blockHeaderMediantime endBlock)) - (fromIntegral (blockHeaderMediantime startBlock)))
   let avg = (List.foldl' (\acc v -> acc + v) 0.0 discoverSpeeds ) / (fromIntegral statisticsBlockSpansCount)
       stddev = sqrt $! (List.foldl' (\acc i-> acc + (i - avg) ^ (2 :: Int)) 0.0 discoverSpeeds) / (fromIntegral ((unPositive2 statisticsBlockSpansCount) - 1))

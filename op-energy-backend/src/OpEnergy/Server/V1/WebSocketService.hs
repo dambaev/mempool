@@ -15,7 +15,7 @@ import qualified Control.Concurrent.STM as STM
 import qualified Control.Concurrent.STM.TVar as TVar
 import           Network.WebSockets ( Connection, receiveData, withPingThread, sendTextData)
 
-import           OpEnergy.Server.V1.Class (runLogging, AppT, AppM, State(..), runAppT)
+import           OpEnergy.Server.V1.Class (runLogging, AppT, State(..), runAppT)
 import           Data.OpEnergy.API.V1.Hash( Hash, generateRandomHash)
 import           Data.OpEnergy.API.V1.Block( BlockHeight, BlockHeader(..))
 import           Data.OpEnergy.API.V1.Positive(naturalFromPositive)
@@ -28,7 +28,7 @@ import           OpEnergy.Server.V1.Config
 -- - handles requests from clients;
 -- - sends notification about newest confirmed block
 -- - sends keepalive packets
-webSocketConnection :: Connection-> AppM ()
+webSocketConnection :: MonadIO m => Connection-> AppT m ()
 webSocketConnection conn = do
   state <- ask
   liftIO $ bracket (runAppT state $ initConnection state) (\uuid -> runAppT state $ closeConnection state uuid) $ \(uuid, witnessedHeightV)-> do

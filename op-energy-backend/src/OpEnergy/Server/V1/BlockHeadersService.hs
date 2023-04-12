@@ -5,6 +5,7 @@ module OpEnergy.Server.V1.BlockHeadersService
   ( syncBlockHeaders
   , getBlockHeaderByHash
   , getBlockHeaderByHeight
+  , mgetBlockHeaderByHeight
   , loadDBState
   ) where
 
