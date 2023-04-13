@@ -4,9 +4,16 @@ let
   op-energy-overlay = (import ./overlay.nix) { GIT_COMMIT_HASH = GIT_COMMIT_HASH; };
   initial_script = cfg:
     pkgs.writeText "initial_script.sql" ''
-    CREATE USER IF NOT EXISTS ${cfg.db_user}@localhost IDENTIFIED BY '${cfg.db_psk}';
-    ALTER USER ${cfg.db_user}@localhost IDENTIFIED BY '${cfg.db_psk}';
-    flush privileges;
+    do
+    $$
+    begin
+      if not exists (select * from pg_user where usename = '${cfg.db_user}') then
+        CREATE USER ${cfg.db_user} WITH PASSWORD '${cfg.db_psk}';
+      end if;
+    end
+    $$
+    ;
+    ALTER USER ${cfg.db_user} WITH PASSWORD '${cfg.db_psk}';
   '';
 
   eachInstance = config.services.op-energy-backend;
@@ -23,12 +30,6 @@ let
         type = lib.types.str;
         example = "mempoolacc";
         description = "Account database name of the instance";
-      };
-      block_spans_db_name = lib.mkOption {
-        default = null;
-        type = lib.types.str;
-        example = "op_energy_mainnet_blockchain";
-        description = "Block span database name of the instance";
       };
       db_user = lib.mkOption {
         default = null;
@@ -49,11 +50,18 @@ let
         default = "";
         example = ''
           {
-            "ELECTRUM": {
-              "HOST": "127.0.0.1",
-              "PORT": 50002,
-              "TLS_ENABLED": true,
-            }
+            "DB_PORT": 5432,
+            "DB_HOST": "127.0.0.1",
+            "DB_USER": "openergy",
+            "DB_NAME": "openergy",
+            "DB_PASSWORD": "password",
+            "SECRET_SALT": "salt",
+            "API_HTTP_PORT": 8999,
+            "BTC_URL": "http://127.0.0.1:8332",
+            "BTC_USER": "op-energy",
+            "BTC_PASSWORD": "password1",
+            "BTC_POLL_RATE_SECS": 10,
+            "SCHEDULER_POLL_RATE_SECS": 10
           }
         '';
       };
@@ -69,11 +77,18 @@ in
       mainnet = {
         config = ''
           {
-            "ELECTRUM": {
-              "HOST": "127.0.0.1",
-              "PORT": 50002,
-              "TLS_ENABLED": true,
-            }
+            "DB_PORT": 5432,
+            "DB_HOST": "127.0.0.1",
+            "DB_USER": "openergy",
+            "DB_NAME": "openergy",
+            "DB_PASSWORD": "password",
+            "SECRET_SALT": "salt",
+            "API_HTTP_PORT": 8999,
+            "BTC_URL": "http://127.0.0.1:8332",
+            "BTC_USER": "op-energy",
+            "BTC_PASSWORD": "password1",
+            "BTC_POLL_RATE_SECS": 10,
+            "SCHEDULER_POLL_RATE_SECS": 10
         '';
       };
     };
@@ -84,94 +99,75 @@ in
       op-energy-overlay # add op-energy-backend into context
     ];
     environment.systemPackages = [ pkgs.op-energy-backend ];
-    # enable mysql and declare op-energy DB
-    services.mysql = {
+    # enable postgresql and declare op-energy DB
+    services.postgresql = {
       enable = true;
-      package = pkgs.mariadb; # there is no default value for this option, so we define one
-      initialDatabases = (lib.mapAttrsToList (name: cfg:
-        { name = "${cfg.db_name}";
-        }
+      ensureDatabases = (lib.mapAttrsToList (name: cfg:
+        "${cfg.db_name}"
       ) eachInstance
       ) ++ (lib.mapAttrsToList (name: cfg:
-        { name = "${cfg.account_db_name}";
-        }
-      ) eachInstance
-      ) ++ (lib.mapAttrsToList (name: cfg:
-        { name = "${cfg.block_spans_db_name}";
-        }
+        "${cfg.account_db_name}"
       ) eachInstance
       );
       ensureUsers = ( lib.mapAttrsToList (name: cfg:
         { name = "${cfg.db_user}";
           ensurePermissions = {
-            "${cfg.db_name}.*" = "ALL PRIVILEGES";
+            "DATABASE ${cfg.db_name}" = "ALL PRIVILEGES";
           };
         }
       ) eachInstance
       ) ++ ( lib.mapAttrsToList (name: cfg:
         { name = "${cfg.db_user}";
           ensurePermissions = {
-            "${cfg.account_db_name}.*" = "ALL PRIVILEGES";
-          };
-        }
-      ) eachInstance
-      ) ++ ( lib.mapAttrsToList (name: cfg:
-        { name = "${cfg.db_user}";
-          ensurePermissions = {
-            "${cfg.block_spans_db_name}.*" = "ALL PRIVILEGES";
+            "DATABASE ${cfg.account_db_name}" = "ALL PRIVILEGES";
           };
         }
       ) eachInstance
       );
     };
     systemd.services = {
-      mysql-op-energy-users = {
+      postgresql-op-energy-users = {
         wantedBy = [ "multi-user.target" ];
         after = [
-          "mysql.service"
+          "postgresql.service"
         ];
         requires = [
-          "mysql.service"
+          "postgresql.service"
         ];
         serviceConfig = {
           Type = "simple";
         };
         path = with pkgs; [
-          mariadb
+          postgresql sudo
         ];
         script = lib.foldl' (acc: i: acc + i) '''' ( lib.mapAttrsToList (name: cfg: ''
           # create database if not exist. we can't use services.mysql.ensureDatabase/initialDatase here the latter
           # will not use schema and the former will only affects the very first start of mariadb service, which is not idemponent
-          if [ ! -d "${config.services.mysql.dataDir}/${cfg.db_name}" ]; then
-            ( echo 'CREATE DATABASE `${cfg.db_name}`;'
-              echo 'use `${cfg.db_name}`;'
-            ) | mysql -uroot
+          if [ ! "$(sudo -u postgres psql -l -x --csv | grep 'Name,${cfg.db_name}' --count)" == "1" ]; then
+            ( echo 'CREATE DATABASE ${cfg.db_name};'
+              echo '\c ${cfg.db_name};'
+            ) | sudo -u postgres psql
           fi
-          if [ ! -d "${config.services.mysql.dataDir}/${cfg.account_db_name}" ]; then
-            ( echo 'CREATE DATABASE `${cfg.account_db_name}`;'
-              echo 'use `${cfg.account_db_name}`;'
-            ) | mysql -uroot
+          if [ ! "$(sudo -u postgres psql -l -x --csv | grep 'Name,${cfg.account_db_name}' --count)" == "1" ]; then
+            ( echo 'CREATE DATABASE ${cfg.account_db_name};'
+              echo '\c ${cfg.account_db_name};'
+            ) | sudo -u postgres psql
           fi
-          if [ ! -d "${config.services.mysql.dataDir}/${cfg.block_spans_db_name}" ]; then
-            ( echo 'CREATE DATABASE `${cfg.block_spans_db_name}`;'
-              echo 'use `${cfg.block_spans_db_name}`;'
-            ) | mysql -uroot
-          fi
-          cat "${initial_script cfg}" | mysql -uroot
+          cat "${initial_script cfg}" | sudo -u postgres psql
         '') eachInstance);
       };
     } // ( lib.mapAttrs' (name: cfg: lib.nameValuePair "op-energy-backend-${name}" (
       let
-        mempool_config = pkgs.writeText "mempool-backend.json" cfg.config; # this renders config and stores in /nix/store
+        openergy_config = pkgs.writeText "op-energy-config.json" cfg.config; # this renders config and stores in /nix/store
       in {
         wantedBy = [ "multi-user.target" ];
         after = [
           "network-setup.service"
-          "mysql.service"
+          "postgresql.service"
         ];
         requires = [
           "network-setup.service"
-          "mysql.service"
+          "postgresql.service"
           ];
         serviceConfig = {
           Type = "simple";
@@ -180,13 +176,11 @@ in
           StartLimitBurst = 0;
         };
         path = with pkgs; [
-          nodejs
-          bashInteractive
+          pkgs.op-energy-backend
         ];
         script = ''
           set -ex
-          cd ${pkgs.op-energy-backend}/backend
-          MEMPOOL_CONFIG_FILE="${mempool_config}" npm run start-production
+          OPENERGY_BACKEND_CONFIG_FILE="${openergy_config}" op-energy-backend +RTS -c -N -s
         '';
       })) eachInstance);
   };

@@ -58,7 +58,7 @@ in
             }
             # testnet API
             location /testnet/api/v1/ws {
-              proxy_pass http://127.0.0.1:8997/;
+              proxy_pass http://127.0.0.1:8997/api/v1/ws;
               proxy_http_version 1.1;
               proxy_set_header Upgrade $http_upgrade;
               proxy_set_header Connection "Upgrade";
@@ -83,7 +83,7 @@ in
             }
             # signet API
             location /signet/api/v1/ws {
-              proxy_pass http://127.0.0.1:8995/;
+              proxy_pass http://127.0.0.1:8995/api/v1/ws;
               proxy_http_version 1.1;
               proxy_set_header Upgrade $http_upgrade;
               proxy_set_header Connection "Upgrade";

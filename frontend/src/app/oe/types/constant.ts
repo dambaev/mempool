@@ -5,6 +5,7 @@ export enum ArrowDirections {
 
 export enum BlockTypes {
   STRING = 'string',
+  NUMBER = 'number',
 }
 
 export enum BlockParts {

@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { ElectrsApiService } from '../../../services/electrs-api.service';
 import { switchMap, tap, debounceTime, catchError, map, take } from 'rxjs/operators';
 import { Block, Transaction, Vout } from '../../../interfaces/electrs.interface';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
@@ -86,7 +85,6 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
     private router: Router,
     private modalService: NgbModal,
     private opEnergyApiService: OpEnergyApiService,
-    private electrsApiService: ElectrsApiService,
     public stateService: StateService,
     private toastr: ToastrService,
     private seoService: SeoService,
@@ -120,8 +118,8 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
 
     this.subscription = this.route.paramMap.pipe(
       switchMap((params: ParamMap) => {
-        const fromBlockHash: string = params.get('from') || '';
-        const toBlockHash: string = params.get('to') || '';
+        const fromBlockHeight: number = parseInt( params.get('from'), 10);
+        const toBlockHeight: number = parseInt( params.get('to'), 10);
         this.fromBlock = undefined;
         this.toBlock = undefined;
         this.page = 1;
@@ -133,13 +131,6 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
           this.blockHeight = history.state.data.blockHeight;
         }
 
-        let isBlockHeight = false;
-        if (/^[0-9]+$/.test(fromBlockHash) && /^[0-9]+$/.test(toBlockHash)) {
-          isBlockHeight = true;
-        } else {
-          this.fromBlockHash = fromBlockHash;
-          this.toBlockHash = toBlockHash;
-        }
         document.body.scrollTo(0, 0);
 
         if (history.state.data && history.state.data.block) {
@@ -150,51 +141,18 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
 
           let fromBlockInCache: Block;
           let toBlockInCache: Block;
-          if (isBlockHeight) {
-            fromBlockInCache = this.latestBlocks.find((block) => block.height === parseInt(fromBlockHash, 10));
-            toBlockInCache = this.latestBlocks.find((block) => block.height === parseInt(toBlockHash, 10));
-            if (fromBlockInCache && toBlockInCache) {
-              return of([fromBlockInCache, toBlockInCache]);
-            }
-            return combineLatest([
-              this.electrsApiService.getBlockHashFromHeight$(parseInt(fromBlockHash, 10)).pipe(
-                catchError(() => of(fromBlockHash)),
-              ),
-              this.electrsApiService.getBlockHashFromHeight$(parseInt(toBlockHash, 10)).pipe(
-                catchError(() => of(toBlockHash)),
-              )
-            ])
-              .pipe(
-                switchMap(([fromHash, toHash]) => {
-                  this.fromBlockHash = fromHash;
-                  this.toBlockHash = toHash;
-                  this.location.replaceState(
-                    this.router.createUrlTree([(this.network ? '/' + this.network : '') + `/hashstrikes/energy_detail/`, fromHash, toHash]).toString()
-                  );
-                  return combineLatest([
-                    this.opEnergyApiService.$getBlock(fromHash).pipe(
-                      catchError(() => of(fromHash)),
-                    ),
-                    this.opEnergyApiService.$getBlock(toHash).pipe(
-                      catchError(() => of(toHash)),
-                    )
-                  ]);
-                })
-              );
-          }
 
-          fromBlockInCache = this.latestBlocks.find((block) => block.id === this.fromBlockHash);
-          toBlockInCache = this.latestBlocks.find((block) => block.id === this.toBlockHash);
+          fromBlockInCache = this.latestBlocks.find((block) => block.height === fromBlockHeight);
+          toBlockInCache = this.latestBlocks.find((block) => block.height === toBlockHeight);
           if (fromBlockInCache && toBlockInCache) {
             return of([fromBlockInCache, toBlockInCache]);
           }
-
           return combineLatest([
-            this.opEnergyApiService.$getBlock(fromBlockHash).pipe(
-              catchError(() => of(fromBlockHash)),
+            this.opEnergyApiService.$getBlockByHeight(fromBlockHeight).pipe(
+              catchError(() => of(fromBlockHeight)),
             ),
-            this.opEnergyApiService.$getBlock(toBlockHash).pipe(
-              catchError(() => of(toBlockHash)),
+            this.opEnergyApiService.$getBlockByHeight(toBlockHeight).pipe(
+              catchError(() => of(toBlockHeight)),
             )
           ]);
         }
@@ -202,7 +160,7 @@ export class EnergyDetailComponent implements OnInit, OnDestroy {
     )
     .subscribe(([fromBlock, toBlock]: [Block, Block]) => {
       this.fromBlock = fromBlock;
-      if (typeof toBlock === BlockTypes.STRING) {
+      if (typeof toBlock === BlockTypes.NUMBER) {
         this.toBlock = {
           height: +toBlock,
         };
