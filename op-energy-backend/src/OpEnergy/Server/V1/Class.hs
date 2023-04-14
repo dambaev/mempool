@@ -13,8 +13,14 @@ import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Servant (Handler)
 
+-- import qualified System.Metrics.Prometheus.Concurrent.Registry as PR
+-- import qualified System.Metrics.Prometheus.Concurrent.RegistryT as P
+-- import qualified System.Metrics.Prometheus.Metric.Counter as P
+-- import qualified System.Metrics.Prometheus.MetricId as P
+
 import           Data.OpEnergy.API.V1.Block (BlockHash, BlockHeight, BlockHeader)
 import           OpEnergy.Server.V1.Config
+import           OpEnergy.Server.V1.Metrics
 import           Data.Pool(Pool)
 import           Database.Persist.Postgresql (SqlBackend)
 
@@ -34,14 +40,16 @@ data State = State
   -- ^ defines the newest witnessed confirmed block
   , logFunc :: LogFunc
   , logLevel :: TVar LogLevel
+  , metrics :: MetricsState
+  -- ^ contains metrics handlers
   }
 
 type AppT = ReaderT State
 type AppM = ReaderT State Handler
 
 -- | constructs default state with given config and DB pool
-defaultState :: (MonadLoggerIO m ) => Config-> LogFunc-> Pool SqlBackend-> m State
-defaultState config logFunc _blockHeadersDBPool = do
+defaultState :: (MonadLoggerIO m ) => Config-> MetricsState-> LogFunc-> Pool SqlBackend-> m State
+defaultState config metrics logFunc _blockHeadersDBPool = do
   _blockHeadersHeightCache <- liftIO $ TVar.newTVarIO Map.empty
   _blockHeadersHashCache <- liftIO $ TVar.newTVarIO Map.empty
   _currentTip <- liftIO $ TVar.newTVarIO Nothing
@@ -54,6 +62,7 @@ defaultState config logFunc _blockHeadersDBPool = do
     , currentTip = _currentTip -- websockets' init data relies on whole BlockHeader
     , logFunc = logFunc
     , logLevel = logLevelV
+    , metrics = metrics
     }
 
 -- | Runs app transformer with given context

@@ -35,6 +35,7 @@ executable op-energy-backend
                     , text
                     , op-energy-api
                     , monad-logger
+                    , prometheus
     hs-source-dirs:   app
     default-language: Haskell2010
     extensions:       OverloadedStrings
@@ -48,6 +49,7 @@ library
                    , OpEnergy.Server.V1.Config
                    , OpEnergy.Server.V1.DB
                    , OpEnergy.Server.V1.Class
+                   , OpEnergy.Server.V1.Metrics
                    , OpEnergy.Server.V1.BlockHeadersService
                    , OpEnergy.Server.V1.WebSocketService
                    , OpEnergy.Server.V1.WebSocketService.Message
@@ -85,6 +87,7 @@ library
                     , transformers
                     , warp
                     , monad-logger
+                    , prometheus
     ghc-options:    -O2 -Wall -Werror -Wno-unticked-promoted-constructors -fno-warn-name-shadowing -Wno-orphans
     extensions:       OverloadedStrings
                     , ScopedTypeVariables

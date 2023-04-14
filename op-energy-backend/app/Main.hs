@@ -8,6 +8,7 @@ import           Data.Proxy
 import qualified Data.Text.IO as Text
 import           Servant
 import           Control.Concurrent.Async
+import qualified Control.Concurrent.MVar as MVar
 import           System.IO
 import           Control.Monad (forM, mapM)
 import           Data.List as L
@@ -19,13 +20,18 @@ import           Data.OpEnergy.API
 import           OpEnergy.Server
 import           OpEnergy.Server.V1
 import           OpEnergy.Server.V1.Config
+import           OpEnergy.Server.V1.Metrics
 import           OpEnergy.Server.V1.Class (State(..), defaultState, runAppT, runLogging)
 
 
 -- | entry point
 main :: IO ()
 main = runStdoutLoggingT $ do
-  state <- OpEnergy.Server.initState
+  config <- liftIO $ OpEnergy.Server.V1.Config.getConfigFromEnvironment
+  metricsV <- liftIO $ MVar.newEmptyMVar -- prometheus's thread will put value into this variable
+  prometheusA <- liftIO $ asyncBound $ OpEnergy.Server.V1.Metrics.runMetricsServer config metricsV
+  metrics <- liftIO $ MVar.readMVar metricsV
+  state <- OpEnergy.Server.initState config metrics
   runAppT state $ runLogging $ $(logInfo) "bootstrap tasks"
   OpEnergy.Server.bootstrapTasks state
   -- now spawn worker threads
@@ -38,5 +44,6 @@ main = runStdoutLoggingT $ do
   liftIO $ waitAnyCancel $ -- waits for any of threads to shutdown in order to shutdown the rest
     [ serverA
     , schedulerA
+    , prometheusA
     ]
   return ()

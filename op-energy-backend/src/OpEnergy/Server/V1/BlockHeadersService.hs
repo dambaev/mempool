@@ -31,6 +31,8 @@ import           Data.Bitcoin.BlockInfo as BlockInfo
 import           Data.OpEnergy.API.V1.Block
 import           OpEnergy.Server.V1.Config
 import           OpEnergy.Server.V1.Class (runLogging, AppT, AppM, State(..))
+import           OpEnergy.Server.V1.Metrics(MetricsState(..))
+import qualified System.Metrics.Prometheus.Metric.Counter as P
 
 
 -- | returns BlockHeader by given hash
@@ -112,7 +114,9 @@ loadDBState = do
 -- | this procedure ensures that BlockHeaders table is in sync with block chain
 syncBlockHeaders :: MonadIO m => AppT m ()
 syncBlockHeaders = do
+  State{ metrics = MetricsState{ syncBlockHeadersCounter = syncBlockHeadersCounter}} <- ask
   runLogging $ $(logDebug) "syncBlockHeaders"
+  liftIO $ P.inc syncBlockHeadersCounter
   mstartSyncHeightFromTo <- mgetHeightToStartSyncFromTo
   case mstartSyncHeightFromTo of
     Nothing-> return () -- do nothing if sync is not needed

@@ -25,14 +25,14 @@ import           OpEnergy.Server.V1.Config
 import           OpEnergy.Server.V1.Class (AppT, AppM, State(..), defaultState, runAppT, runLogging)
 import           OpEnergy.Server.V1.BlockHeadersService (loadDBState, syncBlockHeaders)
 import           OpEnergy.Server.V1.DB
+import           OpEnergy.Server.V1.Metrics
 
 -- | reads config from file and opens DB connection
-initState :: MonadLoggerIO m => m State
-initState = do
-  config <- liftIO $ OpEnergy.Server.V1.Config.getConfigFromEnvironment
+initState :: MonadLoggerIO m => Config-> MetricsState-> m State
+initState config metrics = do
   pool <- liftIO $ OpEnergy.Server.V1.DB.getConnection config
   logFunc <- askLoggerIO
-  defaultState config logFunc pool
+  defaultState config metrics logFunc pool
 
 -- | Runs HTTP server on a port defined in config in the State datatype
 runServer :: (MonadIO m) => AppT m ()

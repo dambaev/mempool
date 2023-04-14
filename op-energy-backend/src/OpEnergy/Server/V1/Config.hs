@@ -55,6 +55,8 @@ data Config = Config
     -- ^ how many seconds to wait until ping packet will be sent
   , configLogLevelMin :: LogLevel
     -- ^ minimum log level to display
+  , configPrometheusPort :: Positive Int
+    -- ^ port which should be used by prometheus metrics
   }
   deriving Show
 instance FromJSON Config where
@@ -76,6 +78,7 @@ instance FromJSON Config where
     <*> ( v .:? "STATISTICS_BLOCK_SPANS_COUNT" .!= (configStatisticsBlockSpansCount defaultConfig))
     <*> ( v .:? "WEBSOCKET_KEEP_ALIVE_SECS" .!= (configWebsocketKeepAliveSecs defaultConfig))
     <*> ( v .:? "LOG_LEVEL_MIN" .!= (configLogLevelMin defaultConfig))
+    <*> ( v .:? "PROMETHEUS_PORT" .!= (configPrometheusPort defaultConfig))
 
 defaultConfig:: Config
 defaultConfig = Config
@@ -96,6 +99,7 @@ defaultConfig = Config
   , configStatisticsBlockSpansCount = 100
   , configWebsocketKeepAliveSecs = 10
   , configLogLevelMin = LevelWarn
+  , configPrometheusPort = 7999
   }
 
 getConfigFromEnvironment :: IO Config
