@@ -31,8 +31,7 @@ import           Data.Bitcoin.BlockInfo as BlockInfo
 import           Data.OpEnergy.API.V1.Block
 import           OpEnergy.Server.V1.Config
 import           OpEnergy.Server.V1.Class (runLogging, AppT, AppM, State(..))
-import           OpEnergy.Server.V1.Metrics(MetricsState(..))
-import qualified System.Metrics.Prometheus.Metric.Counter as P
+import           OpEnergy.Server.V1.Metrics(MetricsState(..), observeDurationH)
 
 
 -- | returns BlockHeader by given hash
@@ -114,16 +113,16 @@ loadDBState = do
 -- | this procedure ensures that BlockHeaders table is in sync with block chain
 syncBlockHeaders :: MonadIO m => AppT m ()
 syncBlockHeaders = do
-  State{ metrics = MetricsState{ syncBlockHeadersCounter = syncBlockHeadersCounter}} <- ask
+  State{ metrics = MetricsState{ syncBlockHeadersDuration = syncBlockHeadersDuration}} <- ask
   runLogging $ $(logDebug) "syncBlockHeaders"
-  liftIO $ P.inc syncBlockHeadersCounter
-  mstartSyncHeightFromTo <- mgetHeightToStartSyncFromTo
-  case mstartSyncHeightFromTo of
-    Nothing-> return () -- do nothing if sync is not needed
-    Just (startSyncHeightFrom, startSyncHeightTo) -> do
-      newestConfirmedBlockHeader <- performSyncFromTo startSyncHeightFrom startSyncHeightTo
-      runLogging $ $(logDebug) $ "new latest confirmed block height " <> tshow startSyncHeightTo
-      updateLatestConfirmedHeightTip newestConfirmedBlockHeader -- cache newest header
+  observeDurationH syncBlockHeadersDuration $ do
+    mstartSyncHeightFromTo <- mgetHeightToStartSyncFromTo
+    case mstartSyncHeightFromTo of
+      Nothing-> return () -- do nothing if sync is not needed
+      Just (startSyncHeightFrom, startSyncHeightTo) -> do
+        newestConfirmedBlockHeader <- performSyncFromTo startSyncHeightFrom startSyncHeightTo
+        runLogging $ $(logDebug) $ "new latest confirmed block height " <> tshow startSyncHeightTo
+        updateLatestConfirmedHeightTip newestConfirmedBlockHeader -- cache newest header
   where
     updateLatestConfirmedHeightTip header = do
       State{ currentTip = currentTipV } <- ask
@@ -132,10 +131,10 @@ syncBlockHeaders = do
     -- | queries bitcoin node and compares with latest witnessed block
     mgetHeightToStartSyncFromTo :: MonadIO m => AppT m (Maybe (BlockHeight, BlockHeight))
     mgetHeightToStartSyncFromTo = do
-      State{ config = config, currentTip = currentTipV } <- ask
+      State{ config = config, currentTip = currentTipV, metrics = MetricsState{ btcGetBlockchainInfoDuration = btcGetBlockchainInfoDuration}} <- ask
       mcurrentConfirmedTip <- liftIO $ TVar.readTVarIO currentTipV
       let userPass = BasicAuthData (Text.encodeUtf8 $ configBTCUser config) (Text.encodeUtf8 $ configBTCPassword config)
-      eblockchainInfo <- liftIO $ Bitcoin.withBitcoin ( configBTCURL config) (getBlockchainInfo userPass [])
+      eblockchainInfo <- liftIO $ observeDurationH btcGetBlockchainInfoDuration $ Bitcoin.withBitcoin ( configBTCURL config) (getBlockchainInfo userPass [])
       case eblockchainInfo of
         (Result _ blockchainInfo ) -> do
           let newUnconfirmedHeightTip = Bitcoin.blocks blockchainInfo
