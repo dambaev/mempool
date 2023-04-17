@@ -40,6 +40,7 @@ data MetricsState = MetricsState
   , getBlockSpanListH :: P.Histogram
     -- calculateStatistics
   , calculateStatisticsH :: P.Histogram
+  , blockHeaderDBInsertH :: P.Histogram
   }
 
 -- | constructs default state with given config and DB pool
@@ -64,6 +65,7 @@ initMetrics _config = do
   -- getBockSpanList
   getBlockSpanListH <- P.register $ P.histogram (P.Info "getBlockSpanList" "") P.defaultBuckets
   calculateStatisticsH <- P.register $ P.histogram (P.Info "calculateStatistics" "") P.defaultBuckets
+  blockHeaderDBInsertH <- P.register $ P.histogram (P.Info "blockHeaderDBInsertH" "") P.defaultBuckets
   _ <- P.register P.ghcMetrics
   _ <- P.register P.procMetrics
   return $ MetricsState
@@ -83,6 +85,7 @@ initMetrics _config = do
     , mgetBlockHeaderByHashCacheDBLookup = mgetBlockHeaderByHashCacheDBLookup
     , getBlockSpanListH = getBlockSpanListH
     , calculateStatisticsH = calculateStatisticsH
+    , blockHeaderDBInsertH = blockHeaderDBInsertH
     }
 
 -- | runs metrics HTTP server
