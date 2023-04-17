@@ -14,7 +14,7 @@ import qualified Control.Concurrent.STM.TVar as TVar
 import           Data.Pool(Pool)
 import qualified Data.Map.Strict as Map
 import           Servant.API (BasicAuthData(..))
-import           Servant (err404, throwError)
+import           Servant (err404, throwError, Handler)
 import           Servant.Client.JsonRpc
 import           Control.Monad (forM_)
 import           Control.Monad.Logger (logDebug, logInfo)
@@ -30,34 +30,62 @@ import           Data.Bitcoin.BlockStats as BlockStats
 import           Data.Bitcoin.BlockInfo as BlockInfo
 import           Data.OpEnergy.API.V1.Block
 import           OpEnergy.Server.V1.Config
-import           OpEnergy.Server.V1.Class (runLogging, AppT, AppM, State(..))
-import           OpEnergy.Server.V1.Metrics(MetricsState(..), observeDurationH)
+import           OpEnergy.Server.V1.Class (runLogging, runAppT, AppT, AppM, State(..))
+import           OpEnergy.Server.V1.Metrics(MetricsState(..))
+import           Prometheus(MonadMonitor)
+import qualified Prometheus as P
+
+
+instance MonadMonitor Handler where
+  doIO = liftIO
+
+getBlockHeaderByHash :: BlockHash -> AppM BlockHeader
+getBlockHeaderByHash hash = do
+  mheader <- mgetBlockHeaderByHash hash
+  case mheader of
+    Nothing-> throwError err404
+    Just header -> return header
 
 
 -- | returns BlockHeader by given hash
 -- Complexity:
 -- - O(log n) {cache Hash -> Height lookup} + O(log n) { Height -> Header cache lookup} - in case if hash exists in cache
 -- - 2 * O(log n) {cache lookup } + DB lookup + 2 * O(log n) {cache insertion} - in case if hash is not cached yet
-getBlockHeaderByHash :: BlockHash -> AppM BlockHeader
-getBlockHeaderByHash hash = do
-  State{ blockHeadersDBPool = pool, blockHeadersHashCache = blockHeadersHashCacheV, blockHeadersHeightCache = blockHeadersHeightCacheV } <- ask
-  blockHeadersHashCache <- liftIO $ TVar.readTVarIO blockHeadersHashCacheV
-  case Map.lookup hash blockHeadersHashCache of -- check cache first
-    Just height -> do
-      runLogging $ $(logDebug) $ "hash " <> tshow hash <> " is a height " <> tshow height <> " and had been found in the cache"
-      getBlockHeaderByHeight height
-    Nothing -> do -- there is no header in cache
-      mheader <- liftIO $ flip runSqlPersistMPool pool $ selectFirst [ BlockHeaderHash ==. hash ] []
-      case mheader of
-        Nothing-> throwError err404
-        Just (Entity _ header) -> do
-          height <- liftIO $ STM.atomically $ do
+mgetBlockHeaderByHash :: (MonadIO m, MonadMonitor m) => BlockHash -> AppT m (Maybe BlockHeader)
+mgetBlockHeaderByHash hash = do
+  state@State{ blockHeadersDBPool = pool
+             , blockHeadersHashCache = blockHeadersHashCacheV
+             , blockHeadersHeightCache = blockHeadersHeightCacheV
+             , metrics = MetricsState { mgetBlockHeaderByHashH = mgetBlockHeaderByHashH
+                                      , mgetBlockHeaderByHashCacheH = mgetBlockHeaderByHashCacheH
+                                      , mgetBlockHeaderByHashCacheHit = mgetBlockHeaderByHashCacheHit
+                                      , mgetBlockHeaderByHashCacheMiss = mgetBlockHeaderByHashCacheMiss
+                                      , mgetBlockHeaderByHashCacheInsert = mgetBlockHeaderByHashCacheInsert
+                                      , mgetBlockHeaderByHeightCacheInsert = mgetBlockHeaderByHeightCacheInsert
+                                      , mgetBlockHeaderByHashCacheDBLookup = mgetBlockHeaderByHashCacheDBLookup
+                                      }
+             } <- ask
+  P.observeDuration mgetBlockHeaderByHashH $ do
+    blockHeadersHashCache <- liftIO $ TVar.readTVarIO blockHeadersHashCacheV
+    mCachedHash <- P.observeDuration mgetBlockHeaderByHashCacheH $ return $! Map.lookup hash blockHeadersHashCache
+    case mCachedHash of -- check cache first
+      Just height -> do
+        runLogging $ $(logDebug) $ "hash " <> tshow hash <> " is a height " <> tshow height <> " and had been found in the cache"
+        P.incCounter mgetBlockHeaderByHashCacheHit
+        runAppT state $ mgetBlockHeaderByHeight height
+      Nothing -> do -- there is no header in cache
+        P.incCounter mgetBlockHeaderByHashCacheMiss
+        mheader <- liftIO $ P.observeDuration mgetBlockHeaderByHashCacheDBLookup $ flip runSqlPersistMPool pool $ selectFirst [ BlockHeaderHash ==. hash ] []
+        case mheader of
+          Nothing-> return Nothing
+          Just (Entity _ header) -> do
             let height = blockHeaderHeight header
-            TVar.modifyTVar blockHeadersHeightCacheV $ \cache-> Map.insert height header cache -- update cache
-            TVar.modifyTVar blockHeadersHashCacheV $ \cache-> Map.insert hash height cache -- update cache
-            return height
-          runLogging $ $(logDebug) $ "header with height " <> tshow height <> " and hash " <> tshow hash <> " inserted into the cache"
-          return header
+            liftIO $ P.observeDuration mgetBlockHeaderByHeightCacheInsert $ STM.atomically $
+              TVar.modifyTVar blockHeadersHeightCacheV $ \cache-> Map.insert height header cache -- update cache
+            liftIO $ P.observeDuration mgetBlockHeaderByHashCacheInsert $ STM.atomically $
+              TVar.modifyTVar blockHeadersHashCacheV $ \cache-> Map.insert hash height cache -- update cache
+            runLogging $ $(logDebug) $ "header with height " <> tshow height <> " and hash " <> tshow hash <> " inserted into the cache"
+            return (Just header)
 
 -- | returns BlockHeader by given height. See mgetBlockHeaderByHeight for reference
 getBlockHeaderByHeight :: BlockHeight -> AppM BlockHeader
@@ -70,30 +98,47 @@ getBlockHeaderByHeight height = do
 -- | returns Just BlockHeader by given height or Nothing if there no block with given height
 -- - O(log n) - in case if block with given height is in Height -> BlockHeader cache;
 -- - O(log n) {cache lookup} + O(DB lookup) + 2 * O(log n) {cache insertion} in case if no such block header in the cache yet
-mgetBlockHeaderByHeight :: MonadIO m => BlockHeight -> AppT m (Maybe BlockHeader)
+mgetBlockHeaderByHeight :: (MonadIO m, MonadMonitor m) => BlockHeight -> AppT m (Maybe BlockHeader)
 mgetBlockHeaderByHeight height = do
-  State{ blockHeadersDBPool = pool, currentTip = currentTipV, blockHeadersHashCache = blockHeadersHashCacheV, blockHeadersHeightCache = blockHeadersHeightCacheV } <- ask
-  mcurrentTip <- liftIO $ TVar.readTVarIO currentTipV
-  blockHeadersHeightCache <- liftIO $ TVar.readTVarIO blockHeadersHeightCacheV
-  case mcurrentTip of
-    Just currentTip
-      | height == blockHeaderHeight currentTip -> return (Just currentTip) -- the fastest case is that caller is looking for a current tip
-      | height < blockHeaderHeight currentTip -> do -- requested height is confirmed one
-          case Map.lookup height blockHeadersHeightCache of -- check cache first
-            Just header -> do
-              runLogging $ $(logDebug) $ "header with height " <> tshow height <> " found in the cache"
-              return (Just header)
-            Nothing -> do -- there is no header in cache
-              mheader <- liftIO $ flip runSqlPersistMPool pool $ selectFirst [ BlockHeaderHeight ==. height ] []
-              case mheader of
-                Nothing-> return Nothing
-                Just (Entity _ header) -> do
-                  liftIO $ STM.atomically $ do
-                    TVar.modifyTVar blockHeadersHeightCacheV $ \cache-> Map.insert height header cache -- update cache
-                    TVar.modifyTVar blockHeadersHashCacheV $ \cache-> Map.insert (blockHeaderHash header) height cache -- update cache
-                  runLogging $ $(logDebug) $ "header with height " <> tshow height <> " inserted in the cache"
-                  return (Just header)
-    _ -> return Nothing
+  State{ blockHeadersDBPool = pool
+       , currentTip = currentTipV
+       , blockHeadersHashCache = blockHeadersHashCacheV
+       , blockHeadersHeightCache = blockHeadersHeightCacheV
+       , metrics = MetricsState { mgetBlockHeaderByHeightH = mgetBlockHeaderByHeightH
+                                , mgetBlockHeaderByHeightCacheH = mgetBlockHeaderByHeightCacheH
+                                , mgetBlockHeaderByHeightCacheHit = mgetBlockHeaderByHeightCacheHit
+                                , mgetBlockHeaderByHeightCacheMiss = mgetBlockHeaderByHeightCacheMiss
+                                , mgetBlockHeaderByHeightCacheInsert = mgetBlockHeaderByHeightCacheInsert
+                                , mgetBlockHeaderByHashCacheInsert = mgetBlockHeaderByHashCacheInsert
+                                , mgetBlockHeaderByHeightCacheDBLookup = mgetBlockHeaderByHeightCacheDBLookup
+                                }
+       } <- ask
+  P.observeDuration mgetBlockHeaderByHeightH $ do
+    mcurrentTip <- liftIO $ TVar.readTVarIO currentTipV
+    blockHeadersHeightCache <- liftIO $ TVar.readTVarIO blockHeadersHeightCacheV
+    case mcurrentTip of
+      Just currentTip
+        | height == blockHeaderHeight currentTip -> return (Just currentTip) -- the fastest case is that caller is looking for a current tip
+        | height < blockHeaderHeight currentTip -> do -- requested height is confirmed one
+            mCachedHeader <- P.observeDuration mgetBlockHeaderByHeightCacheH $ return $! Map.lookup height blockHeadersHeightCache
+            case mCachedHeader of -- check cache first
+              Just header -> do
+                P.incCounter mgetBlockHeaderByHeightCacheHit
+                runLogging $ $(logDebug) $ "header with height " <> tshow height <> " found in the cache"
+                return (Just header)
+              Nothing -> do -- there is no header in cache
+                P.incCounter mgetBlockHeaderByHeightCacheMiss
+                mheader <- liftIO $ P.observeDuration mgetBlockHeaderByHeightCacheDBLookup $ flip runSqlPersistMPool pool $ selectFirst [ BlockHeaderHeight ==. height ] []
+                case mheader of
+                  Nothing-> return Nothing
+                  Just (Entity _ header) -> do
+                    liftIO $ P.observeDuration mgetBlockHeaderByHeightCacheInsert $
+                      STM.atomically $ TVar.modifyTVar blockHeadersHeightCacheV $ \cache-> Map.insert height header cache -- update cache
+                    liftIO $ P.observeDuration mgetBlockHeaderByHashCacheInsert $
+                      STM.atomically $ TVar.modifyTVar blockHeadersHashCacheV $ \cache-> Map.insert (blockHeaderHash header) height cache -- update cache
+                    runLogging $ $(logDebug) $ "header with height " <> tshow height <> " inserted in the cache"
+                    return (Just header)
+      _ -> return Nothing
 
 -- | returns the newest confirmed BlockHeader or Nothing if there are no blocks found yet
 mgetLastBlockHeader :: Pool SqlBackend-> IO (Maybe (Entity BlockHeader))
@@ -111,11 +156,11 @@ loadDBState = do
       runLogging $ $(logInfo) ("current confirmed height tip " <> tshow (blockHeaderHeight header))
 
 -- | this procedure ensures that BlockHeaders table is in sync with block chain
-syncBlockHeaders :: MonadIO m => AppT m ()
+syncBlockHeaders :: (MonadIO m, MonadMonitor m) => AppT m ()
 syncBlockHeaders = do
-  State{ metrics = MetricsState{ syncBlockHeadersDuration = syncBlockHeadersDuration}} <- ask
+  State{ metrics = MetricsState{ syncBlockHeadersH = syncBlockHeadersH}} <- ask
   runLogging $ $(logDebug) "syncBlockHeaders"
-  observeDurationH syncBlockHeadersDuration $ do
+  P.observeDuration syncBlockHeadersH $ do
     mstartSyncHeightFromTo <- mgetHeightToStartSyncFromTo
     case mstartSyncHeightFromTo of
       Nothing-> return () -- do nothing if sync is not needed
@@ -131,10 +176,10 @@ syncBlockHeaders = do
     -- | queries bitcoin node and compares with latest witnessed block
     mgetHeightToStartSyncFromTo :: MonadIO m => AppT m (Maybe (BlockHeight, BlockHeight))
     mgetHeightToStartSyncFromTo = do
-      State{ config = config, currentTip = currentTipV, metrics = MetricsState{ btcGetBlockchainInfoDuration = btcGetBlockchainInfoDuration}} <- ask
+      State{ config = config, currentTip = currentTipV, metrics = MetricsState{ btcGetBlockchainInfoH = btcGetBlockchainInfoH}} <- ask
       mcurrentConfirmedTip <- liftIO $ TVar.readTVarIO currentTipV
       let userPass = BasicAuthData (Text.encodeUtf8 $ configBTCUser config) (Text.encodeUtf8 $ configBTCPassword config)
-      eblockchainInfo <- liftIO $ observeDurationH btcGetBlockchainInfoDuration $ Bitcoin.withBitcoin ( configBTCURL config) (getBlockchainInfo userPass [])
+      eblockchainInfo <- liftIO $ P.observeDuration btcGetBlockchainInfoH $ Bitcoin.withBitcoin ( configBTCURL config) (getBlockchainInfo userPass [])
       case eblockchainInfo of
         (Result _ blockchainInfo ) -> do
           let newUnconfirmedHeightTip = Bitcoin.blocks blockchainInfo

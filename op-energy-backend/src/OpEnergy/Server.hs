@@ -18,6 +18,8 @@ import           Control.Concurrent (threadDelay)
 import           Control.Monad.IO.Class(liftIO, MonadIO)
 import           Control.Monad.Logger (MonadLoggerIO, askLoggerIO, logDebug)
 
+import           Prometheus(MonadMonitor)
+
 import           Data.OpEnergy.API
 import           Data.OpEnergy.API.V1.Positive
 import           OpEnergy.Server.V1
@@ -52,13 +54,13 @@ runServer = do
           :<|> OpEnergy.Server.V1.server
 
 -- | tasks, that should be running during start
-bootstrapTasks :: MonadLoggerIO m => State -> m ()
+bootstrapTasks :: (MonadLoggerIO m, MonadMonitor m) => State -> m ()
 bootstrapTasks s = runAppT s $ do
   OpEnergy.Server.V1.BlockHeadersService.loadDBState -- first, load DB state
   OpEnergy.Server.V1.BlockHeadersService.syncBlockHeaders -- check for missing blocks
 
 -- | main loop of the scheduler. Exception in this procedure will cause app to fail
-schedulerMainLoop :: MonadIO m => AppT m ()
+schedulerMainLoop :: (MonadIO m, MonadMonitor m) => AppT m ()
 schedulerMainLoop = do
   State{ config = Config{ configSchedulerPollRateSecs = delaySecs }} <- ask
   runLogging $ $(logDebug) "scheduler main loop"

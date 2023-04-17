@@ -1,6 +1,7 @@
 {-- | This module is backend's entrypoint
  -}
 {-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE FlexibleInstances          #-}
 module Main where
 
 import           Network.Wai.Handler.Warp
@@ -14,7 +15,8 @@ import           Control.Monad (forM, mapM)
 import           Data.List as L
 import           Control.Exception as E
 import           Control.Monad.IO.Class( liftIO)
-import           Control.Monad.Logger (runStdoutLoggingT, logInfo, askLoggerIO)
+import           Control.Monad.Logger (runStdoutLoggingT, logInfo, askLoggerIO, LoggingT)
+import           Prometheus(MonadMonitor(..))
 
 import           Data.OpEnergy.API
 import           OpEnergy.Server
@@ -23,6 +25,8 @@ import           OpEnergy.Server.V1.Config
 import           OpEnergy.Server.V1.Metrics
 import           OpEnergy.Server.V1.Class (State(..), defaultState, runAppT, runLogging)
 
+
+instance MonadMonitor (LoggingT IO)
 
 -- | entry point
 main :: IO ()
