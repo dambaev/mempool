@@ -208,8 +208,10 @@ syncBlockHeaders = do
       where
         persistBlockHeader :: MonadIO m => BlockHeader -> AppT m ()
         persistBlockHeader header = do
-          State{ blockHeadersDBPool = pool } <- ask
-          _ <- liftIO $ flip runSqlPersistMPool pool $ insert header
+          State{ blockHeadersDBPool = pool
+               , metrics = MetricsState { blockHeaderDBInsertH = blockHeaderDBInsertH}
+               } <- ask
+          _ <- liftIO $ P.observeDuration blockHeaderDBInsertH $ flip runSqlPersistMPool pool $ insert header
           return ()
 
         getBlockInfos height = do
