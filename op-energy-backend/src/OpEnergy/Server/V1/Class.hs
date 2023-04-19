@@ -13,11 +13,6 @@ import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Servant (Handler)
 
--- import qualified System.Metrics.Prometheus.Concurrent.Registry as PR
--- import qualified System.Metrics.Prometheus.Concurrent.RegistryT as P
--- import qualified System.Metrics.Prometheus.Metric.Counter as P
--- import qualified System.Metrics.Prometheus.MetricId as P
-
 import           Data.OpEnergy.API.V1.Block (BlockHash, BlockHeight, BlockHeader)
 import           OpEnergy.Server.V1.Config
 import           OpEnergy.Server.V1.Metrics
