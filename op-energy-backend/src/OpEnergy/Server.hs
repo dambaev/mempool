@@ -17,6 +17,8 @@ import           Control.Monad.Trans.Reader (ask)
 import           Control.Concurrent (threadDelay)
 import           Control.Monad.IO.Class(liftIO, MonadIO)
 import           Control.Monad.Logger (MonadLoggerIO, askLoggerIO, logDebug)
+import qualified Control.Concurrent.MVar as MVar
+import           Control.Concurrent.Async
 
 import           Prometheus(MonadMonitor)
 
@@ -30,11 +32,15 @@ import           OpEnergy.Server.V1.DB
 import           OpEnergy.Server.V1.Metrics
 
 -- | reads config from file and opens DB connection
-initState :: MonadLoggerIO m => Config-> MetricsState-> m State
-initState config metrics = do
+initState :: MonadLoggerIO m => Config-> m (State, Async ())
+initState config = do
   pool <- liftIO $ OpEnergy.Server.V1.DB.getConnection config
   logFunc <- askLoggerIO
-  defaultState config metrics logFunc pool
+  metricsV <- liftIO $ MVar.newEmptyMVar -- prometheus's thread will put value into this variable
+  prometheusA <- liftIO $ asyncBound $ OpEnergy.Server.V1.Metrics.runMetricsServer config metricsV
+  metrics <- liftIO $ MVar.readMVar metricsV
+  state <- defaultState config metrics logFunc pool
+  return (state, prometheusA)
 
 -- | Runs HTTP server on a port defined in config in the State datatype
 runServer :: (MonadIO m) => AppT m ()

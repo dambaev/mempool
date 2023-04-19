@@ -92,7 +92,7 @@ library
                     , wai-middleware-prometheus
                     , prometheus-metrics-ghc
                     , prometheus-proc
-                    , clock
+                    , async
     ghc-options:    -O2 -Wall -Werror -Wno-unticked-promoted-constructors -fno-warn-name-shadowing -Wno-orphans
     extensions:       OverloadedStrings
                     , ScopedTypeVariables

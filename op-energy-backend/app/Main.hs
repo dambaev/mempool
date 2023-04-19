@@ -9,7 +9,6 @@ import           Data.Proxy
 import qualified Data.Text.IO as Text
 import           Servant
 import           Control.Concurrent.Async
-import qualified Control.Concurrent.MVar as MVar
 import           System.IO
 import           Control.Monad (forM, mapM)
 import           Data.List as L
@@ -26,16 +25,14 @@ import           OpEnergy.Server.V1.Metrics
 import           OpEnergy.Server.V1.Class (State(..), defaultState, runAppT, runLogging)
 
 
+-- required by prometheus-client
 instance MonadMonitor (LoggingT IO)
 
 -- | entry point
 main :: IO ()
 main = runStdoutLoggingT $ do
   config <- liftIO $ OpEnergy.Server.V1.Config.getConfigFromEnvironment
-  metricsV <- liftIO $ MVar.newEmptyMVar -- prometheus's thread will put value into this variable
-  prometheusA <- liftIO $ asyncBound $ OpEnergy.Server.V1.Metrics.runMetricsServer config metricsV
-  metrics <- liftIO $ MVar.readMVar metricsV
-  state <- OpEnergy.Server.initState config metrics
+  (state, prometheusA) <- OpEnergy.Server.initState config
   runAppT state $ runLogging $ $(logInfo) "bootstrap tasks"
   OpEnergy.Server.bootstrapTasks state
   -- now spawn worker threads
