@@ -51,3 +51,16 @@ calculateStatistics startHeight span = do
         , stddev = stddev
         }
       }
+
+-- | returns ration between actual median time and theoretical median times. Value of 1.0 means, that there is no difference between theoretical and actual median times.
+getRealTheoreticalRatio
+  :: ( MonadIO m
+     , MonadMonitor m
+     )
+  => BlockSpan
+  -> AppT m Double
+getRealTheoreticalRatio (BlockSpan startBlock endBlock) = do
+  start <- mgetBlockHeaderByHeight startBlock >>= pure . blockHeaderMediantime . fromJust
+  end <- mgetBlockHeaderByHeight endBlock >>= pure . blockHeaderMediantime . fromJust
+  let theoreticalBlockCountWithinRange = (fromIntegral (end - start )) / 600.0
+  return (theoreticalBlockCountWithinRange / (fromIntegral ( endBlock - startBlock)))
