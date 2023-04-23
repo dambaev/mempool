@@ -33,3 +33,23 @@ getBlockSpanList startHeight span numberOfSpans = do
     _span = fromPositive span
     _start = fromNatural startHeight
     spans = map (\i -> BlockSpan (verifyNatural (_start +  (i * _span))) (verifyNatural (_start + _span + i*_span))) [ 0 .. (fromPositive numberOfSpans) - 1]
+
+-- | returns block span list between start and end blocks, where each span has span size of `span` plus possible reminder span (in case of fractional division on `span`)
+getBlockSpanListByRange
+  :: ( MonadIO m
+     , MonadMonitor m
+     )
+  => BlockHeight
+    -- ^ starting block height
+  -> BlockHeight
+    -- ^ end block height
+  -> Positive Int
+    -- ^ span size
+  -> AppT m [BlockSpan]
+getBlockSpanListByRange start end span = do
+  let (spans, lastSpan) = (end - start) `divMod` naturalFromPositive span
+  last <- if lastSpan < 1
+        then return [] -- there is no reminder from division
+        else getBlockSpanList (start + spans * naturalFromPositive span) (verifyPositiveInt $ fromNatural lastSpan) 1
+  main <- getBlockSpanList start span (verifyPositiveInt $ fromNatural spans)
+  return (main ++ last)
