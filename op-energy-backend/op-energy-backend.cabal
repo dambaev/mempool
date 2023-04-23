@@ -93,6 +93,7 @@ library
                     , prometheus-metrics-ghc
                     , prometheus-proc
                     , async
+                    , unliftio-core
     ghc-options:    -O2 -Wall -Werror -Wno-unticked-promoted-constructors -fno-warn-name-shadowing -Wno-orphans
     extensions:       OverloadedStrings
                     , ScopedTypeVariables

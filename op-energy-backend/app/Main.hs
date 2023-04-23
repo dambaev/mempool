@@ -25,9 +25,6 @@ import           OpEnergy.Server.V1.Metrics
 import           OpEnergy.Server.V1.Class (State(..), defaultState, runAppT, runLogging)
 
 
--- required by prometheus-client
-instance MonadMonitor (LoggingT IO)
-
 -- | entry point
 main :: IO ()
 main = runStdoutLoggingT $ do

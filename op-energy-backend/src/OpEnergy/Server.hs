@@ -8,6 +8,7 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE FlexibleInstances          #-}
 module OpEnergy.Server where
 
 import           System.IO as IO
@@ -16,7 +17,8 @@ import           Network.Wai.Handler.Warp(run)
 import           Control.Monad.Trans.Reader (ask)
 import           Control.Concurrent (threadDelay)
 import           Control.Monad.IO.Class(liftIO, MonadIO)
-import           Control.Monad.Logger (MonadLoggerIO, askLoggerIO, logDebug)
+import           Control.Monad.IO.Unlift(MonadUnliftIO)
+import           Control.Monad.Logger (MonadLoggerIO, askLoggerIO, logDebug, LoggingT, NoLoggingT, runLoggingT, filterLogger)
 import qualified Control.Concurrent.MVar as MVar
 import           Control.Concurrent.Async
 
@@ -31,11 +33,23 @@ import           OpEnergy.Server.V1.BlockHeadersService (loadDBState, syncBlockH
 import           OpEnergy.Server.V1.DB
 import           OpEnergy.Server.V1.Metrics
 
+-- required by prometheus-client
+instance MonadMonitor (LoggingT IO)
+instance MonadMonitor (NoLoggingT IO)
+
 -- | reads config from file and opens DB connection
-initState :: MonadLoggerIO m => Config-> m (State, Async ())
+initState
+  :: ( MonadLoggerIO m
+     , MonadUnliftIO m
+     )
+  => Config
+  -> m (State, Async ())
 initState config = do
-  pool <- liftIO $ OpEnergy.Server.V1.DB.getConnection config
   logFunc <- askLoggerIO
+  let Config{ configLogLevelMin = logLevelMin} = config
+      filterUnwantedLevels _source level = level >= logLevelMin
+      runLogging action = runLoggingT (filterLogger filterUnwantedLevels action) logFunc
+  pool <- runLogging $ OpEnergy.Server.V1.DB.getConnection config
   metricsV <- liftIO $ MVar.newEmptyMVar -- prometheus's thread will put value into this variable
   prometheusA <- liftIO $ asyncBound $ OpEnergy.Server.V1.Metrics.runMetricsServer config metricsV
   metrics <- liftIO $ MVar.readMVar metricsV
