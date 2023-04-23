@@ -7,6 +7,7 @@ module OpEnergy.Server.V1.BlockHeadersService
   , getBlockHeaderByHeight
   , mgetBlockHeaderByHeight
   , loadDBState
+  , cacheBlockHeadersFromDB
   ) where
 
 import qualified Control.Concurrent.STM as STM
@@ -243,3 +244,28 @@ syncBlockHeaders = do
           , blockHeaderMediantime = BlockInfo.mediantime bi
           , blockHeaderReward = reward
           }
+
+cacheBlockHeadersFromDB
+  :: ( MonadIO m
+     , MonadMonitor m
+     )
+  => BlockHeight
+    -- ^ block height start
+  -> BlockHeight
+    -- ^ block height end
+  -> AppT m ()
+cacheBlockHeadersFromDB start end = do
+  State{ blockHeadersDBPool = pool
+       , blockHeadersHashCache = blockHeadersHashCacheV
+       , blockHeadersHeightCache = blockHeadersHeightCacheV
+       , metrics = MetricsState { mgetBlockHeaderByHeightCacheInsert = mgetBlockHeaderByHeightCacheInsert
+                                , mgetBlockHeaderByHashCacheInsert = mgetBlockHeaderByHashCacheInsert
+                                , mgetBlockHeaderByHeightCacheDBLookup = mgetBlockHeaderByHeightCacheDBLookup
+                                }
+       } <- ask
+  headers <- liftIO $ P.observeDuration mgetBlockHeaderByHeightCacheDBLookup $ flip runSqlPersistMPool pool $ selectList [ BlockHeaderHeight >=. start, BlockHeaderHeight <=. end ] [ Asc BlockHeaderHeight]
+  forM_ headers $ \(Entity _ header) -> do
+    liftIO $ P.observeDuration mgetBlockHeaderByHeightCacheInsert $
+      STM.atomically $ TVar.modifyTVar blockHeadersHeightCacheV $ \cache-> Map.insert (blockHeaderHeight header) header cache -- update cache
+    liftIO $ P.observeDuration mgetBlockHeaderByHashCacheInsert $
+      STM.atomically $ TVar.modifyTVar blockHeadersHashCacheV $ \cache-> Map.insert (blockHeaderHash header) (blockHeaderHeight header) cache -- update cache
