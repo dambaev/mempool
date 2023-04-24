@@ -22,21 +22,29 @@ module OpEnergy.Server.V1.DB where
 import           Data.Pool
 import qualified Data.Text.Show as T
 import qualified Data.Text.Encoding as TE
-import            Control.Monad.Logger    (runStderrLoggingT)
+import           Control.Monad.IO.Class (MonadIO, liftIO)
+import           Control.Monad.IO.Unlift(MonadUnliftIO)
+import           Control.Monad.Logger    (MonadLoggerIO )
 
-import            Database.Persist.Postgresql
+import           Database.Persist.Postgresql
 
-import            OpEnergy.Server.V1.Config
-import            Data.OpEnergy.API.V1.Block
-import            Data.OpEnergy.API.V1.Positive(fromPositive)
+import           OpEnergy.Server.V1.Config
+import           Data.OpEnergy.API.V1.Block
+import           Data.OpEnergy.API.V1.Positive(fromPositive)
 
 -- | connect to DB. Returns connection pool
-getConnection :: Config -> IO (Pool SqlBackend)
+getConnection
+  :: ( MonadLoggerIO m
+     , MonadUnliftIO m
+     , MonadIO m
+     )
+  => Config
+  -> m (Pool SqlBackend)
 getConnection config = do
-  pool <- runStderrLoggingT $ createPostgresqlPool
+  pool <- createPostgresqlPool
     connStr
     (fromPositive $ configDBConnectionPoolSize config)
-  flip runSqlPersistMPool pool $ runMigration migrateBlock -- perform necessary migrations. currently only BlockHeader table's migrations
+  liftIO $ flip runSqlPersistMPool pool $ runMigration migrateBlock -- perform necessary migrations. currently only BlockHeader table's migrations
   return pool
   where
     connStr = TE.encodeUtf8

@@ -16,6 +16,10 @@
 , op-energy-api
 , stm, stm-chans
 , transformers
+, prometheus-client
+, prometheus-metrics-ghc
+, prometheus-proc
+, wai-middleware-prometheus
 , GIT_COMMIT_HASH
 , ...
 }:
@@ -43,6 +47,10 @@ mkDerivation {
     transformers
     warp
     monad-logger
+    prometheus-client
+    prometheus-metrics-ghc
+    prometheus-proc
+    wai-middleware-prometheus
   ];
   preBuild = ''
     sed -i 's/GIT_COMMIT_HASH/${GIT_COMMIT_HASH}/' src/OpEnergy/Server/GitCommitHash.hs

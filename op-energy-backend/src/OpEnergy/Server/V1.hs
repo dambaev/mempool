@@ -26,6 +26,9 @@ import           OpEnergy.Server.V1.WebSocketService(webSocketConnection)
 import           OpEnergy.Server.V1.BlockSpanService(getBlockSpanList)
 import           OpEnergy.Server.V1.StatisticsService(calculateStatistics)
 
+import           Prometheus(MonadMonitor)
+
+
 -- | here goes implementation of OpEnergy API, which should match Data.OpEnergy.API.V1.V1API
 server:: ServerT V1API (AppT Handler)
 server = OpEnergy.Server.V1.WebSocketService.webSocketConnection
@@ -46,7 +49,7 @@ server = OpEnergy.Server.V1.WebSocketService.webSocketConnection
     :<|> oeGitHashGet
 
 -- | one iteration that called from scheduler thread
-schedulerIteration :: MonadIO m => AppT m ()
+schedulerIteration :: (MonadIO m, MonadMonitor m) => AppT m ()
 schedulerIteration = OpEnergy.Server.V1.BlockHeadersService.syncBlockHeaders
 
 -- returns just commit hash, provided by build system
