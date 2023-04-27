@@ -109,6 +109,14 @@ type V1API
     :> Get '[JSON] BlockHeader
 
   :<|> "oe"
+    :> "blocksbyblockspan"
+    :> Capture "startBlockHeight" BlockHeight
+    :> Capture "span" (Positive Int)
+    :> Capture "numberOfSpan" (Positive Int)
+    :> Description "Returns list of blocks' headers by a given block span. Answer format: [ [startBlockHeight, startBlockHeight + span], [startBlockHeight + span, ...], ... ]"
+    :> Get '[JSON] [[BlockHeader]]
+
+  :<|> "oe"
     :> "blockspanlist"
     :> Capture "startBlockHeight" BlockHeight
     :> Capture "span" (Positive Int)

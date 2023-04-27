@@ -162,6 +162,10 @@ export class OpEnergyApiService {
     return this.httpClient.get<EnergyNbdrStatistics>(`${this.apiBaseUrl}${this.apiBasePath}/api/v1/statistics/${blockHeight}/${span}`);
   }
 
+  $getBlocksByBlockSpan(startBlockHeight: number, span: number, numberOfSpan: number): Observable<BlockHeader[][]> {
+    return this.httpClient.get<BlockHeader[][]>(`${this.apiBaseUrl}${this.apiBasePath}/api/v1/oe/blocksbyblockspan/${startBlockHeight}/${span}/${numberOfSpan}`);
+  }
+
   $getBlockSpanList(startBlockHeight: number, span: number, numberOfSpan: number): Observable<BlockSpan[]> {
     return this.httpClient.get<BlockSpan[]>(`${this.apiBaseUrl}${this.apiBasePath}/api/v1/oe/blockspanlist/${startBlockHeight}/${span}/${numberOfSpan}`);
   }

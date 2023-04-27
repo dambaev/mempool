@@ -8,6 +8,7 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE TemplateHaskell            #-}
 module OpEnergy.Server.V1
   ( server
   , schedulerIteration
@@ -15,16 +16,21 @@ module OpEnergy.Server.V1
 
 import           Servant
 import           Control.Monad.IO.Class(MonadIO)
+import           Control.Monad(forM)
+import           Control.Monad.Logger(logError)
+import qualified Data.Text as T
 
 import           Data.OpEnergy.API.V1
 import           Data.OpEnergy.API.V1.Block
 import           Data.OpEnergy.API.V1.Account
+import           Data.OpEnergy.API.V1.Positive
 import qualified OpEnergy.Server.GitCommitHash as Server
-import           OpEnergy.Server.V1.Class (AppT)
-import           OpEnergy.Server.V1.BlockHeadersService(syncBlockHeaders, getBlockHeaderByHash, getBlockHeaderByHeight)
+import           OpEnergy.Server.V1.Class (AppT, runLogging)
+import           OpEnergy.Server.V1.BlockHeadersService(syncBlockHeaders, getBlockHeaderByHash, getBlockHeaderByHeight, mgetBlockHeaderByHeight)
 import           OpEnergy.Server.V1.WebSocketService(webSocketConnection)
 import           OpEnergy.Server.V1.BlockSpanService(getBlockSpanList)
 import           OpEnergy.Server.V1.StatisticsService(calculateStatistics)
+import           Data.Text.Show(tshow)
 
 import           Prometheus(MonadMonitor)
 
@@ -45,12 +51,33 @@ server = OpEnergy.Server.V1.WebSocketService.webSocketConnection
     :<|> OpEnergy.Server.V1.StatisticsService.calculateStatistics
     :<|> OpEnergy.Server.V1.BlockHeadersService.getBlockHeaderByHash
     :<|> OpEnergy.Server.V1.BlockHeadersService.getBlockHeaderByHeight
+    :<|> getBlocksByBlockSpan
     :<|> OpEnergy.Server.V1.BlockSpanService.getBlockSpanList
     :<|> oeGitHashGet
 
 -- | one iteration that called from scheduler thread
 schedulerIteration :: (MonadIO m, MonadMonitor m) => AppT m ()
 schedulerIteration = OpEnergy.Server.V1.BlockHeadersService.syncBlockHeaders
+
+getBlocksByBlockSpan
+  :: ( MonadIO m
+     , MonadMonitor m
+     )
+  => BlockHeight
+  -> Positive Int
+  -> Positive Int
+  -> AppT m [[BlockHeader]]
+getBlocksByBlockSpan startHeight span numberOfSpan = do
+  spans <- OpEnergy.Server.V1.BlockSpanService.getBlockSpanList startHeight span numberOfSpan
+  forM spans $ \(BlockSpan startHeight endHeight)-> do
+    mstart <- OpEnergy.Server.V1.BlockHeadersService.mgetBlockHeaderByHeight startHeight
+    mend <- OpEnergy.Server.V1.BlockHeadersService.mgetBlockHeaderByHeight endHeight
+    case (mstart, mend) of
+      (Just start, Just end ) -> return [ start, end]
+      _ -> do
+        let err = "failed to get block headers for block span {" <> tshow startHeight <> ", " <> tshow endHeight <> "}"
+        runLogging $ $(logError) err
+        error $ T.unpack err
 
 -- returns just commit hash, provided by build system
 oeGitHashGet :: AppT Handler GitHashResponse
