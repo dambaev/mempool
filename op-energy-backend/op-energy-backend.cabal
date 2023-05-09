@@ -52,6 +52,10 @@ library
                    , OpEnergy.Server.V1.Class
                    , OpEnergy.Server.V1.Metrics
                    , OpEnergy.Server.V1.BlockHeadersService
+--                    , OpEnergy.Server.V1.BlockHeadersService.Map.Cache
+--                    , OpEnergy.Server.V1.BlockHeadersService.Map.Service
+                   , OpEnergy.Server.V1.BlockHeadersService.Vector.Cache
+                   , OpEnergy.Server.V1.BlockHeadersService.Vector.Service
                    , OpEnergy.Server.V1.WebSocketService
                    , OpEnergy.Server.V1.WebSocketService.Message
                    , OpEnergy.Server.V1.BlockSpanService
@@ -95,7 +99,10 @@ library
                     , prometheus-proc
                     , async
                     , unliftio-core
+                    , vector
+                    , ghc-compact
     ghc-options:    -O2 -Wall -Werror -Wno-unticked-promoted-constructors -fno-warn-name-shadowing -Wno-orphans
     extensions:       OverloadedStrings
                     , ScopedTypeVariables
+                    , BangPatterns
 

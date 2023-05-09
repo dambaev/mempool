@@ -57,6 +57,8 @@ data Config = Config
     -- ^ minimum log level to display
   , configPrometheusPort :: Positive Int
     -- ^ port which should be used by prometheus metrics
+  , configCacheChunkSize :: Positive Int
+    -- ^ defines size of chunk with which cache is grown
   }
   deriving Show
 instance FromJSON Config where
@@ -79,6 +81,7 @@ instance FromJSON Config where
     <*> ( v .:? "WEBSOCKET_KEEP_ALIVE_SECS" .!= (configWebsocketKeepAliveSecs defaultConfig))
     <*> ( v .:? "LOG_LEVEL_MIN" .!= (configLogLevelMin defaultConfig))
     <*> ( v .:? "PROMETHEUS_PORT" .!= (configPrometheusPort defaultConfig))
+    <*> ( v .:? "CACHE_CHUNK_SIZE" .!= (configCacheChunkSize defaultConfig))
 
 defaultConfig:: Config
 defaultConfig = Config
@@ -100,6 +103,7 @@ defaultConfig = Config
   , configWebsocketKeepAliveSecs = 10
   , configLogLevelMin = LevelWarn
   , configPrometheusPort = 7999
+  , configCacheChunkSize = 50000
   }
 
 getConfigFromEnvironment :: IO Config
