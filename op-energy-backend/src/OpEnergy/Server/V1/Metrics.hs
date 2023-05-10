@@ -45,34 +45,36 @@ data MetricsState = MetricsState
     -- insertion into DB table BlockHeader
   , blockHeaderDBInsertH :: P.Histogram
   , blockHeaderCacheFromDBLookup :: P.Histogram
+  , getBlocksWithNbdrByBlockSpan :: P.Histogram
   }
 
 -- | constructs default state with given config and DB pool
 initMetrics :: MonadIO m => Config-> m MetricsState
 initMetrics _config = do
-  syncBlockHeadersH <- P.register $ P.histogram (P.Info "syncBlockHeader" "") P.defaultBuckets
-  btcGetBlockchainInfoH <- P.register $ P.histogram (P.Info "btcGetBlockchainInfo" "") P.defaultBuckets
-  btcGetBlockHashH <- P.register $ P.histogram (P.Info "btcGetBlockHashH" "") P.defaultBuckets
-  btcGetBlockH <- P.register $ P.histogram (P.Info "btcGetBlockH" "") P.defaultBuckets
-  btcGetBlockStatsH <- P.register $ P.histogram (P.Info "btcGetBlockStatsH" "") P.defaultBuckets
+  syncBlockHeadersH <- P.register $ P.histogram (P.Info "syncBlockHeader" "") microBuckets
+  btcGetBlockchainInfoH <- P.register $ P.histogram (P.Info "btcGetBlockchainInfo" "") microBuckets
+  btcGetBlockHashH <- P.register $ P.histogram (P.Info "btcGetBlockHashH" "") microBuckets
+  btcGetBlockH <- P.register $ P.histogram (P.Info "btcGetBlockH" "") microBuckets
+  btcGetBlockStatsH <- P.register $ P.histogram (P.Info "btcGetBlockStatsH" "") microBuckets
   -- mgetBlockHeaderByHeight
-  mgetBlockHeaderByHeightH <- P.register $ P.histogram (P.Info "mgetBlockHeaderByHeight" "") P.defaultBuckets
-  blockHeaderHeightCacheH <- P.register $ P.histogram (P.Info "blockHeaderHeightCache" "") P.defaultBuckets
+  mgetBlockHeaderByHeightH <- P.register $ P.histogram (P.Info "mgetBlockHeaderByHeight" "") microBuckets
+  blockHeaderHeightCacheH <- P.register $ P.histogram (P.Info "blockHeaderHeightCache" "") microBuckets
   blockHeaderHeightCacheHit <- P.register $ P.counter (P.Info "blockHeaderHeightCacheHit" "")
   blockHeaderHeightCacheMiss <- P.register $ P.counter (P.Info "blockHeaderHeightCacheMiss" "")
-  blockHeaderHeightCacheInsert <- P.register $ P.histogram (P.Info "blockHeaderHeightCacheInsert" "") P.defaultBuckets
+  blockHeaderHeightCacheInsert <- P.register $ P.histogram (P.Info "blockHeaderHeightCacheInsert" "") microBuckets
   -- getBlockHeaderByHash
-  mgetBlockHeaderByHashH <- P.register $ P.histogram (P.Info "mgetBlockHeaderByHash" "") P.defaultBuckets
-  blockHeaderHashCacheH <- P.register $ P.histogram (P.Info "blockHeaderHashCache" "") P.defaultBuckets
+  mgetBlockHeaderByHashH <- P.register $ P.histogram (P.Info "mgetBlockHeaderByHash" "") microBuckets
+  blockHeaderHashCacheH <- P.register $ P.histogram (P.Info "blockHeaderHashCache" "") microBuckets
   blockHeaderHashCacheHit <- P.register $ P.counter (P.Info "blockHeaderHashCacheHit" "")
   blockHeaderHashCacheMiss <- P.register $ P.counter (P.Info "blockHeaderHashCacheMiss" "")
-  blockHeaderHashCacheInsert <- P.register $ P.histogram (P.Info "blockHeaderHashCacheInsert" "") P.defaultBuckets
+  blockHeaderHashCacheInsert <- P.register $ P.histogram (P.Info "blockHeaderHashCacheInsert" "") microBuckets
   -- getBockSpanList
-  getBlockSpanListH <- P.register $ P.histogram (P.Info "getBlockSpanList" "") P.defaultBuckets
-  calculateStatisticsH <- P.register $ P.histogram (P.Info "calculateStatistics" "") P.defaultBuckets
-  blockHeaderDBInsertH <- P.register $ P.histogram (P.Info "blockHeaderDBInsert" "") P.defaultBuckets
-  blockHeaderHeightCacheEnsureCapacity <- P.register $ P.histogram (P.Info "blockHeaderHeightCacheEnsureCapacity" "") P.defaultBuckets
-  blockHeaderCacheFromDBLookup <- P.register $ P.histogram (P.Info "blockHeaderCacheFromDBLookup" "") P.defaultBuckets
+  getBlockSpanListH <- P.register $ P.histogram (P.Info "getBlockSpanList" "") microBuckets
+  calculateStatisticsH <- P.register $ P.histogram (P.Info "calculateStatistics" "") microBuckets
+  blockHeaderDBInsertH <- P.register $ P.histogram (P.Info "blockHeaderDBInsert" "") microBuckets
+  blockHeaderHeightCacheEnsureCapacity <- P.register $ P.histogram (P.Info "blockHeaderHeightCacheEnsureCapacity" "") microBuckets
+  blockHeaderCacheFromDBLookup <- P.register $ P.histogram (P.Info "blockHeaderCacheFromDBLookup" "") microBuckets
+  getBlocksWithNbdrByBlockSpan <- P.register $ P.histogram (P.Info "getBlocksWithNbdrByBlockSpan" "") microBuckets
   _ <- P.register P.ghcMetrics
   _ <- P.register P.procMetrics
   return $ MetricsState
@@ -96,7 +98,19 @@ initMetrics _config = do
     , calculateStatisticsH = calculateStatisticsH
     , blockHeaderDBInsertH = blockHeaderDBInsertH
     , blockHeaderCacheFromDBLookup = blockHeaderCacheFromDBLookup
+    , getBlocksWithNbdrByBlockSpan = getBlocksWithNbdrByBlockSpan
     }
+  where
+    microBuckets = [ 0.0000001 -- 100 nanoseconds
+                   , 0.00000025 -- 250 ns
+                   , 0.0000005 -- 500 ns
+                   , 0.000001 -- 1 microsecond
+                   , 0.00001 -- 10 microseconds
+                   , 0.0001 -- 100 microseconds
+                   , 0.00025 -- 250 microseconds
+                   , 0.0005 -- 500 microseconds
+                   , 0.001 -- 1 ms
+                   ] ++ P.defaultBuckets
 
 -- | runs metrics HTTP server
 runMetricsServer :: Config -> MVar MetricsState -> IO ()

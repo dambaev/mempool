@@ -37,12 +37,10 @@ calculateStatistics startHeight span = do
        } <- ask
   P.observeDuration calculateStatisticsH $ do
     blockSpans <- getBlockSpanList startHeight span $! positiveFromPositive2 statisticsBlockSpansCount
-    let theoreticalBlockSpanTime = span * 600
-        theoreticalBlockSpanTimePercent = theoreticalBlockSpanTime * 100
     discoverSpeeds::[Double] <- forM blockSpans $ \(BlockSpan start end) -> do
       startBlock <- mgetBlockHeaderByHeight start >>= pure . fromJust
       endBlock <- mgetBlockHeaderByHeight end >>= pure . fromJust
-      return $! (fromIntegral theoreticalBlockSpanTimePercent) / ((fromIntegral (blockHeaderMediantime endBlock)) - (fromIntegral (blockHeaderMediantime startBlock)))
+      return $! getTheoreticalActualMTPPercents startBlock endBlock
     let avg = (List.foldl' (\acc v -> acc + v) 0.0 discoverSpeeds ) / (fromIntegral statisticsBlockSpansCount)
         stddev = sqrt $! (List.foldl' (\acc i-> acc + (i - avg) ^ (2 :: Int)) 0.0 discoverSpeeds) / (fromIntegral ((unPositive2 statisticsBlockSpansCount) - 1))
     return $ Statistics
@@ -64,3 +62,15 @@ getRealTheoreticalRatio (BlockSpan startBlock endBlock) = do
   end <- mgetBlockHeaderByHeight endBlock >>= pure . blockHeaderMediantime . fromJust
   let theoreticalBlockCountWithinRange = (fromIntegral (end - start )) / 600.0
   return (theoreticalBlockCountWithinRange / (fromIntegral ( endBlock - startBlock)))
+
+-- this function return ratio between theoretical mediantime end-start difference and actual mediantime end-start
+getTheoreticalActualMTPPercents
+  :: BlockHeader
+    -- ^ start block height
+  -> BlockHeader
+    -- ^ end block height
+  -> Double
+getTheoreticalActualMTPPercents startBlock endBlock = theoreticalMTP / realMTP
+  where
+    !theoreticalMTP = fromIntegral ((blockHeaderHeight endBlock - blockHeaderHeight startBlock ) * 600 * 100)
+    !realMTP = fromIntegral (blockHeaderMediantime endBlock - blockHeaderMediantime startBlock)

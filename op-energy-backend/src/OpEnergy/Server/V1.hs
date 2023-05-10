@@ -9,6 +9,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE DuplicateRecordFields      #-}
 module OpEnergy.Server.V1
   ( server
   , schedulerIteration
@@ -17,6 +18,7 @@ module OpEnergy.Server.V1
 import           Servant
 import           Control.Monad.IO.Class(MonadIO)
 import           Control.Monad(forM)
+import           Control.Monad.Reader(ask)
 import           Control.Monad.Logger(logError)
 import qualified Data.Text as T
 
@@ -25,14 +27,16 @@ import           Data.OpEnergy.API.V1.Block
 import           Data.OpEnergy.API.V1.Account
 import           Data.OpEnergy.API.V1.Positive
 import qualified OpEnergy.Server.GitCommitHash as Server
-import           OpEnergy.Server.V1.Class (AppT, runLogging)
+import qualified OpEnergy.Server.V1.Metrics as Metrics( MetricsState(..))
+import           OpEnergy.Server.V1.Class (AppT, runLogging, State(..))
 import           OpEnergy.Server.V1.BlockHeadersService(syncBlockHeaders, getBlockHeaderByHash, getBlockHeaderByHeight, mgetBlockHeaderByHeight)
 import           OpEnergy.Server.V1.WebSocketService(webSocketConnection)
 import           OpEnergy.Server.V1.BlockSpanService(getBlockSpanList)
-import           OpEnergy.Server.V1.StatisticsService(calculateStatistics)
+import           OpEnergy.Server.V1.StatisticsService(calculateStatistics, getTheoreticalActualMTPPercents)
 import           Data.Text.Show(tshow)
 
 import           Prometheus(MonadMonitor)
+import qualified Prometheus as P
 
 
 -- | here goes implementation of OpEnergy API, which should match Data.OpEnergy.API.V1.V1API
@@ -52,6 +56,7 @@ server = OpEnergy.Server.V1.WebSocketService.webSocketConnection
     :<|> OpEnergy.Server.V1.BlockHeadersService.getBlockHeaderByHash
     :<|> OpEnergy.Server.V1.BlockHeadersService.getBlockHeaderByHeight
     :<|> getBlocksByBlockSpan
+    :<|> getBlocksWithNbdrByBlockSpan
     :<|> OpEnergy.Server.V1.BlockSpanService.getBlockSpanList
     :<|> oeGitHashGet
 
@@ -78,6 +83,27 @@ getBlocksByBlockSpan startHeight span numberOfSpan = do
         let err = "failed to get block headers for block span {" <> tshow startHeight <> ", " <> tshow endHeight <> "}"
         runLogging $ $(logError) err
         error $ T.unpack err
+
+getBlocksWithNbdrByBlockSpan
+  :: ( MonadIO m
+     , MonadMonitor m
+     )
+  => BlockHeight
+  -> Positive Int
+  -> Positive Int
+  -> AppT m [BlockSpanHeadersNbdr]
+getBlocksWithNbdrByBlockSpan startHeight span numberOfSpans = do
+  State{ metrics = Metrics.MetricsState{ getBlocksWithNbdrByBlockSpan = getBlocksWithNbdrByBlockSpan} } <- ask
+  P.observeDuration getBlocksWithNbdrByBlockSpan $ do
+    blockSpansBlocks <- getBlocksByBlockSpan startHeight span numberOfSpans
+    return $! map toBlockSpanHeadersNbdr blockSpansBlocks
+  where
+    toBlockSpanHeadersNbdr (startBlock:endBlock:_) = BlockSpanHeadersNbdr
+      { startBlock = startBlock
+      , endBlock = endBlock
+      , Data.OpEnergy.API.V1.nbdr = getTheoreticalActualMTPPercents startBlock endBlock
+      }
+    toBlockSpanHeadersNbdr _ = error "getBlocksWithNbdrByBlockSpan: unexpected arguments"
 
 -- returns just commit hash, provided by build system
 oeGitHashGet :: AppT Handler GitHashResponse
