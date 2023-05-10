@@ -76,3 +76,9 @@ export interface BlockHeader {
   chainwork: string;
   mediantime: number;
 }
+
+export interface BlockSpanHeadersNbdr {
+  startBlock: BlockHeader;
+  endBlock: BlockHeader;
+  nbdr: number;
+}
