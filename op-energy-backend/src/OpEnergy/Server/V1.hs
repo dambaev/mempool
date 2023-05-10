@@ -73,16 +73,18 @@ getBlocksByBlockSpan
   -> Positive Int
   -> AppT m [[BlockHeader]]
 getBlocksByBlockSpan startHeight span numberOfSpan = do
-  spans <- OpEnergy.Server.V1.BlockSpanService.getBlockSpanList startHeight span numberOfSpan
-  forM spans $ \(BlockSpan startHeight endHeight)-> do
-    mstart <- OpEnergy.Server.V1.BlockHeadersService.mgetBlockHeaderByHeight startHeight
-    mend <- OpEnergy.Server.V1.BlockHeadersService.mgetBlockHeaderByHeight endHeight
-    case (mstart, mend) of
-      (Just start, Just end ) -> return [ start, end]
-      _ -> do
-        let err = "failed to get block headers for block span {" <> tshow startHeight <> ", " <> tshow endHeight <> "}"
-        runLogging $ $(logError) err
-        error $ T.unpack err
+  State{ metrics = Metrics.MetricsState{ getBlocksByBlockSpan = getBlocksByBlockSpan} } <- ask
+  P.observeDuration getBlocksByBlockSpan $ do
+    spans <- OpEnergy.Server.V1.BlockSpanService.getBlockSpanList startHeight span numberOfSpan
+    forM spans $ \(BlockSpan startHeight endHeight)-> do
+      mstart <- OpEnergy.Server.V1.BlockHeadersService.mgetBlockHeaderByHeight startHeight
+      mend <- OpEnergy.Server.V1.BlockHeadersService.mgetBlockHeaderByHeight endHeight
+      case (mstart, mend) of
+        (Just start, Just end ) -> return [ start, end]
+        _ -> do
+          let err = "failed to get block headers for block span {" <> tshow startHeight <> ", " <> tshow endHeight <> "}"
+          runLogging $ $(logError) err
+          error $ T.unpack err
 
 getBlocksWithNbdrByBlockSpan
   :: ( MonadIO m

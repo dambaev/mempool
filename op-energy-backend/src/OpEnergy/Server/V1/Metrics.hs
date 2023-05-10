@@ -21,6 +21,7 @@ import           Data.OpEnergy.API.V1.Positive
 -- | defines the whole state used by backend
 data MetricsState = MetricsState
   { syncBlockHeadersH :: P.Histogram
+  , loadDBStateH :: P.Histogram
   , btcGetBlockchainInfoH :: P.Histogram
   , btcGetBlockHashH :: P.Histogram
   , btcGetBlockH :: P.Histogram
@@ -45,6 +46,7 @@ data MetricsState = MetricsState
     -- insertion into DB table BlockHeader
   , blockHeaderDBInsertH :: P.Histogram
   , blockHeaderCacheFromDBLookup :: P.Histogram
+  , getBlocksByBlockSpan :: P.Histogram
   , getBlocksWithNbdrByBlockSpan :: P.Histogram
   }
 
@@ -52,6 +54,7 @@ data MetricsState = MetricsState
 initMetrics :: MonadIO m => Config-> m MetricsState
 initMetrics _config = do
   syncBlockHeadersH <- P.register $ P.histogram (P.Info "syncBlockHeader" "") microBuckets
+  loadDBStateH <- P.register $ P.histogram (P.Info "loadDBState" "") microBuckets
   btcGetBlockchainInfoH <- P.register $ P.histogram (P.Info "btcGetBlockchainInfo" "") microBuckets
   btcGetBlockHashH <- P.register $ P.histogram (P.Info "btcGetBlockHashH" "") microBuckets
   btcGetBlockH <- P.register $ P.histogram (P.Info "btcGetBlockH" "") microBuckets
@@ -74,11 +77,13 @@ initMetrics _config = do
   blockHeaderDBInsertH <- P.register $ P.histogram (P.Info "blockHeaderDBInsert" "") microBuckets
   blockHeaderHeightCacheEnsureCapacity <- P.register $ P.histogram (P.Info "blockHeaderHeightCacheEnsureCapacity" "") microBuckets
   blockHeaderCacheFromDBLookup <- P.register $ P.histogram (P.Info "blockHeaderCacheFromDBLookup" "") microBuckets
+  getBlocksByBlockSpan <- P.register $ P.histogram (P.Info "getBlocksByBlockSpan" "") microBuckets
   getBlocksWithNbdrByBlockSpan <- P.register $ P.histogram (P.Info "getBlocksWithNbdrByBlockSpan" "") microBuckets
   _ <- P.register P.ghcMetrics
   _ <- P.register P.procMetrics
   return $ MetricsState
     { syncBlockHeadersH = syncBlockHeadersH
+    , loadDBStateH = loadDBStateH
     , btcGetBlockchainInfoH = btcGetBlockchainInfoH
     , btcGetBlockHashH = btcGetBlockHashH
     , btcGetBlockH = btcGetBlockH
@@ -98,6 +103,7 @@ initMetrics _config = do
     , calculateStatisticsH = calculateStatisticsH
     , blockHeaderDBInsertH = blockHeaderDBInsertH
     , blockHeaderCacheFromDBLookup = blockHeaderCacheFromDBLookup
+    , getBlocksByBlockSpan = getBlocksByBlockSpan
     , getBlocksWithNbdrByBlockSpan = getBlocksWithNbdrByBlockSpan
     }
   where

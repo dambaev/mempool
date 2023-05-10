@@ -85,15 +85,19 @@ mgetLastBlockHeader pool = flip runSqlPersistMPool pool $ selectFirst ([] :: [Fi
 -- | performs read from DB in order to set State.currentHeightTip
 loadDBState :: (MonadIO m, MonadMonitor m) => AppT m ()
 loadDBState = do
-  State{ blockHeadersDBPool = pool, currentTip = currentTipV } <- ask
-  mlast <- liftIO $ mgetLastBlockHeader pool
-  case mlast of
-    Nothing-> return () -- do nothing
-    Just (Entity _ header) -> do
-      liftIO $ STM.atomically $ TVar.writeTVar currentTipV (Just header)
-      runLogging $ $(logInfo) ("current confirmed height tip " <> tshow (blockHeaderHeight header))
-      cacheBlockHeadersFromDB (blockHeaderHeight header)
-      runLogging $ $(logInfo) "cached block headers"
+  State{ blockHeadersDBPool = pool
+       , currentTip = currentTipV
+       , metrics = MetricsState {loadDBStateH = loadDBStateH}
+       } <- ask
+  P.observeDuration loadDBStateH $ do
+    mlast <- liftIO $ mgetLastBlockHeader pool
+    case mlast of
+      Nothing-> return () -- do nothing
+      Just (Entity _ header) -> do
+        liftIO $ STM.atomically $ TVar.writeTVar currentTipV (Just header)
+        runLogging $ $(logInfo) ("current confirmed height tip " <> tshow (blockHeaderHeight header))
+        cacheBlockHeadersFromDB (blockHeaderHeight header)
+        runLogging $ $(logInfo) "cached block headers"
 
 -- | this procedure ensures that BlockHeaders table is in sync with block chain
 syncBlockHeaders :: (MonadIO m, MonadMonitor m) => AppT m ()
