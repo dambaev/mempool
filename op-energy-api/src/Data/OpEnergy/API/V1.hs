@@ -93,7 +93,7 @@ type V1API
   :<|> "statistics"
     :> Capture "blockheight" BlockHeight
     :> Capture "span" (Positive Int)
-    :> Description "Calculates NBDR statistics for a given block height and span"
+    :> Description "Calculates NBDR statistics for a given block height and span. NBDR here is ratio (span * 600 * 100) / (endBlockMedianTime - startBlockMediantime)."
     :> Get '[JSON] Statistics
 
   :<|> "oe"
@@ -115,6 +115,14 @@ type V1API
     :> Capture "numberOfSpan" (Positive Int)
     :> Description "Returns list of blocks' headers by a given block span. Answer format: [ [startBlockHeight, startBlockHeight + span], [startBlockHeight + span, ...], ... ]"
     :> Get '[JSON] [[BlockHeader]]
+
+  :<|> "oe"
+    :> "blockswithnbdrbyblockspan"
+    :> Capture "startBlockHeight" BlockHeight
+    :> Capture "span" (Positive Int)
+    :> Capture "numberOfSpan" (Positive Int)
+    :> Description "Returns list of start and end blocks' headers and their nbdr for each appropriate block span. NBDR here is ratio (span * 600 * 100) / (endBlockMedianTime - startBlockMediantime)."
+    :> Get '[JSON] [BlockSpanHeadersNbdr]
 
   :<|> "oe"
     :> "blockspanlist"
@@ -150,6 +158,25 @@ instance ToSchema GitHashResponse where
 defaultGitHashResponse :: GitHashResponse
 defaultGitHashResponse = GitHashResponse
   { gitCommitHash = "12345678"
+  }
+
+data BlockSpanHeadersNbdr = BlockSpanHeadersNbdr
+  { startBlock :: BlockHeader
+  , endBlock :: BlockHeader
+  , nbdr :: Double
+  }
+  deriving (Show, Generic, Typeable)
+instance ToJSON   BlockSpanHeadersNbdr
+instance FromJSON BlockSpanHeadersNbdr
+instance ToSchema BlockSpanHeadersNbdr where
+  declareNamedSchema proxy = genericDeclareNamedSchema defaultSchemaOptions proxy
+    & mapped.schema.description ?~ "BlockSpanHeadersNbdr schema"
+    & mapped.schema.example ?~ toJSON defaultBlockSpanHeadersNbdr
+defaultBlockSpanHeadersNbdr :: BlockSpanHeadersNbdr
+defaultBlockSpanHeadersNbdr = BlockSpanHeadersNbdr
+  { startBlock = defaultBlockHeader
+  , endBlock = defaultBlockHeader
+  , nbdr = 100.0
   }
 
 data NbdrStatistics = NbdrStatistics
