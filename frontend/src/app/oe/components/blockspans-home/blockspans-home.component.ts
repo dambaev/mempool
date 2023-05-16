@@ -10,7 +10,7 @@ import { switchMap, take } from 'rxjs/operators';
 import { RelativeUrlPipe } from 'src/app/shared/pipes/relative-url/relative-url.pipe';
 import { OpEnergyApiService } from 'src/app/oe/services/op-energy.service';
 import { OeStateService } from 'src/app/oe/services/state.service';
-import { TimeStrike, BlockSpan } from 'src/app/oe/interfaces/op-energy.interface';
+import { TimeStrike, BlockSpan, BlockHeader } from 'src/app/oe/interfaces/op-energy.interface';
 
 interface PastBlock extends Block {
   mediantimeDiff: number;
@@ -139,23 +139,17 @@ export class BlockspansHomeComponent implements OnInit, OnDestroy {
   async blockspanChange({tipBlock, span}): Promise<void> {
     this.span = span;
     const numberOfSpan = this.stateService.env.KEEP_BLOCKS_AMOUNT / 2;
-    const blockNumbers = [];
-    let blockSpanList = [];
-    try {
-      blockSpanList = await lastValueFrom(this.opEnergyApiService.$getBlockSpanList(tipBlock - (span* numberOfSpan) , span, numberOfSpan), {defaultValue: []});
-    } catch (error) {
-      this.toastr.error('Cannot fetch block height data!', 'Failed!');
-    }
-    blockSpanList.reverse().forEach((blockSpan: BlockSpan) => {
-      blockNumbers.push(blockSpan.endBlockHeight, blockSpan.startBlockHeight);
-    });
     this.pastBlocks = [];
-    forkJoin(
-      blockNumbers.map(
-        blockNo => this.opEnergyApiService.$getBlockByHeight(blockNo)
-      )
-    )
+    this.opEnergyApiService.$getBlocksByBlockSpan(tipBlock - (span* numberOfSpan) , span, numberOfSpan)
     .pipe(take(1))
+    .pipe(switchMap( (blockHeaders : BlockHeader[][]) => {
+        let acc:BlockHeader[] = [];
+        blockHeaders.reverse().forEach( ([startBlock, endBlock]: BlockHeader[]) => {
+          return acc.push( endBlock, startBlock);
+        });
+        return [acc]; // I am not sure why subscribe() below will receive argument of type T in case if you return T[]
+      })
+    )
     .subscribe((blocks: any[]) => {
       this.pastBlocks = blocks;
       this.cd.markForCheck();
