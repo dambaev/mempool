@@ -112,6 +112,8 @@ in
         root = "${pkgs.op-energy-frontend frontend_args}";
         extraConfig = ''
           # include the nginx config, which had been adopted to fit nixos-based nginx config
+          add_header 'Access-Control-Allow-Origin' '*' always;
+
           include ${pkgs.op-energy-frontend-nginx-server-config}/nginx.conf;
           # here we include possible options to route testnet-related requests.
           ${testnet_locations}
