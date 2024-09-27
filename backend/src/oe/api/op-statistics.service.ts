@@ -1,10 +1,9 @@
 import logger from '../../logger';
-import opBlockHeaderService from '../service/op-block-header.service';
+import oeBlockHeaderService from '../service/op-block-header.service';
 import {
   BlockHeight,
   ConfirmedBlockHeight,
 } from './interfaces/op-energy.interface';
-import bitcoinApi from '../../api/bitcoin/bitcoin-api-factory';
 import {
   NbdrStatistics,
   NbdrStatisticsError,
@@ -31,27 +30,23 @@ export class OpStatisticService {
           blockSpan,
           NUMBER_OF_BLOCK_SPANS
         );
-        const currentTip = await bitcoinApi.$getBlockHeightTip();
+        const currentTip = await oeBlockHeaderService.$getBlockHeightTip('nbdr');
 
         blockSpanList.forEach((blockNumber) =>
           confirmedBlocks.push(
-            opBlockHeaderService.verifyConfirmedBlockHeight(
+            oeBlockHeaderService.verifyConfirmedBlockHeight(
               blockNumber.startBlockHeight,
-              {
-                value: currentTip,
-              }
+              currentTip
             ),
-            opBlockHeaderService.verifyConfirmedBlockHeight(
+            oeBlockHeaderService.verifyConfirmedBlockHeight(
               blockNumber.endBlockHeight,
-              {
-                value: currentTip,
-              }
+              currentTip
             )
           )
         );
 
         const blockHeadersList =
-          await opBlockHeaderService.$getBlockHeadersByHeights(
+          await oeBlockHeaderService.$getBlockHeadersByHeights(
             'nbdr',
             Array.from(new Set(confirmedBlocks))
           );
